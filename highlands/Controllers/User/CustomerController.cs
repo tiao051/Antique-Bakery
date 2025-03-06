@@ -1,0 +1,462 @@
+﻿using Microsoft.AspNetCore.Mvc;
+using highlands.Services;
+using highlands.Models;
+using highlands.Models.DTO;
+using Microsoft.Extensions.Caching.Distributed;
+using Newtonsoft.Json;
+using RabbitMQ.Client;
+using System.Text;
+using RabbitMQ.Client.Events;
+
+namespace highlands.Controllers.User
+{
+    public class CustomerController : Controller
+    {
+        private readonly string _hostname;
+        private readonly string _username;
+        private readonly string _password;
+        private readonly string _queueName;
+        private readonly string _port;
+        private readonly IMenuItemRepository _dapperRepository;
+        private readonly IDistributedCache _distributedCache;
+        private readonly string _connectionString;
+
+        public CustomerController(
+    IConfiguration configuration,
+    IEnumerable<IMenuItemRepository> repositories,
+    IDistributedCache distributedCache)
+        {
+            _hostname = configuration["RabbitMQ:HostName"];
+            _username = configuration["RabbitMQ:UserName"];
+            _password = configuration["RabbitMQ:Password"];
+            _queueName = configuration["RabbitMQ:QueueName"];
+            _port = configuration["RabbitMQ:Port"];
+            _connectionString = configuration.GetConnectionString("DefaultConnection");
+            _dapperRepository = repositories.OfType<MenuItemDapperRepository>().FirstOrDefault();
+            _distributedCache = distributedCache;
+        }
+        public async Task<IActionResult> Index()
+        {
+            int userId = HttpContext.Session.GetInt32("UserId") ?? 0;
+            if (userId == 0)
+            {
+                ViewBag.TotalQuantity = 0;
+            }
+            else
+            {
+                string cacheKey = $"cart:{userId}";
+                string cachedCart = await _distributedCache.GetStringAsync(cacheKey);
+                List<CartItemTemporary> cartItems = JsonConvert.DeserializeObject<List<CartItemTemporary>>(cachedCart ?? "[]");
+
+                ViewBag.TotalQuantity = cartItems.Sum(i => i.Quantity); // Lấy tổng số lượng từ Redis
+            }
+            var subcategories = await _dapperRepository.GetSubcategoriesAsync();
+            return View("~/Views/User/Customer/Index.cshtml", subcategories);
+        }
+        [HttpGet]
+        public async Task<IActionResult> MenuItems(string subcategory)
+        {
+            if (string.IsNullOrEmpty(subcategory))
+            {
+                return BadRequest("Subcategory is required");
+            }
+
+            var menuItems = await _dapperRepository.GetMenuItemsBySubcategoryAsync(subcategory);
+
+            if (menuItems == null || !menuItems.Any())
+            {
+                return NotFound("No menu items found.");
+            }
+
+            return PartialView("~/Views/User/Customer/_MenuItemsPartial.cshtml", menuItems);
+        }
+        public async Task<ActionResult> ItemSelected(string subcategory, string itemName, string size, int userId)
+        {
+            ViewData["ShowNavbarMenu"] = false;
+            Console.WriteLine($"[DEBUG] ItemSelected received: subcategory={subcategory}, itemName={itemName}, size={size}");
+
+            string cacheKey = $"user_selection:{userId}"; // Key Redis theo userId
+
+            // Nếu tham số bị null, thử lấy từ Redis
+            if (string.IsNullOrEmpty(subcategory) || string.IsNullOrEmpty(itemName) || string.IsNullOrEmpty(size))
+            {
+                var cachedData = await _distributedCache.GetStringAsync(cacheKey);
+
+                if (!string.IsNullOrEmpty(cachedData))
+                {
+                    var userSelection = JsonConvert.DeserializeObject<UserSelectionDTO>(cachedData);
+                    subcategory = userSelection.Subcategory;
+                    itemName = userSelection.ItemName;
+                    size = userSelection.Size;
+                }
+            }
+
+            // Nếu vẫn thiếu dữ liệu, báo lỗi
+            if (string.IsNullOrEmpty(subcategory) || string.IsNullOrEmpty(itemName) || string.IsNullOrEmpty(size))
+            {
+                return BadRequest("Subcategory, ItemName, or Size cannot be null or empty.");
+            }
+
+            // Lưu vào Redis để sử dụng sau này
+            var userSelectionData = new UserSelectionDTO
+            {
+                Subcategory = subcategory,
+                ItemName = itemName,
+                Size = size
+            };
+
+            var cacheOptions = new DistributedCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(1) // Giữ dữ liệu trong Redis 1 giờ
+            };
+
+            await _distributedCache.SetStringAsync(cacheKey, JsonConvert.SerializeObject(userSelectionData), cacheOptions);
+
+            try
+            {
+                // Lấy chi tiết món từ database
+                var (menuItem, prices, recipeList) = await _dapperRepository.GetItemDetailsAsync(subcategory, itemName, size);
+
+                var viewModel = new ItemSelectedViewModel
+                {
+                    MenuItem = menuItem,
+                    AvailableSizes = prices ?? new List<MenuItemPrice>(),
+                    RecipeList = recipeList
+                };
+
+                return View("~/Views/User/Customer/ItemSelected.cshtml", viewModel);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ERROR] {ex.Message}");
+                return Content($"An error occurred: {ex.Message}");
+            }
+        }
+
+        public async Task<ActionResult> LoadRecipePartial(string itemName, string size)
+        {
+            if (string.IsNullOrEmpty(size))
+            {
+                return BadRequest("Size cannot be null or empty.");
+            }
+
+            try
+            {
+                var recipeList = await _dapperRepository.GetIngredientsBySizeAsync(itemName, size);
+
+                return PartialView("~/Views/User/Customer/_RecipePartial.cshtml", recipeList);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error occurred: {ex.Message}");
+                return Content($"An error occurred: {ex.Message}");
+            }
+        }
+
+        public async Task<IActionResult> Checkout()
+        {
+            ViewData["ShowNavbarMenu"] = false;
+            ViewData["ShowFooter"] = false;
+
+            var userId = HttpContext.Session.GetInt32("UserId");
+
+            if (userId == null)
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            return View("~/Views/User/Customer/Checkout.cshtml");
+        }
+        public IActionResult CustomerDataInsertForm()
+        {
+            ViewData["ShowNavbarMenu"] = true;
+            ViewData["ShowFooter"] = false;
+            return View("~/Views/User/Customer/CustomerDataInsertForm.cshtml");
+        }
+        // insert du lieu cua customer vao db
+        [HttpPost]
+        public async Task<IActionResult> Create(string fullname, string phone, string address, string message)
+        {
+            var userId = HttpContext.Session.GetInt32("UserId");
+
+            if (userId == null)
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            var customer = new Customer
+            {
+                FullName = fullname,
+                Phone = phone,
+                Address = address,
+                Message = message,
+                UserId = userId.Value
+            };
+
+            var result = await _dapperRepository.CreateCustomerAsync(customer);
+
+            if (result)
+            {
+                TempData["SuccessMessage"] = "Data inserted successfully!";
+            }
+            else
+            {
+                TempData["ErrorMessage"] = "Data insertion failed!";
+            }
+
+            return RedirectToAction("CustomerDataInsertForm");
+
+        }
+        [HttpGet]
+        public IActionResult GetUserId()
+        {
+            int? userId = HttpContext.Session.GetInt32("UserId");
+            if (userId == null || userId == 0)
+            {
+                return Json(new { success = false, message = "User not authenticated!", userId = 0 });
+            }
+            return Json(new { success = true, userId });
+        }
+        // lấy giá về để phản hồi cho js
+        [HttpGet]
+        public async Task<IActionResult> GetPrice(string itemName, string size)
+        {
+            Console.WriteLine($"Trong controller Querying price for Item: {itemName}, Size: {size}");
+            if (string.IsNullOrEmpty(itemName) || string.IsNullOrEmpty(size))
+            {
+                return Json(new { success = false, message = "Invalid parameters." });
+            }
+
+            var price = await _dapperRepository.GetPriceAsync(itemName, size);
+
+            if (price.HasValue)
+            {
+                return Json(new { success = true, price = price.Value });
+            }
+            else
+            {
+                return Json(new { success = false, message = "Price not found in controller." });
+            }
+        }
+        [HttpPost]
+        public async Task<IActionResult> AddToOrder(int userId, string itemName, string size, decimal price, int quantity = 1, string itemImg = "")
+        {
+            Console.WriteLine($"[DEBUG] Received AddToOrder: userId={userId}, itemName={itemName}, size={size}, quantity={quantity}, itemImg={itemImg}");
+
+            bool added = await _dapperRepository.AddToCartAsync(userId, itemName, size, price, quantity, itemImg);
+            if (!added)
+            {
+                return Json(new { success = false, message = "Failed to add item!" });
+            }
+
+            int totalQuantity = await _dapperRepository.GetTotalQuantityAsync(userId);
+            var sizeQuantities = await _dapperRepository.GetSizeQuantitiesAsync(userId);
+
+            Console.WriteLine($"[DEBUG] Redis Updated - Total Quantity: {totalQuantity}");
+            Console.WriteLine($"[DEBUG] Redis Updated - Size Quantity: {JsonConvert.SerializeObject(sizeQuantities)}");
+
+            return Json(new
+            {
+                success = true,
+                message = "Item added to cart!",
+                cartCount = totalQuantity,
+                sizeQuantities
+            });
+        }
+        // lấy tổng số lượng sản phẩm được add vào giỏ hàng
+        [HttpGet]
+        public async Task<IActionResult> GetCartQuantity()
+        {
+            int userId = HttpContext.Session.GetInt32("UserId") ?? 0;
+            if (userId == 0)
+            {
+                return Json(new { success = false, quantity = 0 });
+            }
+
+            int totalQuantity = await _dapperRepository.GetTotalQuantityAsync(userId);
+            return Json(new { success = true, quantity = totalQuantity });
+        }
+        public async Task<IActionResult> ReviewOrder()
+        {
+            int userId = HttpContext.Session.GetInt32("UserId") ?? 0;
+            if (userId == 0)
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            List<CartItemTemporary> cartItems = await _dapperRepository.GetCartItemsAsync(userId);
+
+            Console.WriteLine($"[DEBUG] Cart Items trong review order: {JsonConvert.SerializeObject(cartItems)}");
+
+            return View("~/Views/User/Customer/ReviewOrder.cshtml", cartItems);
+        }
+        [HttpDelete]
+        public async Task<IActionResult> RemoveCartItem([FromQuery] int userId, [FromQuery] string itemName, [FromQuery] string itemSize)
+        {
+            Console.WriteLine($"[DEBUG] Received request: userId={userId}, itemName={itemName}, itemSize={itemSize}");
+            bool success = await _dapperRepository.RemoveCartItemAsync(userId, itemName, itemSize);
+            var cart = await _dapperRepository.GetCartItemsAsync(userId);
+            Console.WriteLine($"[DEBUG] Cart after delete/remove: {JsonConvert.SerializeObject(cart)}");
+
+            // Chuẩn hóa size
+            Dictionary<string, string> sizeMapping = new Dictionary<string, string>
+    {
+        { "Small", "S" }, { "Medium", "M" }, { "Large", "L" }
+    };
+            string normalizedSize = itemSize;
+            if (sizeMapping.ContainsKey(itemSize))
+            {
+                normalizedSize = sizeMapping[itemSize];
+            }
+
+            // Tìm kiếm item dựa trên cả tên và size
+            var updatedItem = cart.FirstOrDefault(i =>
+                i.ItemName.Trim().ToLower() == itemName.Trim().ToLower() &&
+                i.Size == normalizedSize);
+
+            int updatedQuantity = updatedItem?.Quantity ?? 0;
+            return Json(new
+            {
+                success,
+                message = success ? "Xóa thành công!" : "Không tìm thấy sản phẩm.",
+                updatedQuantity
+            });
+        }
+        [HttpPut]
+        public async Task<IActionResult> IncreaseCartItem([FromQuery] int userId, [FromQuery] string itemName, string itemSize)
+        {
+            Console.WriteLine($"[DEBUG] Received request: userId={userId}, itemName={itemName}, itemSize={itemSize}");
+            bool success = await _dapperRepository.IncreaseCartItem(userId, itemName, itemSize);
+            if (success)
+            {
+                var cart = await _dapperRepository.GetCartItemsAsync(userId);
+                Console.WriteLine($"[DEBUG] Cart after update: {JsonConvert.SerializeObject(cart)}");
+
+                // Chuẩn hóa size trước khi tìm kiếm
+                Dictionary<string, string> sizeMapping = new Dictionary<string, string>
+        {
+            { "Small", "S" }, { "Medium", "M" }, { "Large", "L" }
+        };
+                string normalizedSize = itemSize;
+                if (sizeMapping.ContainsKey(itemSize))
+                {
+                    normalizedSize = sizeMapping[itemSize];
+                }
+
+                // Tìm sản phẩm dựa trên cả tên và size
+                var updatedItem = cart.FirstOrDefault(i =>
+                    i.ItemName.Trim().ToLower() == itemName.Trim().ToLower() &&
+                    i.Size == normalizedSize);
+
+                if (updatedItem == null)
+                {
+                    Console.WriteLine("[ERROR] Không tìm thấy sản phẩm sau khi cập nhật!");
+                    return Json(new { success = false, message = "Không tìm thấy sản phẩm sau khi cập nhật." });
+                }
+                int updatedQuantity = updatedItem.Quantity;
+                Console.WriteLine($"số lượng sau khi tăng: {updatedQuantity}");
+                return Json(new { success, message = "Tăng số lượng thành công!", updatedQuantity });
+            }
+            return Json(new { success, message = "Không tìm thấy sản phẩm." });
+        }
+        [HttpPost]
+        public IActionResult SaveCartData([FromBody] CheckoutDataViewModel cartData)
+        {   
+            Console.WriteLine($"Subtotal: {cartData.Subtotal}, Tax: {cartData.Tax}, Total: {cartData.Total}, TotalQuantity: {cartData.TotalQuantity}");
+
+            HttpContext.Session.SetString("Subtotal", cartData.Subtotal);
+            HttpContext.Session.SetString("Tax", cartData.Tax);
+            HttpContext.Session.SetString("Total", cartData.Total);
+            HttpContext.Session.SetString("TotalQuantity", cartData.TotalQuantity);
+
+            return Json(new { success = true });
+        }
+        // ngày mai làm cái phần xác nhận bằng email sau khi thanh toán thành công
+        [HttpPost]
+        public async Task<IActionResult> Pay(int userId)
+        {
+
+            try
+            {
+                Console.WriteLine($"[DEBUG] Received request: userId={userId}");
+                var userDetails = await _dapperRepository.GetCustomerDetailsAsync(userId);
+                if (userDetails == null || string.IsNullOrEmpty(userDetails.Email))
+                {
+                    return BadRequest("User email not found.");
+                }
+
+                var factory = new ConnectionFactory()
+                {
+                    HostName = _hostname,
+                    UserName = _username,
+                    Password = _password,
+                    Port = int.Parse(_port)
+                };
+
+                await using var connection = await factory.CreateConnectionAsync();
+                await using var channel = await connection.CreateChannelAsync();
+
+                // Đảm bảo Queue tồn tại
+                await channel.QueueDeclareAsync(
+                    queue: _queueName,
+                    durable: true,
+                    exclusive: false,
+                    autoDelete: false,
+                    arguments: null);
+
+                // Tạo message (Email khách hàng)
+
+                var paymentInfo = new
+                {
+                    CustomerEmail = userDetails.Email,
+                    UserName = userDetails.UserName,
+                    Time = DateTime.UtcNow
+                };
+
+                var message = JsonConvert.SerializeObject(paymentInfo);
+                var body = Encoding.UTF8.GetBytes(message);
+                Console.WriteLine($"[DEBUG] Message gửi vào RabbitMQ: {message}");
+                Console.WriteLine($"[DEBUG] Received message: {message}");
+                // Trong phiên bản mới, có thể cần tạo properties khác
+                var properties = new BasicProperties
+                {
+                    Persistent = true // Đảm bảo message được lưu trữ bền vững
+                };
+
+                // Hoặc truyền null nếu không cần properties
+                await channel.BasicPublishAsync(
+                    exchange: "",
+                    routingKey: _queueName,
+                    mandatory: false,
+                    basicProperties: properties, // hoặc null
+                    body: body);
+
+                Console.WriteLine($" Sent payment message: {message}");
+                return Ok("Payment message sent successfully!");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[❌] Error: {ex.Message}");
+                return StatusCode(500, "Failed to send payment message");
+            }
+        }
+        //public async Task<IActionResult> GetCustomerInfo(int userId)
+        //{
+        //    try
+        //    {
+        //        var customerInfo = await _dapperRepository.GetCustomerInfoAsync(userId);
+        //        if (customerInfo == null)
+        //        {
+        //            return NotFound("User not found.");
+        //        }
+
+        //        return Ok(customerInfo);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        Console.WriteLine($"[❌] Error: {ex.Message}");
+        //        return StatusCode(500, "Failed to retrieve user details");
+        //    }
+        //}
+    }   
+}

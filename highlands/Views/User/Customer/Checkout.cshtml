@@ -1,0 +1,354 @@
+﻿@model List<highlands.Models.CartItemTemporary>
+@{
+    var subtotal = Context.Session.GetString("Subtotal") ?? "0.00";
+    var tax = Context.Session.GetString("Tax") ?? "0.00";
+    var total = Context.Session.GetString("Total") ?? "0.00";
+    var totalQuantity = Context.Session.GetString("TotalQuantity") ?? "0";
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coffee Shop Checkout</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link rel="stylesheet" href="~/css/checkout.css?v=@DateTime.Now.Ticks">
+</head>
+<body>
+    <!-- Coffee bean decorations -->
+    <svg class="coffee-decoration beans-1" width="200" height="200" viewBox="0 0 100 100">
+        <path d="M30,50 Q50,20 70,50 Q50,80 30,50 Z" fill="#4a3520" />
+    </svg>
+    <svg class="coffee-decoration beans-2" width="200" height="200" viewBox="0 0 100 100">
+        <path d="M30,50 Q50,20 70,50 Q50,80 30,50 Z" fill="#4a3520" />
+    </svg>
+
+    <div class="container">
+        <!-- Header Navigation -->
+        <header class="header">
+            <div class="nav-links">
+                <a href="/Home/Index" class="nav-link">Home Page</a>
+                <a href="/Customer/ReviewOrder" class="nav-link">Cart</a>
+                <a href="#" class="nav-link active">Checkout</a>
+            </div>
+        </header>
+
+        <!-- Main Checkout Area -->
+        <div class="checkout-container">
+            <!-- Left Side - Customer Information -->
+            <div class="checkout-form">
+                <div class="checkout-sub">
+                    <h2 class="section-title">Personal Details</h2>
+                    <div class="form-content">
+                        <p>It's a pleasure to serve you!</p>
+
+                        <div id="email-container" class="form-group">
+                            <label class="form-label">Email:</label>
+                            <input id="email" type="email" class="form-input" placeholder="abc@email.com">
+                        </div>
+
+                        <div id="address-container" class="form-group">
+                            <label class="form-label">Delivery address:</label>
+                            <input id="address" type="text" class="form-input" placeholder="123 Main Street, Apartment 4B, Los Angeles">
+                        </div>
+
+                    </div>
+                </div>
+                    <!-- Cái này sẽ hiển thị theo ship hoặc tới nơi tự lấy-->
+                <div class="checkout-sub">
+                    <h2 class="section-title">Delivery Preferences</h2>
+                    <div class="form-content">
+                        <div class="shipping-options">
+                            <div class="shipping-option">
+                                <input type="radio" class="shipping-radio">
+                                <div class="shipping-details">
+                                    <h4 class="shipping-title">Tip for Driver</h4>
+                                    <p class="shipping-description">Give an extra tip to the delivery person</p>
+                                    <div class="tip-options" onclick="selectShipping(this, 'tip')">
+                                        <div class="tip-option" onclick="selectTip(this, 1)">$1</div>
+                                        <div class="tip-option" onclick="selectTip(this, 2)">$2</div>
+                                        <div class="tip-option" onclick="selectTip(this, 3)">$3</div>
+                                        <div class="tip-option" onclick="selectTip(this, 5)">$5</div>
+                                        <div class="tip-option" onclick="selectTip(this, 'custom')">Others</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="shipping-option" onclick="selectShipping(this, 'door')" data-type="doorstep">
+                                <input type="radio" class="shipping-radio">
+                                <div class="shipping-details">
+                                    <h4 class="shipping-title">Doorstep Delivery</h4>
+                                    <p class="shipping-description">Deliver to your doorstep instead of meeting at the lobby</p>
+                                </div>
+                                <span class="shipping-price">$2</span>
+                            </div>
+
+                            <div class="shipping-option" onclick="selectShipping(this, 'utensils')">
+                                <input type="radio" class="shipping-radio">
+                                <div class="shipping-details">
+                                    <h4 class="shipping-title">Pick Up Dining Utensils</h4>
+                                    <p class="shipping-description">Antique will provide dining utensils. Let’s join hands to protect the environment together in our upcoming orders!</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Side - Payment Details -->
+            <div class="order-summary">
+                <h2 class="section-title">Payment Information</h2>
+                <div class="summary-content">
+                    <p>Please fill in all the required details to complete the payment process.</p>
+
+                    <div id="phone-container" class="form-group">
+                        <label class="form-label">Phone Number:</label>
+                        <input id="phone" type="text" class="form-input" placeholder="E.g.: +84 987 654 321">
+                    </div>
+
+                    <div class="payment-details">
+                        <div class="form-group">
+                            <label class="form-label">Cardholder Name:</label>
+                            <input type="text" class="form-input" placeholder="Name on card">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Card Number:</label>
+                            <input type="text" class="form-input" placeholder="E.g.: 4111 1111 1111 1111">
+                        </div>
+
+                        <div class="card-date-cvv">
+                            <div class="form-group">
+                                <label class="form-label">Expiration Date:</label>
+                                <input type="text" class="form-input" placeholder="MM/YY">
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">CVV Code:</label>
+                                <input type="text" class="form-input" placeholder="E.g.: 123">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="summary-row">
+                        <span>Quantity</span>
+                        <span>@totalQuantity items</span>
+                    </div>
+
+                    <div class="summary-row">
+                        <span>Subtotal</span>
+                        <span>$@subtotal</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>Tax</span>
+                        <span>$@tax</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>Delivery Preferences Fee</span>
+                        <span>$0</span>
+                    </div>
+
+                    <div class="total-row">
+                        <span>Total Payment</span>
+                        <span>$@total</span>
+                    </div>
+
+                    <button class="submit-btn" onclick="payNow()">Pay Now</button>
+
+                    <div class="gift-option">
+                        <div class="coffee-icon">
+                            <i class="fa-solid fa-gift"></i>
+                        </div>
+                        <div class="gift-text">
+                            <h4 class="gift-title">Send this order as a gift.</h4>
+                            <p class="gift-description">The items will be delivered to the recipient.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</body>
+</html>
+<script>    
+    const selectedOptions = new Set();
+     async function payNow() {
+        try {
+            // Gửi request để lấy userId từ server
+            let userResponse = await fetch("/Customer/GetUserId");
+            let userData = await userResponse.json();
+
+            if (!userData.success || !userData.userId || isNaN(userData.userId) || userData.userId <= 0) {
+                alert("❌ Không thể lấy userId! Vui lòng đăng nhập lại.");
+                return;
+            }
+
+            let userId = userData.userId;
+
+            // 📌 Gửi request thanh toán
+            const response = await fetch(`/customer/pay?userId=${userId}`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                }
+            });
+
+            const result = await response.text();
+            if (response.ok) {
+                alert("✅ " + result);
+            } else {
+                alert("❌ " + result);
+            }
+        } catch (error) {
+            console.error("Lỗi khi gửi yêu cầu:", error);
+            alert("❌ Có lỗi xảy ra! Vui lòng thử lại.");
+        }
+    }
+    function updateDeliveryFee() {
+        const deliveryFeeElement = document.querySelector('.summary-row:nth-of-type(6) span:last-child'); // Delivery Preferences Fee
+        let deliveryFee = 0;
+
+        // Kiểm tra xem Doorstep Delivery có được chọn không
+        document.querySelectorAll('.shipping-option.selected').forEach(option => {
+        if (option.dataset.type === 'doorstep') {
+            let shippingPrice = option.querySelector('.shipping-price').textContent.replace('$', '');
+            deliveryFee += parseFloat(shippingPrice) || 0;
+            }
+        });
+
+
+        // Kiểm tra xem có tip được chọn không
+        const selectedTip = document.querySelector('.tip-options .selected');
+        if (selectedTip) {
+            let tipAmount = selectedTip.getAttribute('data-amount') || selectedTip.textContent.replace('$', '');
+            deliveryFee += parseFloat(tipAmount) || 0;
+        }
+
+        // Cập nhật giá trị hiển thị chính xác
+        deliveryFeeElement.textContent = `$${deliveryFee.toFixed(2)}`;
+
+        // Cập nhật tổng thanh toán
+        updateTotalPayment(deliveryFee);
+    }
+
+    function updateTotalPayment(deliveryFee) {
+        const subtotalElement = document.querySelector('.summary-row:nth-of-type(4) span:last-child'); // Subtotal
+        const taxElement = document.querySelector('.summary-row:nth-of-type(5) span:last-child'); // Tax
+        const totalPaymentElement = document.querySelector('.total-row span:last-child'); // Total Payment
+
+        let subtotal = parseFloat(subtotalElement.textContent.replace('$', '')) || 0;
+        let tax = parseFloat(taxElement.textContent.replace('$', '')) || 0;
+
+        let total = subtotal + tax + deliveryFee;
+
+        // Cập nhật tổng thanh toán
+        totalPaymentElement.textContent = `$${total.toFixed(2)}`;
+     }
+    function selectShipping(element, type) {
+        element.classList.toggle('selected'); // Toggle class để đổi màu
+
+        const radio = element.querySelector('.shipping-radio');
+        if (radio) {
+            radio.checked = !radio.checked;
+        }
+
+        // Thêm hoặc xóa khỏi danh sách chọn
+        if (selectedOptions.has(type)) {
+            selectedOptions.delete(type);
+        } else {
+            selectedOptions.add(type);
+        }
+        updateDeliveryFee();
+    }
+    function getSelectedShipping() {
+        return Array.from(selectedOptions);
+    }
+    function selectTip(element, amount) {
+        const shippingOption = element.closest('.shipping-option'); 
+        if (!shippingOption) return;
+
+        const tipContainer = shippingOption.querySelector('.tip-options');
+        const allTipOptions = tipContainer.querySelectorAll('.tip-option');
+
+        // Kiểm tra xem tip này đã được chọn chưa
+        const isSelected = element.classList.contains('selected');
+
+        // Xóa tất cả 'selected' trong cùng nhóm tip
+        allTipOptions.forEach(option => option.classList.remove('selected'));
+
+        if (!isSelected) {
+            element.classList.add('selected');
+            shippingOption.classList.add('selected'); // Thêm class selected vào shipping-option cha
+        } else {
+            shippingOption.classList.remove('selected'); // Nếu bỏ chọn, bỏ luôn selected của shipping-option cha
+        }
+
+        // Đồng bộ radio input
+        const radio = shippingOption.querySelector('.shipping-radio');
+        if (radio) {
+            radio.checked = !isSelected;
+        }
+
+        // Xử lý hiển thị cho "Others"
+        if (amount === 'custom') {
+            if (!isSelected) {
+                const customAmount = prompt('Nhập số tiền tip (USD):', '2');
+                if (customAmount && !isNaN(customAmount)) {
+                    element.textContent = `$${parseFloat(customAmount)}`;
+                    element.setAttribute('data-amount', parseFloat(customAmount));
+                } else {
+                    element.textContent = 'Others'; // Nếu nhập sai, reset về Others
+                }
+            } else {
+                element.textContent = 'Others';
+                element.removeAttribute('data-amount');
+            }
+        }
+        updateDeliveryFee();
+    }
+    // async function getCustomerInfo() {
+    //     try {
+    //         // Lấy userId từ API trước
+    //         let userResponse = await fetch("/Customer/GetUserId");
+    //         if (!userResponse.ok) {
+    //             throw new Error("Không thể lấy userId! Vui lòng đăng nhập lại.");
+    //         }
+
+    //         let userData = await userResponse.json();
+
+    //         // Kiểm tra dữ liệu hợp lệ
+    //         if (!userData.success || !userData.userId || isNaN(userData.userId) || userData.userId <= 0) {
+    //             alert("❌ Không thể lấy userId! Vui lòng đăng nhập lại.");
+    //             return;
+    //         }
+
+    //         let userId = userData.userId;
+
+    //         // Gọi API lấy thông tin khách hàng
+    //         let response = await fetch(`/api/customer/get-customer-info?userId=${userId}`);
+    //         if (!response.ok) {
+    //             throw new Error("Failed to fetch customer info");
+    //         }
+
+    //         let data = await response.json();
+    //         console.log("Customer Info:", data);
+
+    //         // Hiển thị lên UI
+    //         updateField("email-container", "email", data.email);
+    //         updateField("address-container", "address", data.deliveryAddress);
+    //         updateField("phone-container", "phone", data.phone);
+
+    //         return data;
+    //     } catch (error) {
+    //         console.error("Error fetching customer info:", error);
+    //         alert("❌ Lỗi khi lấy thông tin khách hàng!");
+    //     }
+    // }
+
+    // // Gọi API khi load trang
+    // document.addEventListener("DOMContentLoaded", function () {
+    //     getCustomerInfo();
+    // });
+
+</script>

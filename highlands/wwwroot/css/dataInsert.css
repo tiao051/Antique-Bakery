@@ -1,0 +1,98 @@
+﻿
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500&family=Poppins:wght@300&display=swap');
+/* Định dạng chung */
+.custom-form {
+    max-width: 700px;
+    margin: 80px auto auto auto;
+    padding: 30px;
+    background: #f9f5ee;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+    border: 2px solid #8c5d33;
+    font-family: 'Poppins', sans-serif;
+}
+
+/* Layout form */
+.form-container {
+    display: flex;
+    gap: 25px;
+}
+
+.form-left, .form-right {
+    flex: 1;
+}
+
+.group {
+    position: relative;
+    margin-bottom: 25px;
+}
+
+/* Input & Textarea */
+.control-custom {
+    width: 100%;
+    padding: 12px 15px;
+    font-size: 16px;
+    border: 2px solid #c4a484;
+    border-radius: 8px;
+    background: #fffaf0;
+    transition: border-color 0.3s, box-shadow 0.3s;
+    font-family: 'Poppins', sans-serif;
+}
+
+    .control-custom:focus {
+        border-color: #8c5d33;
+        box-shadow: 0 0 5px rgba(140, 93, 51, 0.5);
+        outline: none;
+        background: #fcf6e8;
+    }
+
+/* Label */
+.group label {
+    position: absolute;
+    top: 50%;
+    left: 15px;
+    font-size: 16px;
+    color: #8c5d33;
+    transform: translateY(-50%);
+    transition: 0.3s;
+    background: #f9f5ee;
+    padding: 0 5px;
+    font-family: 'Playfair Display', serif;
+}
+
+.control-custom:focus ~ label,
+.control-custom:valid ~ label {
+    top: -5px;
+    font-size: 12px;
+    color: #5e3a1d;
+}
+
+/* Textarea */
+.textarea-custom {
+    resize: none;
+    height: 140px;
+}
+
+/* Nút submit */
+.form-button {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.btn-submit {
+    background: #8c5d33;
+    color: white;
+    border: none;
+    padding: 12px 25px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.3s, transform 0.2s;
+    border-radius: 8px;
+    font-family: 'Playfair Display', serif;
+}
+
+    .btn-submit:hover {
+        background: #6e4322;
+        transform: translateY(-2px);
+    }

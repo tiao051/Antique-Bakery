@@ -1,0 +1,397 @@
+﻿@model highlands.Models.DTO.ItemSelectedViewModel
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var filteredMenuItems = ViewBag.MenuItem as MenuItem;
+    var availableSizes = Model.AvailableSizes ?? new List<MenuItemPrice>();
+    var hasClassicSizes = availableSizes != null && availableSizes.Any(s => s.Size == "S" || s.Size == "M" || s.Size == "L");
+    var hasEspressoSizes = availableSizes != null && availableSizes.Any(s => s.Size == "Single Shot" || s.Size == "Double Shot");
+}
+<body>
+    <div class="item">
+        <div class="menu-link-wrapper">
+            <h3 class="menu-link">
+                <a href="@Url.Action("Index", "Customer", new { area = "User" })">Menu</a> /
+                @*chưa xong*@ 
+                <a href="javascript:void(0);" data-subcategory="@Model.MenuItem.SubCategory">@Model.MenuItem.SubCategory</a> /
+                <span class="item-name">@Model.MenuItem.ItemName</span>
+            </h3>
+        </div>
+        <div class="item-container">
+            <img class="item-img" src="@Model.MenuItem.ItemImg" alt="@Model.MenuItem.ItemName" />
+            <div class="item-content">
+                <a class="item-name-track">@Model.MenuItem.ItemName</a>
+                @*chưa xong*@ 
+                    <h3>30 Calories</h3>
+            </div>
+        </div>
+
+        <div class="details-container">
+            <div class="size-options">
+                <h2>Size options</h2>
+                <div class="size-buttons">
+                    @if (hasClassicSizes)
+                    {
+                        @foreach (var size in availableSizes.OrderBy(s => s.Size == "S" ? 1 : s.Size == "M" ? 2 : 3))
+                        {
+                            <button class="size-button @(size.Size == "S" ? "small" : size.Size == "M" ? "medium" : "large")"
+                                    data-size="@size.Size"
+                                    data-name="@Model.MenuItem.ItemName">
+                                <img src="~/img/cup.png" alt="@size.Size">
+                                <span class="size-label">@size.Size</span>
+                                <span class="size-description">
+                                    @(size.Size == "S" ? "12 fl oz" : size.Size == "M" ? "16 fl oz" : "20 fl oz")
+                                </span>
+                            </button>
+                        }
+                    }
+                    else if (hasEspressoSizes)
+                    {
+                        @foreach (var size in availableSizes.OrderBy(s => s.Size == "Double Shot"))
+                        {
+                            if (size.Size == "Single Shot")
+                            {
+                                <button class="size-button medium" data-size="@size.Size" data-name="@Model.MenuItem.ItemName">
+                                    <img src="~/img/cup.png" alt="Single Shot">
+                                    <span class="size-label">Single Shot</span>
+                                    <span class="size-description">16 fl oz</span>
+                                </button>
+                            }
+                        }
+                        @foreach (var size in availableSizes.Where(s => s.Size == "Double Shot"))
+                        {
+                            <button class="size-button large" data-size="@size.Size" data-name="@Model.MenuItem.ItemName">
+                                <img src="~/img/cup.png" alt="Double Shot">
+                                <span class="size-label">Double Shot</span>
+                                <span class="size-description">20 fl oz</span>
+                            </button>
+                        }
+                    }
+                </div>
+                <div class="store-availability">
+                    <i class="fa-solid fa-location-dot"></i>
+                    <a href="#">Select a store to view availability</a>
+                </div>
+            </div>
+            <div class="included-options">
+                <h2 id="includedTitle">What's included</h2>
+                <div class="ingredients-container">
+                    @*load lên size M lúc đầu*@
+                    @await Html.PartialAsync("~/Views/User/Customer/_RecipePartial.cshtml", Model.RecipeList)
+                </div>
+
+            </div>
+
+        </div>
+        <button id="addToOrderBtn" class="btn-add-to-order">Add to Order</button>
+    </div>
+
+</body>
+<style>
+    .ingredients-container {
+        max-width: 500px;
+    }
+
+        .ingredients-container span {
+            font-size: 1.1rem;
+        }
+
+    .ingredient-section {
+        width: 300px;
+        margin-bottom: 24px;
+        position: relative;
+    }
+
+    .label-wrapper {
+        position: relative;
+        margin-bottom: -8px;
+        z-index: 1;
+    }
+
+    .category-label {
+        font-size: 12px;
+        color: #6B6B6B;
+        background-color: white;
+        padding: 0 8px;
+        margin-left: 8px;
+        position: relative;
+        z-index: 2;
+    }
+
+    .ingredient-control {
+        border: 1px solid #6B6B6B;
+        border-radius: 8px;
+        padding: 16px;
+        background: white;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        position: relative;
+    }
+
+    .ingredient-item {
+        display: flex;
+        justify-content: space-between;
+        width: 100%;
+    }
+
+    .quantity-control span {
+        padding-left: 5px;
+        padding-right: 5px;
+    }
+
+    .quantity-control button {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background-color: #fff;
+        border: 1px solid rgb(0, 117, 74);
+        cursor: pointer;
+        transition: background-color 0.2s ease-in-out;
+    }
+
+    .custom-select {
+        width: 100%;
+        border: none;
+        background: transparent;
+        font-size: 16px;
+        appearance: none;
+        -webkit-appearance: none;
+        cursor: pointer;
+        padding-right: 24px;
+    }
+
+    .check-icon {
+        color: #00704A;
+    }
+
+    /* Thêm mũi tên cho select */
+    .ingredient-control:has(select)::after {
+        content: "";
+        position: absolute;
+        right: 16px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 10px;
+        height: 10px;
+        border-right: 2px solid rgb(0, 117, 74);
+        border-bottom: 2px solid rgb(0, 117, 74);
+        transform: translateY(-50%) rotate(45deg);
+        pointer-events: none;
+    }
+
+    /* Hover states */
+    .ingredient-control:hover {
+        border-color: #00704A;
+    }
+
+    .custom-select:focus {
+        outline: none;
+    }
+</style>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<link rel="stylesheet" href="~/css/selected.css?v=@DateTime.Now.Ticks">
+<script src="https://kit.fontawesome.com/a6ec772266.js" crossorigin="anonymous"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        // xu ly chon size
+       const sizeButtons = document.querySelectorAll(".size-button");
+       // luu gia tri ban dau cua nguyen lieu theo size (để thay đổi cái whats included lại)
+       const initialIngredientValues = {};
+
+            document.querySelectorAll(".ingredient-select, .quantity").forEach(element => {
+            initialIngredientValues[element.dataset.ingredientId] = element.value || element.textContent;
+        });
+        // chon mac dinh la 16oz
+        function selectDefaultSize() {
+            sizeButtons.forEach(btn => btn.classList.remove("selected"));
+            const defaultSize = document.querySelector(".size-button.medium");
+            if (defaultSize) {
+                defaultSize.classList.add("selected");
+            }
+        }
+
+        sizeButtons.forEach(button => {
+        button.addEventListener("click", function () {
+            sizeButtons.forEach(btn => btn.classList.remove("selected"));
+            this.classList.add("selected");
+            console.log(this);
+
+            const selectedSize = this.getAttribute("data-size");
+            const itemName = this.getAttribute("data-name");
+
+            fetch(`/Customer/LoadRecipePartial?size=${encodeURIComponent(selectedSize)}&itemName=${encodeURIComponent(itemName)}`,
+            {
+                method: "GET"
+            })
+            .then(response => response.text())
+            .then(data => {
+                document.querySelector(".ingredients-container").innerHTML = data;
+
+                // Sau khi cập nhật nội dung, gán lại event listeners
+                attachQuantityControlEvents();
+            })
+            .catch(error => console.error("Error:", error));
+        });
+    });
+
+        // load ham
+        attachQuantityControlEvents();
+        selectDefaultSize();
+
+        // xu ly button tang giam
+        function attachQuantityControlEvents() {
+        document.querySelectorAll(".quantity-control").forEach(control => {
+            const decreaseBtn = control.querySelector(".btn-decrease");
+            const increaseBtn = control.querySelector(".btn-increase");
+            const quantitySpan = control.querySelector(".quantity");
+
+            const ingredientSection = control.closest(".ingredient-item");
+            const ingredientType = ingredientSection?.getAttribute("data-ingredient-type");
+
+            decreaseBtn.addEventListener("click", function () {
+                let currentValue = parseFloat(quantitySpan.textContent);
+
+                if (ingredientType === "Main-Pumps") {
+                    if (currentValue > 1) {
+                        quantitySpan.textContent = (currentValue - 0.5).toFixed(1);
+                        updateTitle();
+                    }
+                }
+                else if (ingredientType === "Shots"){
+                    if (currentValue > 1) {
+                        quantitySpan.textContent = (currentValue - 1).toFixed(1);
+                        updateTitle();
+                    }
+                }
+                else {
+                    if (currentValue > 0) {
+                        quantitySpan.textContent = (currentValue - 0.5).toFixed(1);
+                        updateTitle();
+                    }
+                }
+            });
+
+            increaseBtn.addEventListener("click", function () {
+                let currentValue = parseFloat(quantitySpan.textContent);
+                if (ingredientType === "Main-Pumps") {
+                    if (currentValue >= 1) {
+                        quantitySpan.textContent = (currentValue + 0.5).toFixed(1);
+                        updateTitle();
+                    }
+                }
+                else if (ingredientType === "Shots"){
+                    if (currentValue >= 1) {
+                        quantitySpan.textContent = (currentValue + 1).toFixed(1);
+                        updateTitle();
+                    }
+                }
+                else {
+                    if (currentValue > 0) {
+                        quantitySpan.textContent = (currentValue + 0.5).toFixed(1);
+                        updateTitle();
+                    }
+                }
+            });
+        });
+    }
+
+    // mục tiêu là lấy được giá trị ban đầu của từng ingredient trong công thức sau đó sẽ so sánh nó có thay đổi với
+    // lúc đầu sau khi tăng giảm hoặc thay đổi không. Nếu có thì đổi, ko thì giữ nguyên. Update liên tục
+        // // update tieu de theo activities
+        // const title = document.getElementById("includedTitle");
+        // function updateTitle(){
+        //     title.textContent = "Customer Customized";
+        // }
+
+        // // theo doi thay doi
+        // document.querySelectorAll(".ingredient-select").forEach(select => {
+        //     select.addEventListener("change", updateTitle);
+        // });
+    });
+        $(document).ready(function () {
+        $("#addToOrderBtn").click(function () {
+            let itemName = $(".item-name-track").text().trim();
+            let size = $(".size-button.selected").data("size");
+            let itemImg = document.querySelector(".item-img")?.getAttribute("src") || "";
+            console.log("[DEBUG] Image Src:", itemImg);
+            console.log("Size gửi lên server:", size);
+
+            if (!itemName || !size) {
+                alert("Please select an item and size.");
+                return;
+            }
+
+            console.log("[DEBUG] Add to Order Clicked:", { itemName, size });
+            // Bước 1: Gọi API để lấy userId
+            $.ajax({
+                url: "/Customer/GetUserId",
+                type: "GET",
+                success: function (userResponse) {
+                    if (!userResponse.success || userResponse.userId === 0) {
+                        alert("User not authenticated!");
+                        return;
+                    }
+
+                    let userId = userResponse.userId; // Lấy userId từ API
+
+                    // Bước 2: Gọi API để lấy giá (price)
+                    $.ajax({
+                        url: "/Customer/GetPrice",
+                        type: "GET",
+                        data: { itemName: itemName, size: size },
+                        success: function (priceResponse) {
+                            if (!priceResponse.success) {
+                                alert("Iu thu thao");
+                                return;
+                            }
+
+                            let price = priceResponse.price;
+
+                            // Bước 3: Gửi yêu cầu thêm vào giỏ hàng
+                             $.ajax({
+                                url: "/Customer/AddToOrder",
+                                type: "POST",
+                                data: { userId: userId, itemName: itemName, size: size, price: price, quantity: 1, itemImg: itemImg},
+                                success: function (orderResponse) {
+                                    console.log("[DEBUG] Order Response:", orderResponse); // Kiểm tra response trả về
+
+                                    if (orderResponse.success) {
+                                        const cartCountElement = document.querySelector('.cart-count');
+
+                                        console.log("[DEBUG] Updated Cart Count:", orderResponse.cartCount);
+
+                                        if (cartCountElement) {
+                                            cartCountElement.classList.add('cart-count-animated');
+
+                                            setTimeout(function () {
+                                                cartCountElement.textContent = orderResponse.cartCount;
+                                            }, 250);
+
+                                            setTimeout(function () {
+                                                cartCountElement.classList.remove('cart-count-animated');
+                                            }, 500);
+                                        }
+
+                                        // Bắn event để các nơi khác có thể cập nhật UI
+                                        $(document).trigger("cartUpdated");
+                                    } else {
+                                        alert(orderResponse.message);
+                                    }
+                                },
+                                error: function () {
+                                    alert("Failed to add item!");
+                                }
+                            });
+                        },
+                        error: function () {
+                            alert("Failed to fetch price.");
+                        }
+                    });
+                },
+                error: function () {
+                    alert("Failed to fetch user ID.");
+                }
+            });
+        });
+    });
+</script>

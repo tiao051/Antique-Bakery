@@ -1,0 +1,97 @@
+﻿@model IEnumerable<highlands.Models.DTO.SubcategoryDTO>
+
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<body>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Left Sidebar -->
+        <div class="sidebar" style="width: 145px; padding-right: 20px;">
+            <h2>Drinks</h2>
+            <ul>
+                <li><a href="javascript:void(0);" data-subcategory="Hot Coffees">Hot Coffees</a></li>
+                <li><a href="javascript:void(0);" data-subcategory="Iced Coffees">Iced Coffees</a></li>
+                <li><a href="javascript:void(0);" data-subcategory="Hot Tea">Hot Tea</a></li>
+                <li><a href="javascript:void(0);" data-subcategory="Iced Tea">Iced Tea</a></li>
+                <li><a href="javascript:void(0);" data-subcategory="Freeze">Freeze</a></li>
+                <li><a href="javascript:void(0);" data-subcategory="Other Drinks">Other Drinks</a></li>
+            </ul>
+            <h2>Food</h2>
+            <ul>
+                <li><a href="javascript:void(0);" data-subcategory="Pastry">Pastry</a></li>
+                <li><a href="javascript:void(0);" data-subcategory="Breadsticks">Breadsticks</a></li>
+            </ul>
+            <h2>Merchandise</h2>
+            <ul>
+                <li><a href="#">Cold Cups</a></li>
+                <li><a href="#">Tumblers</a></li>
+                <li><a href="#">Mugs</a></li>
+                <li><a href="#">Water Bottles</a></li>
+                <li><a href="#">Others</a></li>
+            </ul>
+        </div>
+
+        <div id="menu-items" class="menu-items">
+            <h1><a href="@Url.Action("Index", "Customer", new { area = "User" })">Menu</a></h1>
+            @foreach (var categoryGroup in Model.GroupBy(m => m.Category))
+            {
+                <div class="category-group">
+                    <h2>@categoryGroup.Key</h2>
+                    <div class="subcategory-group">
+                        @foreach (var subcategoryGroup in categoryGroup.GroupBy(m => m.SubCategory))
+                        {
+                            var firstItem = subcategoryGroup.FirstOrDefault();
+                            <a href="javascript:void(0);" data-subcategory="@subcategoryGroup.Key" class="menu-item">
+                                <div class="img-item">
+                                    @* Hiển thị hình ảnh trước khi hiển thị tên subcategory *@
+                                    @if (firstItem != null && !string.IsNullOrEmpty(firstItem.SubcategoryImg))
+                                    {
+                                        <img src="@Url.Content(firstItem.SubcategoryImg)" alt="@subcategoryGroup.Key" />
+                                    }
+                                    else
+                                    {
+                                        <p>Image not found</p>
+                                    }
+                                </div>
+                                <h3>@subcategoryGroup.Key</h3>
+                            </a>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+
+
+    </div>
+</body>
+</html>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<link rel="stylesheet" href="~/css/logged.css">
+<script>
+     $(document).on("click", "a[data-subcategory]", function (e) {
+        e.preventDefault(); // Ngăn chặn reload trang
+
+        var subcategory = $(this).data("subcategory"); // Lấy giá trị subcategory từ attribute
+
+           $.ajax({
+            url: '@Url.Action("MenuItems", "Customer", new { area = "User" })',
+            type: 'GET',
+            data: { subcategory: subcategory }, // Gửi subcategory lên server
+            success: function (result) {
+                $("#menu-items").html(result);
+            },
+            error: function (xhr, status, error) {
+                console.error("AJAX Error: ", status, error);
+                console.log(xhr.responseText);
+                alert("Không thể tải dữ liệu, vui lòng thử lại.");
+            }
+        });
+    });
+
+</script>
+

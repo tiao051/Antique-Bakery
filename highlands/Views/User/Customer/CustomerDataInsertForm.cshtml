@@ -1,0 +1,41 @@
+﻿@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<link rel="stylesheet" href="~/css/dataInsert.css?v=@DateTime.Now.Ticks">
+<form asp-action="Create" asp-controller="Customer" method="post" class="custom-form">
+    @await Html.PartialAsync("_Notification")
+
+    <div class="form-container">
+        <div class="form-left">
+            <div class="group">
+                <input class="control-custom" type="text" name="fullname" required />
+                <span class="bar"></span>
+                <label>Full Name</label>
+            </div>
+            <div class="group">
+                <input class="control-custom" type="tel" name="phone" required />
+                <span class="bar"></span>
+                <label>Phone</label>
+            </div>
+            <div class="group">
+                <input class="control-custom" type="text" name="address" required />
+                <span class="bar"></span>
+                <label>Address</label>
+            </div>
+        </div>
+
+        <div class="form-right">
+            <div class="group">
+                <textarea class="control-custom textarea-custom" rows="6" name="message"></textarea>
+                <span class="bar"></span>
+                <label>Message</label>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-button">
+        <button class="btn-submit" type="submit">☕ Submit</button>
+    </div>
+</form>
+
+

@@ -1,0 +1,70 @@
+﻿@{
+    var successMessage = TempData["SuccessMessage"] as string ?? Context.Session.GetString("SuccessMessage");
+    var errorMessage = TempData["ErrorMessage"] as string ?? Context.Session.GetString("ErrorMessage");
+}
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div id="flash-message" class="success-message">
+        @TempData["SuccessMessage"]
+    </div>
+}
+@if (TempData["ErrorMessage"] != null)
+{
+    <div id="flash-message" class="error-message">
+        @TempData["ErrorMessage"]
+    </div>
+}
+
+<script>
+    setTimeout(function () {
+        var flashMessages = document.querySelectorAll('.success-message, .error-message');
+
+        flashMessages.forEach(function (message) {
+            message.classList.add('fade-out');
+            setTimeout(function () {
+                message.style.display = 'none';
+            }, 1000);
+        });
+    }, 1500);
+</script>
+
+
+<style>
+    /* Thông báo thành công */
+    .success-message {
+        background-color: #4caf50;
+        color: white;
+        padding: 15px 20px;
+        border-radius: 5px;
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 9999;
+        opacity: 1;
+        transition: opacity 1s ease, transform 1s ease;
+    }
+
+    /* Thông báo lỗi */
+    .error-message {
+        background-color: #f44336;
+        color: white;
+        padding: 15px 20px;
+        border-radius: 5px;
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 9999;
+        opacity: 1;
+        transition: opacity 1s ease, transform 1s ease;
+    }
+
+    /* Hiệu ứng mờ dần */
+    .fade-out {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+
+</style>

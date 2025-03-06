@@ -1,0 +1,406 @@
+﻿@{
+    ViewData["Title"] = "Guest Checkout";
+    Layout = null;
+}
+@model List<highlands.Models.CartItemTemporary>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Review Order</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="~/css/revieworder.css?v=@DateTime.Now.Ticks">
+</head>
+<body>
+    <div class="container">
+        <div class="left-panel">
+            <button class="back-button" onclick="window.location.href='@Url.Action("Index", "Customer")'">
+                <i class="fa-solid fa-house-chimney"></i>
+                Back to menu
+            </button>
+            <div class="left-container">
+            <div class="checkout-header">
+                <h1>Guest checkout (@Model.Sum(item => item.Quantity))</h1>
+                <p>Ready in around 5-8 minutes</p>
+            </div>
+            <div class="pickup-store" onclick="toggleDropdown(this)">
+                <div class="store-header">
+                    <span>Pickup store</span>
+                </div>
+                <div class="store-container" >
+                    <h2 class="store-name">Manning & Buttonwillow</h2>
+                    <i class="fa-solid fa-location-arrow"></i>
+                </div>
+            </div>
+            <div class="pickup-options">
+                <p>Pickup options</p>
+                <div class="options-grid">
+                    <button class="option-button">
+                        <div class="option-content">
+                            <svg class="option-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                            </svg>
+                            <span class="option-text">In store</span>
+                        </div>
+                    </button>
+                    <button class="option-button">
+                        <div class="option-content">
+                            <svg class="option-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z" />
+                                <path d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0" />
+                            </svg>
+                            <span class="option-text">Drive-Thru</span>
+                        </div>
+
+                    </button>
+                </div>
+            </div>
+            </div>
+        </div>
+        @if (Model == null || !Model.Any())
+        {
+            <div class="right-panel">
+                <div class="content-center">
+                    @* bị lỗi con cặc gì ở đây rồi đéo hiểu*@
+                    <span class="coffee-icon">☕</span> 
+                    <h2>Start your next order</h2>
+                    <p>As you add menu items, they'll appear here. You'll have a chance to review before placing your order.</p> 
+                    <button type="button" class="add-items-button"
+                            onclick="window.location.href='@Url.Action("Index", "Customer")'">
+                        Add items
+                    </button>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="right-panel">
+                <div class="cart-items">
+                    <ul>
+                        @foreach (var item in Model)
+                        {
+                            <li>
+                                <div class="item-content">
+                                    <div class="item-content-loaded">
+                                        <div class="item-img">
+                                            <img src="@item.ItemImg" alt="Hình ảnh sản phẩm" width="100" height="100" />
+                                        </div>
+                                        <div class="item-detail">
+                                            <p class="item-name">@item.ItemName</p>
+                                            @{
+                                                var sizeMapping = new Dictionary<string, string>
+                                                {
+                                                    { "S", "Small" },
+                                                    { "M", "Medium" },
+                                                    { "L", "Large" }
+                                                };
+                                                var displaySize = sizeMapping.ContainsKey(item.Size) ? sizeMapping[item.Size] : item.Size;
+                                            }
+                                            <div class="item-quantity-size">
+                                                <span class="item-size">@displaySize</span>
+                                                <div class="item-quantity-container">
+                                                    <span class="item-quantity-text">Quantity: </span>
+                                                    <span class="item-quantity">@item.Quantity</span>
+                                                </div>
+                                            </div>
+                                            <div class="item-price">
+                                                <span class="item-price-text">Price:</span>
+                                                <span class="item-price-number">@item.Price.ToString("C")</span>
+                                            </div>
+                                            <div class="icon-container">
+                                                <i data-itemname="@item.ItemName" data-size="@displaySize" class="fas fa-pencil-alt"></i>
+                                                <i data-itemname="@item.ItemName" data-size="@displaySize" class="fas fa-plus-circle"></i>
+                                                <i data-itemname="@item.ItemName" data-size="@displaySize" class="fas fa-trash-alt"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </li>
+                        }
+                    </ul>
+                </div>
+                <div class="pay-ment">
+                    <ul>
+                        <li>
+                            @{
+                                decimal subtotal = Model.Sum(item => item.Quantity * item.Price);
+                                decimal tax = subtotal * 0.05m;
+                                decimal total = subtotal + tax;
+                            }
+                            <div class="subtotal">
+                                <span class="subtotal-text">Subtotal</span>
+                                <span class="subtotal-number">$@subtotal.ToString("0.00")</span>
+                            </div>
+                            <div class="tax">
+                                <span class="tax-text">Tax</span>
+                                <span class="tax-number">$@tax.ToString("0.00")</span>
+                            </div>
+                            <div class="total">
+                                <span class="total-text">Total</span>
+                                <span class="total-number">$@total.ToString("0.00")</span>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+                <div class="checkout">
+                    <h1>Checkout</h1>
+                    <div class="divider"></div>
+
+                    <div class="checkbox-container">
+                        <div class="checkbox"></div>
+                        <div class="signup-text">
+                            <h2>Sign up for emails from Antique (optional)</h2>
+                            <p>Know about products, offers, announcements and initiatives.</p>
+                        </div>
+                    </div>
+                    <button onclick="sendCartDataToServerAndRedirect()" class="payment-button">
+                        Credit / Debit Card
+                    </button>
+                    <div class="payment-icons">
+                        <div class="payment-icon">
+                            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Visa_Inc._logo.svg/200px-Visa_Inc._logo.svg.png" alt="Visa" height="20">
+                        </div>
+                        <div class="payment-icon">
+                            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Mastercard-logo.svg/200px-Mastercard-logo.svg.png" alt="Mastercard" height="20">
+                        </div>
+                        <div class="payment-icon">
+                            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/fa/American_Express_logo_%282018%29.svg/200px-American_Express_logo_%282018%29.svg.png" alt="American Express" height="20">
+                        </div>
+                    </div>
+
+                    <p class="terms-text">
+                        By using guest checkout, you agree to the Terms of Use, the use of the information collected for analytics, and acknowledge reading the Privacy Notice
+                    </p>
+
+                    <div class="footer-links">
+                        <a href="#" class="link">
+                            Terms of Use
+                            <svg class="external-link-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                            </svg>
+                        </a>
+                        <a href="#" class="link">
+                            Privacy Notice
+                            <svg class="external-link-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</body>
+</html>
+
+<script>
+    document.addEventListener("click", async function (event) {
+        if (event.target.classList.contains("fa-trash-alt")) {
+            let quantityElement = event.target.closest(".item-detail").querySelector(".item-quantity");
+            let itemName = event.target.getAttribute("data-itemname");
+            let itemSize = event.target.getAttribute("data-size");
+            try {
+                let userResponse = await fetch("/Customer/GetUserId");
+                let userData = await userResponse.json();
+
+                if (!userData.success) {
+                    alert("Không thể lấy userId! Vui lòng đăng nhập lại.");
+                    return;
+                }
+
+                let userId = userData.userId;
+
+                // Fix the URL template syntax and add itemSize
+                let url = `/Customer/RemoveCartItem?userId=${userId}&itemName=${encodeURIComponent(itemName)}&itemSize=${encodeURIComponent(itemSize)}`;
+                console.log("Fetch URL:", url);
+
+                let response = await fetch(url, {
+                    method: "DELETE"
+                });
+
+                let data = await response.json();
+                if (data.success) {
+                    // Check if we have an updated quantity
+                    if (data.updatedQuantity !== undefined) {
+                        if (data.updatedQuantity > 0) {
+                            // Update the quantity display
+                            quantityElement.textContent = data.updatedQuantity;
+                        } else {
+                            // Remove the item from the DOM if quantity is 0
+                            let itemToRemove = event.target.closest("li");
+                            if (itemToRemove) {
+                                itemToRemove.remove();
+                            }
+                        }
+                        updateTotal();
+                    } else {
+                        // If backend doesn't return a quantity, refresh the page
+                        window.location.reload();
+                    }
+                } else {
+                    alert("Lỗi: " + data.message);
+                }
+            } catch (error) {
+                console.error("Lỗi:", error);
+            }
+        }
+        if (event.target.classList.contains("fa-plus-circle")){
+            let itemName = event.target.getAttribute("data-itemname");
+            let itemSize = event.target.getAttribute("data-size");
+            let quantityElement = event.target.closest(".item-detail").querySelector(".item-quantity");
+                if (!itemName || !quantityElement) {
+                     console.error("Không thể lấy itemName hoặc item-quantity!");
+                     return;
+                }
+                try {
+                    // Lấy userId từ backend (Redis)
+                    let userResponse = await fetch("/Customer/GetUserId");
+                    let userData = await userResponse.json();
+
+                    if (!userData.success) {
+                        alert("Không thể lấy userId! Vui lòng đăng nhập lại.");
+                        return;
+                    }
+
+                    let userId = userData.userId; // Lấy userId từ Redis
+
+                    // Gửi request tăng số lượng sản phẩm
+                    let url = `/Customer/IncreaseCartItem?userId=${userId}&itemName=${encodeURIComponent(itemName)}&itemSize=${encodeURIComponent(itemSize)}`;
+                    console.log("Fetch URL:", url);
+
+                    let response = await fetch(url, {
+                        method: "PUT"
+                    });
+
+                        let data = await response.json();
+                            console.log("Full Response:", data);
+                    if (data.success) {
+                        quantityElement.textContent = data.updatedQuantity;
+                        updateTotal();
+
+                    } else {
+                        alert("Lỗi: " + data.message);
+                    }
+                } catch (error) {
+                    console.error("Lỗi:", error);
+                }
+            }
+    });
+    function updateTotal() {
+        let subtotal = 0;
+        let totalQuantity = 0;
+        let cartItems = document.querySelectorAll(".cart-items li");
+        // Check if there are any items left
+        if (cartItems.length === 0) {
+             let headerElement = document.querySelector("h1");
+            if (headerElement) {
+                headerElement.textContent = "Guest checkout (0)";
+            }
+            // No items left - show empty cart view
+            showEmptyCartView();
+            return;
+        }
+
+        cartItems.forEach(item => {
+            let priceText = item.querySelector(".item-price-number")?.textContent || "$0";
+            let quantityText = item.querySelector(".item-quantity")?.textContent || "0";
+
+            let price = parseFloat(priceText.replace(/[^0-9.]/g, ""));
+            let quantity = parseInt(quantityText.trim());
+
+            if (!isNaN(price) && !isNaN(quantity)) {
+                subtotal += price * quantity;
+                totalQuantity += quantity;
+            }
+        });
+        let tax = subtotal * 0.05;
+        let total = subtotal + tax;
+        // Update UI
+        document.querySelector(".subtotal-number").textContent = `$${subtotal.toFixed(2)}`;
+        document.querySelector(".tax-number").textContent = `$${tax.toFixed(2)}`;
+        document.querySelector(".total-number").textContent = `$${total.toFixed(2)}`;
+
+        // Update checkout title
+        let headerElement = document.querySelector("h1");
+        if (headerElement) {
+            headerElement.textContent = `Guest checkout (${totalQuantity})`;
+        }
+        // luu vao localstorage
+        localStorage.setItem("subtotal", subtotal.toFixed(2));
+        localStorage.setItem("tax", tax.toFixed(2)); 
+        localStorage.setItem("total", total.toFixed(2)); 
+        localStorage.setItem("totalQuantity", totalQuantity);
+    }
+    // Function to show empty cart view
+    function showEmptyCartView() {
+        // Create the empty cart HTML
+        const emptyCartHTML = `
+            <div class="content-center">
+                <svg class="coffee-icon" viewBox="0 0 24 24" fill="none" stroke="#00754a" stroke-width="2">
+                    <path d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
+                </svg>
+                <h2>Start your next order</h2>
+                <p>As you add menu items, they'll appear here. You'll have a chance to review before placing your order.</p>
+                <button class="add-items-button">Add items</button>
+            </div>
+        `;
+        // Get the right panel
+        const rightPanel = document.querySelector(".right-panel");
+        // Replace its contents
+        rightPanel.innerHTML = emptyCartHTML;
+    }
+    function sendCartDataToServerAndRedirect() {
+        let subtotal = localStorage.getItem("subtotal") || "0.00";
+        let tax = localStorage.getItem("tax") || "0.00";
+        let total = localStorage.getItem("total") || "0.00";
+        let totalQuantity = localStorage.getItem("totalQuantity") || "0";
+
+        fetch("/Customer/SaveCartData", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ subtotal, tax, total, totalQuantity })
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log("[DEBUG] Server response:", data); // Check phản hồi server
+            if (data.success) {
+                window.location.href = "/Customer/Checkout";
+            }
+        })
+        .catch(error => console.error("[ERROR]", error));
+    }
+     document.addEventListener('DOMContentLoaded', function() {
+           const divs = document.querySelectorAll(".option-button");
+            divs.forEach(div => {
+                div.addEventListener("click", function() {
+                    divs.forEach(d => d.classList.remove("active"));
+                    this.classList.add("active");
+                });
+            });
+            // const icon = document.querySelector('.coffee-icon');
+            // if (icon && icon.tagName !== "SPAN") {
+            //     let newIcon = document.createElement("span");
+            //     newIcon.className = "coffee-icon";
+            //     newIcon.textContent = "☕";
+            //     icon.replaceWith(newIcon);
+            // }
+            // Reset the animation every 9 seconds to maintain the pattern
+            // setInterval(() => {
+            //     icon.style.animation = 'none';
+            //     void icon.offsetWidth; // Trigger reflow
+            //     icon.style.animation = `
+            //         shake 2s ease-in-out 0s 1,
+            //         fly-up 1.5s ease-in-out 2s forwards,
+            //         reset-position 0s ease-in-out 3.5s forwards,
+            //         shake 2s ease-in-out 3.5s 1,
+            //         fly-up 1.5s ease-in-out 5.5s forwards,
+            //         reset-position 0s ease-in-out 7s forwards,
+            //         shake 2s ease-in-out 7s 1
+            //     `;
+            // }, 9000);
+             updateTotal();
+     });
+</script>

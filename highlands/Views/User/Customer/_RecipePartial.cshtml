@@ -1,0 +1,71 @@
+﻿@using highlands.Models.DTO
+@model List<RecipeWithIngredientDetail>
+
+
+<div class="ingredients-container">
+    @if (Model != null)
+    {
+        var groupedIngredients = Model.GroupBy(r => r.IngredientCategory);
+        @foreach (var category in groupedIngredients)
+        {
+            <div class="ingredient-section">
+                <div class="label-wrapper">
+                    <span class="category-label">@category.Key</span>
+                </div>
+                <div class="ingredient-control">
+                    @foreach (var recipe in category)
+                    {
+                        <div class="ingredient-item" data-ingredient-type="@recipe.IngredientType">
+                            @switch (recipe.IngredientType)
+                            {
+                                case "Change":
+                                    <select class="custom-select">
+                                        @foreach (var option in category)
+                                        {
+                                            <option value="@option.IngredientName">@option.IngredientName</option>
+                                        }
+                                    </select>
+                                    break;
+
+                                case "Adjust":
+                                    <select class="custom-select">
+                                        <option value="No">No @recipe.IngredientName</option>
+                                        <option value="Light">Light @recipe.IngredientName</option>
+                                        <option value="Normal" selected>Normal @recipe.IngredientName</option>
+                                        <option value="Extra">Extra @recipe.IngredientName</option>
+                                    </select>
+                                    break;
+
+                                case "Main-Pumps":
+                                case "Pumps":
+                                    <span>@recipe.IngredientName</span>
+                                    <div class="quantity-control">
+                                        <button class="btn-decrease">-</button>
+                                        <span class="quantity">@((recipe.Quantity / 10.0).ToString("0.0"))</span>
+                                        <button class="btn-increase">+</button>
+                                    </div>
+                                    break;
+
+                                case "Shots":
+                                    <span>@recipe.IngredientName</span>
+                                    <div class="quantity-control">
+                                        <button class="btn-decrease">-</button>
+                                        <span class="quantity">@recipe.Quantity.ToString("0")</span>
+                                        <button class="btn-increase">+</button>
+                                    </div>
+                                    break;
+
+                                default:
+                                    <span>@recipe.IngredientName</span>
+                                    <svg class="check-icon" width="20" height="20" viewBox="0 0 24 24">
+                                        <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" fill="#00704A" />
+                                    </svg>
+                                    break;
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    }
+</div>
