@@ -1,4 +1,5 @@
 ﻿using highlands.Data;
+using highlands.Models;
 using highlands.Services;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
@@ -10,6 +11,7 @@ var configuration = builder.Configuration;
 
 // đăng ký rabbitmq
 builder.Services.AddHostedService<MessageConsumerService>();
+//builder.Services.Configure<RabbitMQSettings>(builder.Configuration.GetSection("RabbitMQ"));
 
 // Đăng ký DbContext & Dapper
 services.AddDbContext<AppDbContext>(options =>
@@ -70,6 +72,6 @@ app.UseAuthorization();
 app.UseSession();
 
 // Cấu hình route mặc định
-app.MapControllerRoute(name: "default", pattern: "{controller=Customer}/{action=Index}/{id?}");
+app.MapControllerRoute(name: "default", pattern: "{controller=Home}/{action=Index}/{id?}");
 
 app.Run();
