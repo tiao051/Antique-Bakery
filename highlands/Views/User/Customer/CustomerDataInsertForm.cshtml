@@ -1,7 +1,7 @@
 ﻿@{
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
-<link rel="stylesheet" href="~/css/dataInsert.css?v=@DateTime.Now.Ticks">
+<link rel="stylesheet" href="~/css/customer/dataInsert.css?v=@DateTime.Now.Ticks">
 <form asp-action="Create" asp-controller="Customer" method="post" class="custom-form">
     @await Html.PartialAsync("_Notification")
 

@@ -402,12 +402,12 @@ body {
 }
 
 .subtotal-text, .tax-text {
-    font-size: 24px;
+    font-size: 20px;
     color: var(--primary-color);
 }
 
 .subtotal-number, .tax-number {
-    font-size: 24px;
+    font-size: 22px;
     font-weight: bold;
     color: var(--primary-color);
 }
@@ -419,7 +419,7 @@ body {
 }
 
 .total-text {
-    font-size: 28px;
+    font-size: 24px;
     font-weight: bold;
     color: var(--primary-color);
 }
@@ -438,7 +438,7 @@ body {
 
     .checkout h1 {
         font-family: var(--font-secondary);
-        font-size: 42px;
+        font-size: 36px;
         margin: 0 0 10px 0;
         color: var(--primary-color);
         text-align: center;
@@ -494,13 +494,13 @@ body {
 }
 
     .signup-text h2 {
-        font-size: 24px;
+        font-size: 16px;
         margin: 0 0 5px 0;
         color: var(--primary-color);
     }
 
     .signup-text p {
-        font-size: 16px;
+        font-size: 12px;
         margin: 0;
         color: var(--text-color);
     }

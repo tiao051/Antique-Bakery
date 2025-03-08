@@ -242,4 +242,103 @@ a {
     .btn-add-to-order:active {
         transform: scale(0.95); 
     }
+.ingredients-container {
+    max-width: 500px;
+}
 
+.ingredients-container span {
+    font-size: 1.1rem;
+}
+
+.ingredient-section {
+    width: 300px;
+    margin-bottom: 24px;
+    position: relative;
+}
+
+.label-wrapper {
+    position: relative;
+    margin-bottom: -8px;
+    z-index: 1;
+}
+
+.category-label {
+    font-size: 12px;
+    color: #6B6B6B;
+    background-color: white;
+    padding: 0 8px;
+    margin-left: 8px;
+    position: relative;
+    z-index: 2;
+}
+
+.ingredient-control {
+    border: 1px solid #6B6B6B;
+    border-radius: 8px;
+    padding: 16px;
+    background: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+}
+
+.ingredient-item {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.quantity-control span {
+    padding-left: 5px;
+    padding-right: 5px;
+}
+
+.quantity-control button {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: #fff;
+    border: 1px solid rgb(0, 117, 74);
+    cursor: pointer;
+    transition: background-color 0.2s ease-in-out;
+}
+
+.custom-select {
+    width: 100%;
+    border: none;
+    background: transparent;
+    font-size: 16px;
+    appearance: none;
+    -webkit-appearance: none;
+    cursor: pointer;
+    padding-right: 24px;
+}
+
+.check-icon {
+    color: #00704A;
+}
+
+/* Thêm mũi tên cho select */
+.ingredient-control:has(select)::after {
+    content: "";
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 10px;
+    height: 10px;
+    border-right: 2px solid rgb(0, 117, 74);
+    border-bottom: 2px solid rgb(0, 117, 74);
+    transform: translateY(-50%) rotate(45deg);
+    pointer-events: none;
+}
+
+/* Hover states */
+.ingredient-control:hover {
+    border-color: #00704A;
+}
+
+.custom-select:focus {
+    outline: none;
+}
