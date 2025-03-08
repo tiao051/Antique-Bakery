@@ -6,7 +6,7 @@ namespace highlands.Controllers.User
     {
         public IActionResult Index()
         {
-            return View();
+            return View("~/Views/User/Manager/Index.cshtml");
         }
     }
 }

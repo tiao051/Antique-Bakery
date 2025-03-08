@@ -8,6 +8,7 @@ using System.Diagnostics;
 using System.Data;
 using Microsoft.CodeAnalysis.Elfie.Model.Map;
 using System.Drawing;
+using Microsoft.AspNetCore.Mvc;
 
 namespace highlands.Services
 {
@@ -115,7 +116,6 @@ namespace highlands.Services
             Console.WriteLine($"Cache miss! Query time from SQL Server: {stopwatch.ElapsedMilliseconds} ms");
             return (menuItem, prices, recipeList);
         }
-
         public async Task<List<RecipeWithIngredientDetail>> GetIngredientsBySizeAsync(string itemName, string size)
         {
             string cacheKey = $"ingredients:{itemName}:{size}";
@@ -145,12 +145,16 @@ namespace highlands.Services
                 );
 
                 var result = recipeList.AsList();
-
                 // Cache kết quả với TTL 30 phút
                 var cacheOptions = new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(30) };
                 await _distributedCache.SetStringAsync(cacheKey, JsonConvert.SerializeObject(result), cacheOptions);
 
                 Console.WriteLine($"Cache MISS - Key: {cacheKey} (Size: {size}), Cached for: 30 minutes");
+                Console.WriteLine("Recipe List:");
+                foreach (var recipe in result)
+                {
+                    Console.WriteLine(JsonConvert.SerializeObject(recipe, Formatting.Indented));
+                }
 
                 return result;
             }

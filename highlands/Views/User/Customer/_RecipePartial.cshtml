@@ -2,31 +2,41 @@
 @model List<RecipeWithIngredientDetail>
 
 
-<div class="ingredients-container">
-    @if (Model != null)
+@if (Model != null)
+{
+    var groupedIngredients = Model.GroupBy(r => r.IngredientCategory);
+    @foreach (var category in groupedIngredients)
     {
-        var groupedIngredients = Model.GroupBy(r => r.IngredientCategory);
-        @foreach (var category in groupedIngredients)
-        {
-            <div class="ingredient-section">
-                <div class="label-wrapper">
-                    <span class="category-label">@category.Key</span>
-                </div>
-                <div class="ingredient-control">
+        var mainIngredient = category.FirstOrDefault(i => i.InRecipe == 1);
+        var alternativeIngredients = category.Where(i => i.InRecipe == 0).ToList();
+
+        <div class="ingredient-section">
+            <div class="label-wrapper">
+                <span class="category-label">@category.Key</span>
+            </div>
+            <div class="ingredient-control">
+                @if (category.First().IngredientType == "Change")
+                {
+                    <div class="ingredient-item" data-ingredient-type="@category.First().IngredientType">
+                        <select class="custom-select">
+                            @if (mainIngredient != null)
+                            {
+                                <option value="@mainIngredient.IngredientName" selected>@mainIngredient.IngredientName</option>
+                            }
+                            @foreach (var alt in alternativeIngredients)
+                            {
+                                <option value="@alt.IngredientName">@alt.IngredientName</option>
+                            }
+                        </select>
+                    </div>
+                }
+                else
+                {
                     @foreach (var recipe in category)
                     {
-                        <div class="ingredient-item" data-ingredient-type="@recipe.IngredientType">
-                            @switch (recipe.IngredientType)
+                        <div class="ingredient-item" data-ingredient-type="@category.First().IngredientType">
+                            @switch (category.First().IngredientType)
                             {
-                                case "Change":
-                                    <select class="custom-select">
-                                        @foreach (var option in category)
-                                        {
-                                            <option value="@option.IngredientName">@option.IngredientName</option>
-                                        }
-                                    </select>
-                                    break;
-
                                 case "Adjust":
                                     <select class="custom-select">
                                         <option value="No">No @recipe.IngredientName</option>
@@ -64,8 +74,10 @@
                             }
                         </div>
                     }
-                </div>
+                }
             </div>
-        }
+        </div>
     }
-</div>
+}
+
+

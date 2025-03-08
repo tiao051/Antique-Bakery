@@ -9,7 +9,7 @@ namespace highlands.Services
         Task<List<SubcategoryDTO>> GetSubcategoriesAsync();
         Task<List<MenuItem>> GetMenuItemsBySubcategoryAsync(string subcategory);
         Task<bool> CreateCustomerAsync(Customer customer);
-        Task<List<RecipeWithIngredientDetail>> GetIngredientsBySizeAsync(string itemName, string size);
+        //Task<List<RecipeWithIngredientDetail>> GetIngredientsBySizeAsync(string itemName, string size);
         Task<(MenuItem?, List<MenuItemPrice>, List<RecipeWithIngredientDetail>)>
             GetItemDetailsAsync(string subcategory, string itemName, string size);
         Task<decimal?> GetPriceAsync(string itemName, string size);
@@ -21,5 +21,6 @@ namespace highlands.Services
         Task<bool> IncreaseCartItem(int userId, string itemName, string itemSize);
         Task<CustomerDetailsForEmail?> GetCustomerDetailsAsync(int userId);
         //Task<CustomerInfoDTO?> GetCustomerInfoAsync(int userId);
+        Task<List<RecipeWithIngredientDetail>> GetIngredientsBySizeAsync(string itemName, string size);
     }
 }

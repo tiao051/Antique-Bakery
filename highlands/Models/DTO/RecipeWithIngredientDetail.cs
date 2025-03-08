@@ -8,5 +8,6 @@
         public string IngredientType { get; set; }
         public int Quantity { get; set; }
         public string Size { get; set; }
+        public int InRecipe {get; set;}
     }
 }

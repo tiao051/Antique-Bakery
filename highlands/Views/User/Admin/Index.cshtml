@@ -1,6 +1,482 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
-@{
+﻿@{
+    Layout = null;
 }
-<h2> Đây là trang Admin</h2>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Antique Cafe - Admin Dashboard</title>
+    <link rel="stylesheet" href="~/css/admin/adminView.css?v=@DateTime.Now.Ticks">
+    <!-- Adding Font Awesome for icons -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/js/all.min.js"></script>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-overlay">
+            <div class="logo-container">
+                <div class="logo">Antique Cafe</div>
+                <div class="logo-subtitle">Admin Dashboard</div>
+            </div>
+
+            <div class="admin-profile">
+                <div class="admin-avatar">A</div>
+                <div class="admin-info">
+                    <div class="admin-name">Admin User</div>
+                    <div class="admin-role">System Administrator</div>
+                </div>
+            </div>
+
+            <ul class="menu">
+                <li class="menu-header">Core</li>
+                <li class="menu-item active">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span>Dashboard</span>
+                </li>
+                <li class="menu-item">
+                    <i class="fas fa-users"></i>
+                    <span>User Management</span>
+                </li>
+                <li class="menu-item">
+                    <i class="fas fa-box"></i>
+                    <span>Products</span>
+                </li>
+                <li class="menu-item">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span>Orders</span>
+                </li>
+
+                <li class="menu-header">Management</li>
+                <li class="menu-item">
+                    <i class="fas fa-store"></i>
+                    <span>Branches</span>
+                </li>
+                <li class="menu-item">
+                    <i class="fas fa-user-tie"></i>
+                    <span>Managers</span>
+                </li>
+                <li class="menu-item">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Reports</span>
+                </li>
+
+                <li class="menu-header">System</li>
+                <li class="menu-item">
+                    <i class="fas fa-cog"></i>
+                    <span>Settings</span>
+                </li>
+                <li class="menu-item">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Logout</span>
+                </li>
+            </ul>
+
+            <div class="sidebar-footer">
+                &copy; 2025 Antique Cafe. All rights reserved.
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Header -->
+        <div class="header">
+            <div class="header-left">
+                <div class="header-title">Admin Dashboard</div>
+            </div>
+            <div class="header-right">
+                <div class="header-action btn-outline">
+                    <i class="fas fa-calendar"></i> Today
+                </div>
+                <div class="header-action">
+                    <i class="fas fa-download"></i> Generate Report
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard Content -->
+        <div class="dashboard">
+            <!-- Stats Cards -->
+            <div class="stats-container">
+                <div class="stat-card">
+                    <div class="stat-icon revenue-icon">
+                        <i class="fas fa-dollar-sign"></i>
+                    </div>
+                    <div class="stat-title">Total Revenue</div>
+                    <div class="stat-value">$24,896</div>
+                    <div class="stat-change change-up">
+                        <i class="fas fa-arrow-up"></i> 8.3% compared to last month
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon orders-icon">
+                        <i class="fas fa-shopping-bag"></i>
+                    </div>
+                    <div class="stat-title">Total Orders</div>
+                    <div class="stat-value">1,483</div>
+                    <div class="stat-change change-up">
+                        <i class="fas fa-arrow-up"></i> 5.2% compared to last month
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon customers-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="stat-title">Total Customers</div>
+                    <div class="stat-value">652</div>
+                    <div class="stat-change change-up">
+                        <i class="fas fa-arrow-up"></i> 12.1% compared to last month
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon products-icon">
+                        <i class="fas fa-coffee"></i>
+                    </div>
+                    <div class="stat-title">Total Products Sold</div>
+                    <div class="stat-value">3,721</div>
+                    <div class="stat-change change-down">
+                        <i class="fas fa-arrow-down"></i> 2.4% compared to last month
+                    </div>
+                </div>
+            </div>
+
+            <!-- Revenue Chart and Recent Orders -->
+            <div class="grid-container">
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <div class="chart-title">Revenue Overview</div>
+                        <div class="chart-filters">
+                            <div class="chart-filter">Day</div>
+                            <div class="chart-filter active">Week</div>
+                            <div class="chart-filter">Month</div>
+                            <div class="chart-filter">Year</div>
+                        </div>
+                    </div>
+                    <div class="chart">
+                        <div class="placeholder-chart">
+                            <img src="/api/placeholder/600/300" alt="Revenue Chart Placeholder" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <div class="table-header">
+                        <div class="table-title">Recent Orders</div>
+                        <a href="#" class="table-link">View All</a>
+                    </div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Order ID</th>
+                                <th>Customer</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>#ORD-2305</td>
+                                <td>John Smith</td>
+                                <td>$32.50</td>
+                                <td><span class="status status-completed">Completed</span></td>
+                            </tr>
+                            <tr>
+                                <td>#ORD-2304</td>
+                                <td>Alice Johnson</td>
+                                <td>$18.00</td>
+                                <td><span class="status status-pending">Pending</span></td>
+                            </tr>
+                            <tr>
+                                <td>#ORD-2303</td>
+                                <td>Robert Williams</td>
+                                <td>$24.75</td>
+                                <td><span class="status status-completed">Completed</span></td>
+                            </tr>
+                            <tr>
+                                <td>#ORD-2302</td>
+                                <td>Emma Brown</td>
+                                <td>$42.20</td>
+                                <td><span class="status status-cancelled">Cancelled</span></td>
+                            </tr>
+                            <tr>
+                                <td>#ORD-2301</td>
+                                <td>Michael Davis</td>
+                                <td>$15.50</td>
+                                <td><span class="status status-completed">Completed</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Branch Performance -->
+            <div class="chart-container">
+                <div class="chart-header">
+                    <div class="chart-title">New User Registrations & Conversion Rate</div>
+                    <div class="chart-filters">
+                        <div class="chart-filter">Week</div>
+                        <div class="chart-filter active">Month</div>
+                        <div class="chart-filter">Quarter</div>
+                    </div>
+                </div>
+                <div class="chart">
+                    <div class="placeholder-chart">
+                        <img src="/api/placeholder/600/300" alt="User Registration Chart Placeholder" />
+                    </div>
+                </div>
+            </div>
+
+            <!-- Branch Performance -->
+            <div class="performance-container">
+                <div class="branch-performance">
+                    <div class="branch-header">
+                        <div class="branch-icon">
+                            <i class="fas fa-store"></i>
+                        </div>
+                        <div class="branch-info">
+                            <div class="branch-name">Downtown Branch</div>
+                            <div class="branch-manager">Manager: Sarah Johnson</div>
+                        </div>
+                    </div>
+                    <div class="branch-stats">
+                        <div class="branch-stat">
+                            <div class="branch-stat-title">Revenue</div>
+                            <div class="branch-stat-value">$9,845</div>
+                        </div>
+                        <div class="branch-stat">
+                            <div class="branch-stat-title">Orders</div>
+                            <div class="branch-stat-value">532</div>
+                        </div>
+                        <div class="branch-stat">
+                            <div class="branch-stat-title">Performance</div>
+                            <div class="branch-stat-value">94%</div>
+                        </div>
+                        <div class="branch-stat">
+                            <div class="branch-stat-title">Staff</div>
+                            <div class="branch-stat-value">12</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="branch-performance">
+                    <div class="branch-header">
+                        <div class="branch-icon">
+                            <i class="fas fa-store"></i>
+                        </div>
+                        <div class="branch-info">
+                            <div class="branch-name">Uptown Branch</div>
+                            <div class="branch-manager">Manager: James Smith</div>
+                        </div>
+                    </div>
+                    <div class="branch-stats">
+                        <div class="branch-stat">
+                            <div class="branch-stat-title">Revenue</div>
+                            <div class="branch-stat-value">$7,623</div>
+                        </div>
+                        <div class="branch-stat">
+                            <div class="branch-stat-title">Orders</div>
+                            <div class="branch-stat-value">418</div>
+                        </div>
+                        <div class="branch-stat">
+                            <div class="branch-stat-title">Performance</div>
+                            <div class="branch-stat-value">88%</div>
+                        </div>
+                        <div class="branch-stat">
+                            <div class="branch-stat-title">Staff</div>
+                            <div class="branch-stat-value">9</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="user-management">
+                <div class="table-header">
+                    <div class="table-title">User Management</div>
+                    <div class="header-action">
+                        <i class="fas fa-plus"></i> Add New User
+                    </div>
+                </div>
+
+                <div class="user-list">
+                    <div class="user-filters">
+                        <div class="user-filter active">All Users</div>
+                        <div class="user-filter">Administrators</div>
+                        <div class="user-filter">Managers</div>
+                        <div class="user-filter">Staff</div>
+                        <div class="user-filter">Customers</div>
+                    </div>
+
+                    <div class="search-bar">
+                        <input type="text" class="search-input" placeholder="Search users...">
+                        <button class="search-button"><i class="fas fa-search"></i></button>
+                    </div>
+
+                    <table class="user-table">
+                        <thead>
+                            <tr>
+                                <th>User ID</th>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Role</th>
+                                <th>Status</th>
+                                <th>Last Login</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>#USR-001</td>
+                                <td>Admin User</td>
+                                <td>admin@antiquecafe.com</td>
+                                <td><span class="user-role role-admin">Admin</span></td>
+                                <td>Active</td>
+                                <td>Today, 8:30 AM</td>
+                                <td>
+                                    <div class="user-action">
+                                        <div class="action-button edit-button"><i class="fas fa-edit"></i></div>
+                                        <div class="action-button delete-button"><i class="fas fa-trash"></i></div>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>#USR-002</td>
+                                <td>Sarah Johnson</td>
+                                <td>sarah@antiquecafe.com</td>
+                                <td><span class="user-role role-manager">Manager</span></td>
+                                <td>Active</td>
+                                <td>Yesterday, 5:42 PM</td>
+                                <td>
+                                    <div class="user-action">
+                                        <div class="action-button edit-button"><i class="fas fa-edit"></i></div>
+                                        <div class="action-button delete-button"><i class="fas fa-trash"></i></div>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>#USR-003</td>
+                                <td>James Smith</td>
+                                <td>james@antiquecafe.com</td>
+                                <td><span class="user-role role-manager">Manager</span></td>
+                                <td>Active</td>
+                                <td>Today, 10:15 AM</td>
+                                <td>
+                                    <div class="user-action">
+                                        <div class="action-button edit-button"><i class="fas fa-edit"></i></div>
+                                        <div class="action-button delete-button"><i class="fas fa-trash"></i></div>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>#USR-004</td>
+                                <td>Emily Chen</td>
+                                <td>emily@antiquecafe.com</td>
+                                <td><span class="user-role role-manager">Manager</span></td>
+                                <td>Active</td>
+                                <td>Today, 9:22 AM</td>
+                                <td>
+                                    <div class="user-action">
+                                        <div class="action-button edit-button"><i class="fas fa-edit"></i></div>
+                                        <div class="action-button delete-button"><i class="fas fa-trash"></i></div>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>#USR-005</td>
+                                <td>Michael Davis</td>
+                                <td>michael@antiquecafe.com</td>
+                                <td><span class="user-role role-staff">Staff</span></td>
+                                <td>Active</td>
+                                <td>Yesterday, 2:45 PM</td>
+                                <td>
+                                    <div class="user-action">
+                                        <div class="action-button edit-button"><i class="fas fa-edit"></i></div>
+                                        <div class="action-button delete-button"><i class="fas fa-trash"></i></div>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>#USR-006</td>
+                                <td>John Smith</td>
+                                <td>john@email.com</td>
+                                <td><span class="user-role role-customer">Customer</span></td>
+                                <td>Active</td>
+                                <td>Today, 11:30 AM</td>
+                                <td>
+                                    <div class="user-action">
+                                        <div class="action-button edit-button"><i class="fas fa-edit"></i></div>
+                                        <div class="action-button delete-button"><i class="fas fa-trash"></i></div>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div class="pagination">
+                        <div class="page-item"><i class="fas fa-chevron-left"></i></div>
+                        <div class="page-item active">1</div>
+                        <div class="page-item">2</div>
+                        <div class="page-item">3</div>
+                        <div class="page-item">4</div>
+                        <div class="page-item">5</div>
+                        <div class="page-item"><i class="fas fa-chevron-right"></i></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        // Simple JavaScript to toggle between dashboard and user management
+        document.addEventListener('DOMContentLoaded', function() {
+            const menuItems = document.querySelectorAll('.menu-item');
+            const dashboard = document.querySelector('.dashboard');
+            const userManagement = document.querySelector('.user-management');
+
+            menuItems.forEach(item => {
+                item.addEventListener('click', function() {
+                    // Remove active class from all menu items
+                    menuItems.forEach(i => i.classList.remove('active'));
+
+                    // Add active class to clicked item
+                    this.classList.add('active');
+
+                    // Toggle content based on menu item
+                    if (this.querySelector('span').textContent === 'User Management') {
+                        dashboard.style.display = 'none';
+                        userManagement.style.display = 'block';
+                        document.querySelector('.header-title').textContent = 'User Management';
+                    } else if (this.querySelector('span').textContent === 'Dashboard') {
+                        dashboard.style.display = 'block';
+                        userManagement.style.display = 'none';
+                        document.querySelector('.header-title').textContent = 'Admin Dashboard';
+                    }
+                });
+            });
+
+            // User filter functionality
+            const userFilters = document.querySelectorAll('.user-filter');
+            userFilters.forEach(filter => {
+                filter.addEventListener('click', function() {
+                    userFilters.forEach(f => f.classList.remove('active'));
+                    this.classList.add('active');
+                    // Here you would add code to filter the user table
+                });
+            });
+
+            // Chart filter functionality
+            const chartFilters = document.querySelectorAll('.chart-filter');
+            chartFilters.forEach(filter => {
+                filter.addEventListener('click', function() {
+                    const parentFilters = this.parentElement.querySelectorAll('.chart-filter');
+                    parentFilters.forEach(f => f.classList.remove('active'));
+                    this.classList.add('active');
+                    // Here you would add code to update the chart
+                });
+            });
+        });
+    </script>
+</body>
+</html>
+
