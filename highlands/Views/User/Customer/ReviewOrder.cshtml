@@ -150,12 +150,13 @@
                     <div class="divider"></div>
 
                     <div class="checkbox-container">
-                        <div class="checkbox"></div>
+                        <input type="checkbox" id="subscribeEmails" name="subscribeEmails" class="checkbox" />
                         <div class="signup-text">
                             <h2>Sign up for emails from Antique (optional)</h2>
                             <p>Know about products, offers, announcements and initiatives.</p>
                         </div>
                     </div>
+
                     <button onclick="sendCartDataToServerAndRedirect()" class="payment-button">
                         Credit / Debit Card
                     </button>
@@ -357,11 +358,19 @@
         let tax = localStorage.getItem("tax") || "0.00";
         let total = localStorage.getItem("total") || "0.00";
         let totalQuantity = localStorage.getItem("totalQuantity") || "0";
+         let checkbox = document.getElementById("subscribeEmails");
+        if (!checkbox) {
+            console.error("[ERROR] Checkbox không tồn tại!");
+            return;
+        }
+
+        let subscribeEmails = checkbox.checked;
+        console.log("[DEBUG] Checkbox checked:", subscribeEmails);
 
         fetch("/Customer/SaveCartData", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ subtotal, tax, total, totalQuantity })
+            body: JSON.stringify({ subtotal, tax, total, totalQuantity, subscribeEmails})
         })
         .then(response => response.json())
         .then(data => {
@@ -372,7 +381,11 @@
         })
         .catch(error => console.error("[ERROR]", error));
     }
-     document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById("subscribeEmails").addEventListener("change", function() {
+        console.log("[DEBUG] Checkbox checked:", this.checked);
+    });
+
+    document.addEventListener('DOMContentLoaded', function() {
            const divs = document.querySelectorAll(".option-button");
             divs.forEach(div => {
                 div.addEventListener("click", function() {
@@ -403,4 +416,5 @@
             // }, 9000);
              updateTotal();
      });
+
 </script>

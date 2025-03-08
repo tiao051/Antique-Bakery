@@ -6,7 +6,6 @@ using Microsoft.Extensions.Caching.Distributed;
 using Newtonsoft.Json;
 using RabbitMQ.Client;
 using System.Text;
-using RabbitMQ.Client.Events;
 
 namespace highlands.Controllers.User
 {
@@ -361,24 +360,36 @@ namespace highlands.Controllers.User
         }
         [HttpPost]
         public IActionResult SaveCartData([FromBody] CheckoutDataViewModel cartData)
-        {   
-            Console.WriteLine($"Subtotal: {cartData.Subtotal}, Tax: {cartData.Tax}, Total: {cartData.Total}, TotalQuantity: {cartData.TotalQuantity}");
+        {
+            Console.WriteLine($"Subtotal: {cartData.Subtotal}, Tax: {cartData.Tax}, Total: {cartData.Total}, TotalQuantity: {cartData.TotalQuantity}, SubscribeEmails: {cartData.SubscribeEmails}");
 
             HttpContext.Session.SetString("Subtotal", cartData.Subtotal);
             HttpContext.Session.SetString("Tax", cartData.Tax);
             HttpContext.Session.SetString("Total", cartData.Total);
             HttpContext.Session.SetString("TotalQuantity", cartData.TotalQuantity);
+            HttpContext.Session.SetString("SubscribeEmails", cartData.SubscribeEmails.ToString()); 
 
             return Json(new { success = true });
         }
-        // ngày mai làm cái phần xác nhận bằng email sau khi thanh toán thành công
+
         [HttpPost]
         public async Task<IActionResult> Pay(int userId)
         {
+            bool subscribeEmails = HttpContext.Session.GetString("SubscribeEmails") == "True";
+            if (!subscribeEmails) return Ok("Thanh toán thành công.");
 
+            Console.WriteLine($"[DEBUG] Received request: userId={userId}");
+
+            string cacheKey = $"email_sent:{userId}";
+            // Kiểm tra xem email đã gửi chưa
+            var cacheValue = await _distributedCache.GetStringAsync(cacheKey);
+            if (!string.IsNullOrEmpty(cacheValue))
+            {
+                Console.WriteLine($"[⚠] Email đã gửi trước đó, bỏ qua...");
+                return Ok("Email đã được gửi trước đó.");
+            }
             try
             {
-                Console.WriteLine($"[DEBUG] Received request: userId={userId}");
                 var userDetails = await _dapperRepository.GetCustomerDetailsAsync(userId);
                 if (userDetails == null || string.IsNullOrEmpty(userDetails.Email))
                 {
@@ -396,15 +407,12 @@ namespace highlands.Controllers.User
                 await using var connection = await factory.CreateConnectionAsync();
                 await using var channel = await connection.CreateChannelAsync();
 
-                // Đảm bảo Queue tồn tại
                 await channel.QueueDeclareAsync(
                     queue: _queueName,
                     durable: true,
                     exclusive: false,
                     autoDelete: false,
                     arguments: null);
-
-                // Tạo message (Email khách hàng)
 
                 var paymentInfo = new
                 {
@@ -415,23 +423,24 @@ namespace highlands.Controllers.User
 
                 var message = JsonConvert.SerializeObject(paymentInfo);
                 var body = Encoding.UTF8.GetBytes(message);
-                Console.WriteLine($"[DEBUG] Message gửi vào RabbitMQ: {message}");
-                Console.WriteLine($"[DEBUG] Received message: {message}");
-                // Trong phiên bản mới, có thể cần tạo properties khác
-                var properties = new BasicProperties
-                {
-                    Persistent = true // Đảm bảo message được lưu trữ bền vững
-                };
 
-                // Hoặc truyền null nếu không cần properties
+                var properties = new BasicProperties { Persistent = true };
+
                 await channel.BasicPublishAsync(
                     exchange: "",
                     routingKey: _queueName,
                     mandatory: false,
-                    basicProperties: properties, // hoặc null
+                    basicProperties: properties,
                     body: body);
 
-                Console.WriteLine($" Sent payment message: {message}");
+                Console.WriteLine($"[✔] Sent payment message: {message}");
+
+                // Lưu vào Redis để tránh gửi lại
+                await _distributedCache.SetStringAsync(cacheKey, "sent", new DistributedCacheEntryOptions
+                {
+                    AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10)
+                });
+
                 return Ok("Payment message sent successfully!");
             }
             catch (Exception ex)
@@ -458,5 +467,5 @@ namespace highlands.Controllers.User
         //        return StatusCode(500, "Failed to retrieve user details");
         //    }
         //}
-    }   
+    }
 }

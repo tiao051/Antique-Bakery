@@ -477,7 +477,6 @@ body {
 .checkbox {
     width: 20px;
     height: 20px;
-    border: 2px solid var(--primary-color);
     border-radius: 4px;
     margin-right: 15px;
     margin-top: 3px;
@@ -485,9 +484,24 @@ body {
     transition: all 0.2s ease;
 }
 
-    .checkbox:hover {
-        background-color: rgba(94, 48, 35, 0.1);
+@keyframes bounceUpDown {
+    0% {
+        transform: translateY(0);
     }
+    30% {
+        transform: translateY(-5px);
+    }
+    60% {
+        transform: translateY(3px);
+    }
+    100% {
+        transform: translateY(0);
+    }
+}
+
+.checkbox:checked {
+    animation: bounceUpDown 0.3s ease-in-out;
+}
 
 .signup-text {
     flex: 1;
