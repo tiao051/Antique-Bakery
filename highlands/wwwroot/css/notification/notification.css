@@ -1,0 +1,97 @@
+﻿
+#flash-message {
+    padding: 15px 25px;
+    border-radius: 8px;
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 9999;
+    opacity: 1;
+    transition: opacity 0.8s ease, transform 0.8s ease;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.1);
+    font-family: 'Georgia', serif;
+    font-size: 16px;
+    letter-spacing: 0.5px;
+    min-width: 280px;
+    max-width: 500px;
+    text-align: center;
+    display: flex;
+    align-items: center;
+}
+
+/* Success message - warm coffee tones */
+.success-message {
+    background-color: #e8d7b9; /* Light coffee cream */
+    color: #5a3921; /* Dark coffee bean */
+    border-left: 5px solid #8c6240; /* Medium roast stripe */
+}
+
+/* Error message - reddish coffee tones */
+.error-message {
+    background-color: #e4c3a8; /* Light reddish coffee */
+    color: #6a2e18; /* Dark roast */
+    border-left: 5px solid #a04126; /* Reddish coffee bean stripe */
+}
+
+    /* Icons for messages */
+    .success-message::before,
+    .error-message::before {
+        content: "";
+        display: inline-block;
+        width: 24px;
+        height: 24px;
+        margin-right: 15px;
+        background-size: contain;
+        background-repeat: no-repeat;
+        flex-shrink: 0;
+    }
+
+.success-message::before {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%238c6240'%3E%3Cpath d='M2,21V19H20V21H2M20,8V5H18V8H20M20,3A2,2 0 0,1 22,5V8A2,2 0 0,1 20,10H18V13A4,4 0 0,1 14,17H8A4,4 0 0,1 4,13V3H20M16,5H6V13A2,2 0 0,0 8,15H14A2,2 0 0,0 16,13V5Z'/%3E%3C/svg%3E");
+}
+
+.error-message::before {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23a04126'%3E%3Cpath d='M2,21V19H20V21H2M20,8V5H18V8H20M20,3A2,2 0 0,1 22,5V8A2,2 0 0,1 20,10H18V13A4,4 0 0,1 14,17H8A4,4 0 0,1 4,13V3H20M16,5H6V13A2,2 0 0,0 8,15H14A2,2 0 0,0 16,13V5Z'/%3E%3C/svg%3E");
+}
+
+/* Decorative bottom border */
+#flash-message::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: repeating-linear-gradient( 45deg, transparent, transparent 5px, rgba(0,0,0,0.05) 5px, rgba(0,0,0,0.05) 10px );
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+}
+
+/* Pop-in animation when message appears */
+@keyframes popIn {
+    0% {
+        opacity: 0;
+        transform: translate(-50%, -15px);
+    }
+
+    70% {
+        transform: translate(-50%, 3px);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translate(-50%, 0);
+    }
+}
+
+#flash-message {
+    animation: popIn 0.5s ease-out forwards;
+}
+
+/* Fade-out animation */
+.fade-out {
+    opacity: 0 !important;
+    transform: translate(-50%, -20px) !important;
+}
+
