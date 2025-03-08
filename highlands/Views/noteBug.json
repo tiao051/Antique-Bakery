@@ -1,11 +1,12 @@
 {
   // cái nút add items ở trang review order không hoạt động
-  //  lỗi dự đoán là có thằng nào tự chuyển thẻ <span class="coffee-icon">☕</span> sang thẻ <svg> cũ //
+  //  lỗi dự đoán là có thằng nào tự chuyển thẻ <span class="coffee-icon">☕</span> sang thẻ <svg> cũ // --------------> bỏ qua
   // chưa thiết kế được phần tick vào để nhận được email
   // chưa bắt buộc customer phải chọn in store hoặc drive-thru (vấn đề là cái in store thì phải sửa lại layout checkout)
   // chưa giải quyết được cái nút edit item (nặng)
   // chưa giải quyết được phần pickup store
   // có thể là sẽ đổi cái phần personal details của checkout thành một partial view để xử lý in-store hoặc drive-thru
   // chưa xử lý được cái validate phần payment information
-  // chưa xử lý được phần paynow
+  // chưa xử lý được phần paynow -------------------------------------------------------> XONG
+  // chưa xử lý được dropdownlist cho ingredient ---------------------------------------> XONG
 }
