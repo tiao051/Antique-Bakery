@@ -5,7 +5,7 @@ namespace highlands.Controllers.API
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class ValuesController : ControllerBase
+    public class AdminApiController : ControllerBase
     {
     }
 }
