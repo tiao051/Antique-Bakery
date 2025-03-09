@@ -1,82 +1,100 @@
 ﻿using Dapper;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authentication;
 using System.Security.Claims;
-using highlands.Models;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Text;
+using Microsoft.Extensions.Caching.Distributed;
+using Newtonsoft.Json;
+using System.Diagnostics;
 
 namespace highlands.Controllers.Account
 {
     public class AccountController : Controller
     {
-        private readonly string _connectionString = "Server=DESKTOP-IN72EQB;Database=coffee_shop;Trusted_Connection=True;Encrypt=False;";
+        private readonly string _connectionString;
+        private readonly IDistributedCache _distributedCache;
+        private readonly IConfiguration _config;
+
+        public AccountController(IConfiguration config, IDistributedCache distributedCache)
+        {
+            _connectionString = config.GetConnectionString("DefaultConnection");
+            _config = config;
+            _distributedCache = distributedCache;
+        }
 
         public IActionResult Index(string view = "login")
         {
             ViewBag.ViewToShow = view; // Lưu tham số để xác định giao diện
             return View();
         }
-
-
-        [HttpPost]
-        public IActionResult Register(string name, string email, string password)
+        private string GenerateJwtToken(int userId, int roleId)
         {
-            using (var connection = new SqlConnection(_connectionString))
+            var secretKey = Environment.GetEnvironmentVariable("JWT_SECRET")
+                            ?? _config["JwtSettings:SecretKey"];
+            Console.WriteLine($"Secret Key Length: {secretKey.Length}");
+            Console.WriteLine($"Secret Key: {secretKey}");
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+            var claims = new[]
             {
-                connection.Open();
+                new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
+                new Claim(ClaimTypes.Role, roleId.ToString()),
+            };
 
-                // Kiểm tra email đã tồn tại
-                var checkEmailQuery = "SELECT COUNT(*) FROM Users WHERE Email = @Email";
-                int emailExists = connection.ExecuteScalar<int>(checkEmailQuery, new { Email = email });
+            var token = new JwtSecurityToken(
+               issuer: _config["JwtSettings:Issuer"],
+               audience: _config["JwtSettings:Audience"],
+               claims: claims,
+               expires: DateTime.UtcNow.AddMinutes(Convert.ToDouble(_config["JwtSettings:ExpireMinutes"])),
+               signingCredentials: creds
+           );
 
-                if (emailExists > 0)
+            return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+
+        private string GenerateRefreshToken()
+        {
+            return Convert.ToBase64String(Guid.NewGuid().ToByteArray());
+        }
+        // Xử lý đăng nhập
+        public async Task<IActionResult> Login(string email, string password)
+        {
+            Stopwatch stopwatch = new Stopwatch();
+
+            // Kiểm tra Redis trước
+            string redisKey = $"user:role:{email}";
+            stopwatch.Start();
+            string roleData = await _distributedCache.GetStringAsync(redisKey);
+            stopwatch.Stop();
+
+            Console.WriteLine($" Kiem tra Redis - Thoi gian: {stopwatch.ElapsedMilliseconds} ms");
+
+            if (roleData != null)
+            {
+                Console.WriteLine("Du lieu lay tu Redis:");
+                Console.WriteLine(roleData);
+
+                dynamic roleObj = JsonConvert.DeserializeObject<dynamic>(roleData);
+                Console.WriteLine($"RoleId: {roleObj.RoleId}, Type: {roleObj.RoleId.GetType()}");
+
+                int roleId;
+                if (int.TryParse(roleObj.RoleId.ToString(), out roleId))
                 {
-                    TempData["ErrorMessage"] = "Email already exists. Please use another one.";
-                    return RedirectToAction("Index", new { view = "register" }); 
-                }
-
-                // Lưu người dùng mới
-                var insertUserQuery = @"
-                INSERT INTO Users (Username, Email, Password, Role)
-                VALUES (@Username, @Email, @Password, @Role)";
-
-                var result = connection.Execute(insertUserQuery, new
-                {
-                    Username = name,
-                    Email = email,
-                    Password = password,
-                    Role = "Customer" 
-                });
-                if (result > 0)
-                {
-                    TempData["SuccessMessage"] = "Sign up successful! Please log in.";
-                    return RedirectToAction("Index", new { view = "login" }); 
+                    return RedirectByRole(roleId);
                 }
                 else
                 {
-                    TempData["ErrorMessage"] = "An error occurred. Please try again.";
-                    return RedirectToAction("Index", new { view = "register" });
+                    return BadRequest("Invalid RoleId");
                 }
             }
-        }
 
-
-        //public IActionResult Logged()
-        //{
-        //    var userEmail = HttpContext.Session.GetString("UserEmail");
-        //    if (string.IsNullOrEmpty(userEmail))
-        //    {
-        //        return RedirectToAction("Index", "Account"); 
-        //    }
-        //    return View("~/Views/User/Customer/Index.cshtml");
-        //}
-
-        // Xử lý đăng nhập
-        public IActionResult Login(string email, string password)
-        {
+            stopwatch.Restart();
             using (var connection = new SqlConnection(_connectionString))
             {
                 connection.Open();
@@ -93,24 +111,85 @@ namespace highlands.Controllers.Account
                     TempData["ErrorMessage"] = "Password is incorrect.";
                     return RedirectToAction("Index");
                 }
+                stopwatch.Stop();
+                Console.WriteLine($"Query DB - Thoi gian: {stopwatch.ElapsedMilliseconds} ms");
+
+                // Tạo JWT & Refresh Token
+                var token = GenerateJwtToken(user.UserId, user.RoleId);
+                var refreshToken = GenerateRefreshToken();
+
+                // Lưu Role vào Redis
+                var roleCacheData = JsonConvert.SerializeObject(new { RoleId = user.RoleId, Permissions = "View,Edit" });
+                await _distributedCache.SetStringAsync(redisKey, roleCacheData, new DistributedCacheEntryOptions
+                {
+                    AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(1)
+                });
+
+                // Lưu Refresh Token vào Redis
+                string refreshKey = $"user:refresh:{user.UserId}";
+                await _distributedCache.SetStringAsync(refreshKey, refreshToken, new DistributedCacheEntryOptions
+                {
+                    AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(7)
+                });
+
+                // Lưu UserId vào Session
+                HttpContext.Session.SetInt32("UserId", (int)user.UserId);
+
+                // Lưu token vào Cookie
+                Response.Cookies.Append("jwt", token, new CookieOptions { HttpOnly = true, Secure = true });
+                Response.Cookies.Append("refreshToken", refreshToken, new CookieOptions { HttpOnly = true, Secure = true });
+                Console.WriteLine($"roleData: {roleData}");
+                return RedirectByRole(user.RoleId);
+            }
+        }
+        private IActionResult RedirectByRole(int roleId)
+        {
+            return roleId switch
+            {
+                2 => RedirectToAction("Index", "Customer"),
+                1 => RedirectToAction("Index", "Admin"),
+                3 => RedirectToAction("Index", "Manager"),
+                _ => RedirectToAction("Index", "Home"),
+            };
+        }
+        [HttpPost]
+        public IActionResult Register(string name, string email, string password)
+        {
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                connection.Open();
+
+                // Kiểm tra email đã tồn tại
+                var checkEmailQuery = "SELECT COUNT(*) FROM Users WHERE Email = @Email";
+                int emailExists = connection.ExecuteScalar<int>(checkEmailQuery, new { Email = email });
+
+                if (emailExists > 0)
+                {
+                    TempData["ErrorMessage"] = "Email already exists. Please use another one.";
+                    return RedirectToAction("Index", new { view = "register" });
+                }
+
+                // Lưu người dùng mới
+                var insertUserQuery = @"
+                INSERT INTO Users (Username, Email, Password, Role)
+                VALUES (@Username, @Email, @Password, @Role)";
+
+                var result = connection.Execute(insertUserQuery, new
+                {
+                    Username = name,
+                    Email = email,
+                    Password = password,
+                    Role = "Customer"
+                });
+                if (result > 0)
+                {
+                    TempData["SuccessMessage"] = "Sign up successful! Please log in.";
+                    return RedirectToAction("Index", new { view = "login" });
+                }
                 else
                 {
-                    HttpContext.Session.SetString("UserName", (string)user.UserName);
-                    HttpContext.Session.SetInt32("UserId", (int)user.UserId);
-
-                    //HttpContext.Session.SetString("UserRole", user.Role);
-
-                    switch (user.Role)
-                    {
-                        case "Customer":
-                            return RedirectToAction("Index", "Customer");
-                        case "Admin":
-                            return RedirectToAction("Index", "Admin");
-                        case "Manager":
-                            return RedirectToAction("Index", "Manager");
-                        default:
-                            return RedirectToAction("Index", "Home");
-                    }
+                    TempData["ErrorMessage"] = "An error occurred. Please try again.";
+                    return RedirectToAction("Index", new { view = "register" });
                 }
             }
         }
@@ -123,7 +202,6 @@ namespace highlands.Controllers.Account
             // Chuyển hướng người dùng về trang login hoặc trang chủ
             return RedirectToAction("Index", "Account");
         }
-
 
         [HttpGet]
         public async Task<IActionResult> GoogleLogin(string returnUrl = null)

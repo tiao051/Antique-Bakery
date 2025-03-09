@@ -386,7 +386,7 @@ namespace highlands.Controllers.User
             if (!string.IsNullOrEmpty(cacheValue))
             {
                 Console.WriteLine($"[⚠] Email đã gửi trước đó, bỏ qua...");
-                return Ok("Email đã được gửi trước đó.");
+                return Ok("Ban da thuc hien thanh toan roi.");
             }
             try
             {

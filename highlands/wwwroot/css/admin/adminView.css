@@ -142,6 +142,10 @@ body {
         width: 20px;
         text-align: center;
     }
+.menu-item a {
+    color: white;
+    text-decoration: none !important;
+}
 
 .sidebar-footer {
     padding: 15px 20px;
@@ -674,7 +678,7 @@ body {
         overflow: visible;
     }
 
-    .logo, .logo-subtitle, .admin-info, .menu-item span, .sidebar-footer {
+    .logo, .logo-subtitle, .admin-info, .menu-item span, .sidebar-footer, menu-item a {
         display: none;
     }
 
