@@ -385,7 +385,7 @@ namespace highlands.Services
             return false;
         }
         public async Task<CustomerDetailsForEmail?> GetCustomerDetailsAsync(int userId)
-        {
+        { 
             string cacheKey = $"customer:{userId}"; // Đổi tên key để tránh trùng với cart
             Console.WriteLine($"[DEBUG] Cache key: {cacheKey}");
 
@@ -399,7 +399,11 @@ namespace highlands.Services
             Console.WriteLine($"[DEBUG] Không tìm thấy userId={userId} trong cache. Đang truy vấn database...");
 
             // Truy vấn database
-            string query = "SELECT UserId, UserName, Email FROM users WHERE Type = 'google' AND UserId = @userId";
+            string query = @"
+                        SELECT u.UserId, u.UserName, u.Email, c.CustomerId
+                        FROM Users u
+                        LEFT JOIN Customer c ON u.UserId = c.UserId
+                        WHERE u.UserId = @userId";
             var customer = await _connection.QueryFirstOrDefaultAsync<CustomerDetailsForEmail>(query, new { userId });
 
             if (customer != null)
@@ -411,7 +415,7 @@ namespace highlands.Services
                 {
                     AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(1)
                 });
-                Console.WriteLine($"[✔] Lưu user {userId} vào cache.");
+                Console.WriteLine($"[✔] Luu user {userId} vao cache.");
             }
             else
             {
@@ -463,5 +467,13 @@ namespace highlands.Services
 
         //    return customerinfo;
         //}
+        public async Task<int> InsertOrderAsync (Order order)
+        {
+            const string query = @"
+                   INSERT INTO [Order] (OrderDate, TotalAmount, Status, CustomerId)
+                   VALUES (@OrderDate, @TotalAmount, @Status, @CustomerId);
+                   SELECT CAST(SCOPE_IDENTITY() as int);";
+            return await _connection.ExecuteScalarAsync<int>(query, order);
+        }
     }
 }

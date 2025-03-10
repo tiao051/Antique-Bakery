@@ -19,9 +19,9 @@ public partial class Customer
 
     public string? Message { get; set; }
 
-    public virtual ICollection<Feedback> Feedbacks { get; set; } = new List<Feedback>();
+    //public virtual ICollection<Feedback> Feedbacks { get; set; } = new List<Feedback>();
 
-    public virtual ICollection<Order> Orders { get; set; } = new List<Order>();
+    //public virtual ICollection<Order> Orders { get; set; } = new List<Order>();
 
-    public virtual User? User { get; set; }
+    //public virtual User? User { get; set; }
 }

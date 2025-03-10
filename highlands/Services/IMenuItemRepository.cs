@@ -22,5 +22,6 @@ namespace highlands.Services
         Task<CustomerDetailsForEmail?> GetCustomerDetailsAsync(int userId);
         //Task<CustomerInfoDTO?> GetCustomerInfoAsync(int userId);
         Task<List<RecipeWithIngredientDetail>> GetIngredientsBySizeAsync(string itemName, string size);
+        Task<int> InsertOrderAsync(Order order);
     }
 }

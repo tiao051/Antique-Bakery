@@ -130,28 +130,28 @@
                         </div>
                     </div>
 
-                    <div class="summary-row">
-                        <span>Quantity</span>
-                        <span>@totalQuantity items</span>
-                    </div>
+                        <div class="summary-row">
+                            <span>Quantity</span>
+                            <span>@totalQuantity items</span>
+                        </div>
 
-                    <div class="summary-row">
-                        <span>Subtotal</span>
-                        <span>$@subtotal</span>
-                    </div>
-                    <div class="summary-row">
-                        <span>Tax</span>
-                        <span>$@tax</span>
-                    </div>
-                    <div class="summary-row">
-                        <span>Delivery Preferences Fee</span>
-                        <span>$0</span>
-                    </div>
+                        <div class="summary-row">
+                            <span>Subtotal</span>
+                            <span>$@subtotal</span>
+                        </div>
+                        <div class="summary-row">
+                            <span>Tax</span>
+                            <span>$@tax</span>
+                        </div>
+                        <div class="summary-row">
+                            <span>Delivery Preferences Fee</span>
+                            <span>$0</span>
+                        </div>
 
-                    <div class="total-row">
-                        <span>Total Payment</span>
-                        <span>$@total</span>
-                    </div>
+                        <div class="total-row">
+                            <span>Total Payment</span>
+                            <span id="totalAmount" data-value="@total">$@total</span>
+                        </div>
 
                     <button class="submit-btn" onclick="payNow()">Pay Now</button>
 
@@ -173,8 +173,13 @@
 </html>
 <script>    
     const selectedOptions = new Set();
-     async function payNow() {
+     async function payNow() { 
         try {
+
+            const totalPaymentElement = document.querySelector('.total-row span:last-child');
+            let totalAmount = parseFloat(totalPaymentElement.textContent.replace('$', '')) || 0;
+
+            console.log("🔹 Tổng tiền gửi lên server:", totalAmount);
             // Gửi request để lấy userId từ server
             let userResponse = await fetch("/Customer/GetUserId");
             let userData = await userResponse.json();
@@ -185,13 +190,21 @@
             }
 
             let userId = userData.userId;
+            const requestData = {
+                userId: userId,
+                totalAmount: parseFloat(totalAmount.toFixed(2))
+            };
+
+            console.log("Request gửi lên server:", JSON.stringify(requestData));
 
             // 📌 Gửi request thanh toán
             const response = await fetch(`/customer/pay?userId=${userId}`, {
                 method: "POST",
                 headers: {
+                    "Accept": "application/json",
                     "Content-Type": "application/json"
-                }
+                },
+                body: JSON.stringify(requestData)
             });
 
             const result = await response.text();
@@ -244,7 +257,7 @@
 
         // Cập nhật tổng thanh toán
         totalPaymentElement.textContent = `$${total.toFixed(2)}`;
-     }
+    }
     function selectShipping(element, type) {
         element.classList.toggle('selected'); // Toggle class để đổi màu
 

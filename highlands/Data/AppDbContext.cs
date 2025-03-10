@@ -93,9 +93,9 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.Message).HasMaxLength(50);
             entity.Property(e => e.Phone).HasMaxLength(15);
 
-            entity.HasOne(d => d.User).WithMany(p => p.Customers)
-                .HasForeignKey(d => d.UserId)
-                .HasConstraintName("FK__Customer__UserId__3D5E1FD2");
+            //entity.HasOne(d => d.User).WithMany(p => p.Customers)
+            //    .HasForeignKey(d => d.UserId)
+            //    .HasConstraintName("FK__Customer__UserId__3D5E1FD2");
         });
 
         modelBuilder.Entity<Employee>(entity =>
@@ -127,9 +127,9 @@ public partial class AppDbContext : DbContext
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
 
-            entity.HasOne(d => d.Customer).WithMany(p => p.Feedbacks)
-                .HasForeignKey(d => d.CustomerId)
-                .HasConstraintName("FK__Feedback__Custom__4E88ABD4");
+            //entity.HasOne(d => d.Customer).WithMany(p => p.Feedbacks)
+            //    .HasForeignKey(d => d.CustomerId)
+            //    .HasConstraintName("FK__Feedback__Custom__4E88ABD4");
         });
 
         modelBuilder.Entity<Ingredient>(entity =>
@@ -207,9 +207,9 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.Status).HasMaxLength(50);
             entity.Property(e => e.TotalAmount).HasColumnType("decimal(10, 2)");
 
-            entity.HasOne(d => d.Customer).WithMany(p => p.Orders)
-                .HasForeignKey(d => d.CustomerId)
-                .HasConstraintName("FK__Order__CustomerI__4222D4EF");
+            //entity.HasOne(d => d.Customer).WithMany(p => p.Orders)
+            //    .HasForeignKey(d => d.CustomerId)
+            //    .HasConstraintName("FK__Order__CustomerI__4222D4EF");
         });
 
         modelBuilder.Entity<OrderDetail>(entity =>

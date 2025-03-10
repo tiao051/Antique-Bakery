@@ -95,6 +95,6 @@ app.UseAuthorization();
 app.UseSession();
 
 // Cấu hình route mặc định
-app.MapControllerRoute(name: "default", pattern: "{controller=Account}/{action=Index}/{id?}");
+app.MapControllerRoute(name: "default", pattern: "{controller=Customer}/{action=Checkout}/{id?}");
 
 app.Run();

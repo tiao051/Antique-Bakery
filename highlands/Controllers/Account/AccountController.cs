@@ -146,9 +146,9 @@ namespace highlands.Controllers.Account
         {
             return roleId switch
             {
-                2 => RedirectToAction("Index", "Customer"),
+                2 => RedirectToAction("Index", "Manager"),
                 1 => RedirectToAction("Index", "Admin"),
-                3 => RedirectToAction("Index", "Manager"),
+                3 => RedirectToAction("Index", "Customer"),
                 _ => RedirectToAction("Index", "Home"),
             };
         }

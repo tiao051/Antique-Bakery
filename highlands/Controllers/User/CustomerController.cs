@@ -207,15 +207,28 @@ namespace highlands.Controllers.User
 
         }
         [HttpGet]
-        public IActionResult GetUserId()
+        public async Task<IActionResult> GetUserId()
         {
             int? userId = HttpContext.Session.GetInt32("UserId");
+
             if (userId == null || userId == 0)
             {
-                return Json(new { success = false, message = "User not authenticated!", userId = 0 });
+                // Kiểm tra Redis xem user có refresh token không
+                var refreshKey = $"user:refresh:{userId}";
+                var refreshToken = await _distributedCache.GetStringAsync(refreshKey);
+
+                if (string.IsNullOrEmpty(refreshToken))
+                {
+                    return Json(new { success = false, message = "User session expired!", userId = 0 });
+                }
+
+                // Nếu có refresh token -> User vẫn còn hợp lệ
+                return Json(new { success = true, userId });
             }
+
             return Json(new { success = true, userId });
         }
+
         // lấy giá về để phản hồi cho js
         [HttpGet]
         public async Task<IActionResult> GetPrice(string itemName, string size)
@@ -373,29 +386,44 @@ namespace highlands.Controllers.User
         }
 
         [HttpPost]
-        public async Task<IActionResult> Pay(int userId)
+        public async Task<IActionResult> Pay(int userId, decimal totalAmount)
         {
             bool subscribeEmails = HttpContext.Session.GetString("SubscribeEmails") == "True";
-            if (!subscribeEmails) return Ok("Thanh toán thành công.");
+            Console.WriteLine($"[DEBUG] Received payment request: userId={userId}, totalAmount={totalAmount}");
 
-            Console.WriteLine($"[DEBUG] Received request: userId={userId}");
-
-            string cacheKey = $"email_sent:{userId}";
-            // Kiểm tra xem email đã gửi chưa
-            var cacheValue = await _distributedCache.GetStringAsync(cacheKey);
-            if (!string.IsNullOrEmpty(cacheValue))
-            {
-                Console.WriteLine($"[⚠] Email đã gửi trước đó, bỏ qua...");
-                return Ok("Ban da thuc hien thanh toan roi.");
-            }
             try
             {
+                // Kiểm tra user có tồn tại không
                 var userDetails = await _dapperRepository.GetCustomerDetailsAsync(userId);
-                if (userDetails == null || string.IsNullOrEmpty(userDetails.Email))
+                if (userDetails == null)
                 {
-                    return BadRequest("User email not found.");
+                    return BadRequest("User not found.");
+                }
+                int? customerId = userDetails.CustomerId;
+                // Gọi hàm riêng để tạo đơn hàng
+                int orderId = await CreateOrder((int)customerId, totalAmount);
+                if (orderId == -1)
+                {
+                    return StatusCode(500, "Failed to create order");
+                }
+                Console.WriteLine($"[✔] Order created successfully: orderId={orderId}");
+
+                // Nếu user không đăng ký nhận email => Trả về luôn
+                if (!subscribeEmails)
+                {
+                    return Ok("Thanh toán thành công.");
                 }
 
+                // 4️⃣ Kiểm tra Redis tránh gửi email trùng
+                string cacheKey = $"email_sent:{userId}";
+                var cacheValue = await _distributedCache.GetStringAsync(cacheKey);
+                if (!string.IsNullOrEmpty(cacheValue))
+                {
+                    Console.WriteLine($"Email đã gửi trước đó, bỏ qua...");
+                    return Ok("Bạn đã thực hiện thanh toán rồi.");
+                }
+
+                // Gửi email qua RabbitMQ
                 var factory = new ConnectionFactory()
                 {
                     HostName = _hostname,
@@ -441,31 +469,37 @@ namespace highlands.Controllers.User
                     AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10)
                 });
 
-                return Ok("Payment message sent successfully!");
+                return Ok("Thanh toán thành công và email xác nhận đã được gửi.");
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"[❌] Error: {ex.Message}");
-                return StatusCode(500, "Failed to send payment message");
+                return StatusCode(500, "Lỗi khi xử lý thanh toán.");
             }
         }
-        //public async Task<IActionResult> GetCustomerInfo(int userId)
-        //{
-        //    try
-        //    {
-        //        var customerInfo = await _dapperRepository.GetCustomerInfoAsync(userId);
-        //        if (customerInfo == null)
-        //        {
-        //            return NotFound("User not found.");
-        //        }
+        [HttpPost]
+        public async Task<int> CreateOrder(int customerId, decimal totalAmount)
+        {
+            try
+            {
+                var order = new Order
+                {
+                    OrderDate = DateTime.Now,
+                    TotalAmount = totalAmount,
+                    Status = "Confirmed",
+                    CustomerId = customerId
+                };
 
-        //        return Ok(customerInfo);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        Console.WriteLine($"[❌] Error: {ex.Message}");
-        //        return StatusCode(500, "Failed to retrieve user details");
-        //    }
-        //}
+                int orderId = await _dapperRepository.InsertOrderAsync(order);
+                Console.WriteLine($"Created order successfully for customer = {customerId}, OrderId = {orderId}");
+
+                return orderId;  
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"ERROR: {ex.Message}");
+                return -1;  
+            }
+        }
     }
 }
