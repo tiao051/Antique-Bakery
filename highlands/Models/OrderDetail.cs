@@ -15,6 +15,8 @@ public partial class OrderDetail
 
     public string? ItemName { get; set; }
 
+    public string? Size { get; set; }
+
     public virtual MenuItem? ItemNameNavigation { get; set; }
 
     public virtual Order? Order { get; set; }
