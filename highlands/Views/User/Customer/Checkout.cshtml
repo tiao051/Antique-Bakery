@@ -197,7 +197,7 @@
 
             console.log("Request gửi lên server:", JSON.stringify(requestData));
 
-            // 📌 Gửi request thanh toán
+            // Gửi request thanh toán
             const response = await fetch(`/customer/pay?userId=${userId}`, {
                 method: "POST",
                 headers: {
