@@ -198,7 +198,7 @@
             console.log("Request gửi lên server:", JSON.stringify(requestData));
 
             // Gửi request thanh toán
-            const response = await fetch(`/customer/pay?userId=${userId}`, {
+            const response = await fetch("/customer/pay", {
                 method: "POST",
                 headers: {
                     "Accept": "application/json",
@@ -259,7 +259,7 @@
         totalPaymentElement.textContent = `$${total.toFixed(2)}`;
     }
     function selectShipping(element, type) {
-        element.classList.toggle('selected'); // Toggle class để đổi màu
+        element.classList.toggle('selected'); 
 
         const radio = element.querySelector('.shipping-radio');
         if (radio) {

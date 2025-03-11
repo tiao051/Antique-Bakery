@@ -386,9 +386,12 @@ namespace highlands.Controllers.User
         }
 
         [HttpPost]
-        public async Task<IActionResult> Pay(int userId, decimal totalAmount)
+        public async Task<IActionResult> Pay([FromBody] PaymentRequestDTO request)
         {
             bool subscribeEmails = HttpContext.Session.GetString("SubscribeEmails") == "True";
+
+            int userId = request.UserID;
+            decimal totalAmount = request.TotalAmount;
             Console.WriteLine($"[DEBUG] Received payment request: userId={userId}, totalAmount={totalAmount}");
 
             try
