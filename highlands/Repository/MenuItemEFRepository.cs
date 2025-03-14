@@ -2,7 +2,7 @@
 using highlands.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace highlands.Services
+namespace highlands.Repository
 {
     public class MenuItemEFRepository
     {

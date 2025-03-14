@@ -1,5 +1,6 @@
 ﻿using highlands.Data;
 using highlands.Models;
+using highlands.Repository;
 using highlands.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Data.SqlClient;

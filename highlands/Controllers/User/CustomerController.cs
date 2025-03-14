@@ -1,11 +1,11 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using highlands.Services;
 using highlands.Models;
 using highlands.Models.DTO;
 using Microsoft.Extensions.Caching.Distributed;
 using Newtonsoft.Json;
 using RabbitMQ.Client;
 using System.Text;
+using highlands.Repository;
 
 namespace highlands.Controllers.User
 {

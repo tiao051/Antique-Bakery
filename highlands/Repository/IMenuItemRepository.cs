@@ -1,7 +1,7 @@
 ﻿using highlands.Models;
 using highlands.Models.DTO;
 
-namespace highlands.Services
+namespace highlands.Repository
 {
     public interface IMenuItemRepository
     {

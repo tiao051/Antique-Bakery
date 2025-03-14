@@ -10,7 +10,7 @@ using Microsoft.CodeAnalysis.Elfie.Model.Map;
 using System.Drawing;
 using Microsoft.AspNetCore.Mvc;
 
-namespace highlands.Services
+namespace highlands.Repository
 {
     public class MenuItemDapperRepository : IMenuItemRepository
     {
@@ -93,7 +93,7 @@ namespace highlands.Services
             ))?.ToList() ?? new List<MenuItemPrice>();
 
             // m = single shot
-            var normalizedSize = (itemName == "Espresso" && size == "M") ? "Single Shot" : size;
+            var normalizedSize = itemName == "Espresso" && size == "M" ? "Single Shot" : size;
 
             // Lấy danh sách nguyên liệu từ `GetRecipeByItemName`
             var parameters = new DynamicParameters();
@@ -130,7 +130,7 @@ namespace highlands.Services
             try
             {
                 // Chuyển đổi size nếu là Espresso
-                var normalizedSize = (itemName == "Espresso" && size == "M") ? "Single Shot" : size;
+                var normalizedSize = itemName == "Espresso" && size == "M" ? "Single Shot" : size;
 
                 // Thiết lập tham số cho Stored Procedure
                 var parameters = new DynamicParameters();
@@ -342,7 +342,7 @@ namespace highlands.Services
             Console.WriteLine($"item to remove: ({itemToRemove})");
             if (itemToRemove != null)
             {
-                itemToRemove.Quantity = itemToRemove.Quantity - 1 ;
+                itemToRemove.Quantity = itemToRemove.Quantity - 1;
 
                 if (itemToRemove.Quantity <= 0)
                 {
@@ -385,7 +385,7 @@ namespace highlands.Services
             return false;
         }
         public async Task<CustomerDetailsForEmail?> GetCustomerDetailsAsync(int userId)
-        { 
+        {
             string cacheKey = $"customer:{userId}"; // Đổi tên key để tránh trùng với cart
             Console.WriteLine($"[DEBUG] Cache key: {cacheKey}");
 
@@ -467,7 +467,7 @@ namespace highlands.Services
 
         //    return customerinfo;
         //}
-        public async Task<int> InsertOrderAsync (Order order)
+        public async Task<int> InsertOrderAsync(Order order)
         {
             const string query = @"
                    INSERT INTO [Order] (OrderDate, TotalAmount, Status, CustomerId)
