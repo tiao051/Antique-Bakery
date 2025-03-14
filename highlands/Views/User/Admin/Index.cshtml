@@ -172,7 +172,7 @@
                         <thead>
                             <tr>
                                 <th>Order ID</th>
-                                <th>Customer</th>
+                                <th>Email</th>
                                 <th>Amount</th>
                                 <th>Status</th>
                             </tr>
@@ -180,7 +180,7 @@
                         <tbody>
                             <tr>
                                 <td>#ORD-2305</td>
-                                <td>John Smith</td>
+                                <td>123123</td>
                                 <td>$32.50</td>
                                 <td><span class="status status-completed">Completed</span></td>
                             </tr>
@@ -427,7 +427,7 @@
             </div>
         </div>
     </div>
-    <script>
+  @*   <script>
         // Simple JavaScript to toggle between dashboard and user management
         document.addEventListener('DOMContentLoaded', function() {
             const menuItems = document.querySelectorAll('.menu-item');
@@ -455,28 +455,28 @@
                 });
             });
 
-            // User filter functionality
-            const userFilters = document.querySelectorAll('.user-filter');
-            userFilters.forEach(filter => {
-                filter.addEventListener('click', function() {
-                    userFilters.forEach(f => f.classList.remove('active'));
-                    this.classList.add('active');
-                    // Here you would add code to filter the user table
-                });
-            });
+            // // User filter functionality
+            // const userFilters = document.querySelectorAll('.user-filter');
+            // userFilters.forEach(filter => {
+            //     filter.addEventListener('click', function() {
+            //         userFilters.forEach(f => f.classList.remove('active'));
+            //         this.classList.add('active');
+            //         // Here you would add code to filter the user table
+            //     });
+            // });
 
-            // Chart filter functionality
-            const chartFilters = document.querySelectorAll('.chart-filter');
-            chartFilters.forEach(filter => {
-                filter.addEventListener('click', function() {
-                    const parentFilters = this.parentElement.querySelectorAll('.chart-filter');
-                    parentFilters.forEach(f => f.classList.remove('active'));
-                    this.classList.add('active');
-                    // Here you would add code to update the chart
-                });
-            });
+            // // Chart filter functionality
+            // const chartFilters = document.querySelectorAll('.chart-filter');
+            // chartFilters.forEach(filter => {
+            //     filter.addEventListener('click', function() {
+            //         const parentFilters = this.parentElement.querySelectorAll('.chart-filter');
+            //         parentFilters.forEach(f => f.classList.remove('active'));
+            //         this.classList.add('active');
+            //         // Here you would add code to update the chart
+            //     });
+            // });
         });
-    </script>
+    </script> *@
 </body>
 </html>
 

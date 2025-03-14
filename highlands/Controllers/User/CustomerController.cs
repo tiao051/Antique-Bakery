@@ -418,13 +418,13 @@ namespace highlands.Controllers.User
                 }
 
                 // 4️⃣ Kiểm tra Redis tránh gửi email trùng
-                string cacheKey = $"email_sent:{userId}";
-                var cacheValue = await _distributedCache.GetStringAsync(cacheKey);
-                if (!string.IsNullOrEmpty(cacheValue))
-                {
-                    Console.WriteLine($"Email đã gửi trước đó, bỏ qua...");
-                    return Ok("Bạn đã thực hiện thanh toán rồi.");
-                }
+                //string cacheKey = $"email_sent:{userId}";
+                //var cacheValue = await _distributedCache.GetStringAsync(cacheKey);
+                //if (!string.IsNullOrEmpty(cacheValue))
+                //{
+                //    Console.WriteLine($"Email đã gửi trước đó, bỏ qua...");
+                //    return Ok("Bạn đã thực hiện thanh toán rồi.");
+                //}
 
                 // Gửi email qua RabbitMQ
                 var factory = new ConnectionFactory()
@@ -467,10 +467,10 @@ namespace highlands.Controllers.User
                 Console.WriteLine($"[✔] Sent payment message: {message}");
 
                 // Lưu vào Redis để tránh gửi lại
-                await _distributedCache.SetStringAsync(cacheKey, "sent", new DistributedCacheEntryOptions
-                {
-                    AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10)
-                });
+                //await _distributedCache.SetStringAsync(cacheKey, "sent", new DistributedCacheEntryOptions
+                //{
+                //    AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10)
+                //});
 
                 return Ok("Thanh toán thành công và email xác nhận đã được gửi.");
             }

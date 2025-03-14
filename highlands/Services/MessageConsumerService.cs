@@ -35,6 +35,7 @@ namespace highlands.Services
                 arguments: null);
 
             var consumer = new AsyncEventingBasicConsumer(channel);
+
             consumer.ReceivedAsync += async (sender, ea) =>
             {
                 try
@@ -49,30 +50,35 @@ namespace highlands.Services
 
                     if (!string.IsNullOrWhiteSpace(email))
                     {
-                        Console.WriteLine($" Received email: {email}");
+                        Console.WriteLine($"Received email: {email}");
                         await SendEmailAsync(email, userName);
                     }
                     else
                     {
-                        Console.WriteLine(" Lỗi: Email không hợp lệ.");
+                        Console.WriteLine("Lỗi: Email không hợp lệ.");
                     }
-
-                    await channel.BasicAckAsync(ea.DeliveryTag, false);
-                    Console.WriteLine($"[CONSUMER] Received message: {message}");
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($" Error processing message: {ex.Message}");
+                    Console.WriteLine($"Error processing message: {ex.Message}");
+                }
+                finally
+                {
+                    // Đảm bảo ACK message ngay cả khi có lỗi
+                    await channel.BasicAckAsync(ea.DeliveryTag, false);
+                    Console.WriteLine($"[DEBUG] ACK sent for message: {ea.DeliveryTag}");
                 }
             };
 
-            await channel.BasicConsumeAsync(queue: _queueName, autoAck: false, consumer: consumer); 
+            Console.WriteLine("[DEBUG] Starting consumer..."); // Chuyển log này ra ngoài event handler
+            await channel.BasicConsumeAsync(queue: _queueName, autoAck: false, consumer: consumer);
 
             while (!stoppingToken.IsCancellationRequested)
             {
                 await Task.Delay(1000, stoppingToken);
             }
         }
+
         private async Task SendEmailAsync(string toEmail, string userName)
         {
             Console.WriteLine($"[DEBUG] Email được gửi tới: '{toEmail}'");
@@ -82,7 +88,6 @@ namespace highlands.Services
                 return;
             }
             toEmail = toEmail.Trim();
-            Console.WriteLine($"[DEBUG] Email được gửi tới: '{toEmail}'");
 
             var email = new MimeMessage();
             email.From.Add(new MailboxAddress("Antique", "thubeztdaxuo@gmail.com"));
