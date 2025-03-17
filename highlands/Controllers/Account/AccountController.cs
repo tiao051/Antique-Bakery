@@ -150,7 +150,7 @@ namespace highlands.Controllers.Account
                 1 => RedirectToAction("Index", "Admin"),
                 3 => RedirectToAction("Index", "Customer"),
                 _ => RedirectToAction("Index", "Home"),
-            };
+            };  
         }
         [HttpPost]
         public IActionResult Register(string name, string email, string password)
