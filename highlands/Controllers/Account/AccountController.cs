@@ -11,6 +11,8 @@ using System.Text;
 using Microsoft.Extensions.Caching.Distributed;
 using Newtonsoft.Json;
 using System.Diagnostics;
+using Microsoft.AspNetCore.Identity.Data;
+using Microsoft.DotNet.Scaffolding.Shared.Messaging;
 
 namespace highlands.Controllers.Account
 {
@@ -32,7 +34,7 @@ namespace highlands.Controllers.Account
             ViewBag.ViewToShow = view; // Lưu tham số để xác định giao diện
             return View();
         }
-        private string GenerateJwtToken(int userId, int roleId)
+        private string GenerateJwtToken(string email, int roleId)
         {
             var secretKey = Environment.GetEnvironmentVariable("JWT_SECRET")
                             ?? _config["JwtSettings:SecretKey"];
@@ -43,7 +45,7 @@ namespace highlands.Controllers.Account
 
             var claims = new[]
             {
-                new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
+                new Claim(ClaimTypes.NameIdentifier, email.ToString()),
                 new Claim(ClaimTypes.Role, roleId.ToString()),
             };
 
@@ -63,94 +65,138 @@ namespace highlands.Controllers.Account
             return Convert.ToBase64String(Guid.NewGuid().ToByteArray());
         }
         // Xử lý đăng nhập
-        public async Task<IActionResult> Login(string email, string password)
+        //public async Task<IActionResult> Login(string email, string password)
+        //{
+        //    Stopwatch stopwatch = new Stopwatch();
+
+        //    // Kiểm tra Redis trước
+        //    string redisKey = $"user:role:{email}";
+        //    stopwatch.Start();
+        //    string roleData = await _distributedCache.GetStringAsync(redisKey);
+        //    stopwatch.Stop();
+
+        //    Console.WriteLine($" Kiem tra Redis - Thoi gian: {stopwatch.ElapsedMilliseconds} ms");
+
+        //    if (roleData != null)
+        //    {
+        //        Console.WriteLine("Du lieu lay tu Redis:");
+        //        Console.WriteLine(roleData);
+
+        //        dynamic roleObj = JsonConvert.DeserializeObject<dynamic>(roleData);
+        //        Console.WriteLine($"RoleId: {roleObj.RoleId}, Type: {roleObj.RoleId.GetType()}");
+
+        //        int roleId;
+        //        if (int.TryParse(roleObj.RoleId.ToString(), out roleId))
+        //        {
+        //            return RedirectByRole(roleId);
+        //        }
+        //        else
+        //        {
+        //            return BadRequest("Invalid RoleId");
+        //        }
+        //    }
+
+        //    stopwatch.Restart();
+        //    using (var connection = new SqlConnection(_connectionString))
+        //    {
+        //        connection.Open();
+        //        var query = "SELECT * FROM Users WHERE Email = @Email";
+        //        var user = connection.QuerySingleOrDefault(query, new { Email = email });
+
+        //        if (user == null)
+        //        {
+        //            TempData["ErrorMessage"] = "Email does not exist.";
+        //            return RedirectToAction("Index");
+        //        }
+        //        else if (user.Password != password)
+        //        {
+        //            TempData["ErrorMessage"] = "Password is incorrect.";
+        //            return RedirectToAction("Index");
+        //        }
+        //        stopwatch.Stop();
+        //        Console.WriteLine($"Query DB - Thoi gian: {stopwatch.ElapsedMilliseconds} ms");
+
+        //        // Tạo JWT & Refresh Token
+        //        var token = GenerateJwtToken(user.UserId, user.RoleId);
+        //        var refreshToken = GenerateRefreshToken();
+
+        //        // Lưu Role vào Redis
+        //        var roleCacheData = JsonConvert.SerializeObject(new { RoleId = user.RoleId, Permissions = "View,Edit" });
+        //        await _distributedCache.SetStringAsync(redisKey, roleCacheData, new DistributedCacheEntryOptions
+        //        {
+        //            AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(1)
+        //        });
+
+        //        // Lưu Refresh Token vào Redis
+        //        string refreshKey = $"user:refresh:{user.UserId}";
+        //        await _distributedCache.SetStringAsync(refreshKey, refreshToken, new DistributedCacheEntryOptions
+        //        {
+        //            AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(7)
+        //        });
+
+        //        // Lưu UserId vào Session
+        //        HttpContext.Session.SetInt32("UserId", (int)user.UserId);
+
+        //        // Lưu token vào Cookie
+        //        Response.Cookies.Append("jwt", token, new CookieOptions { HttpOnly = true, Secure = true });
+        //        Response.Cookies.Append("refreshToken", refreshToken, new CookieOptions { HttpOnly = true, Secure = true });
+        //        Console.WriteLine($"roleData: {roleData}");
+        //        return RedirectByRole(user.RoleId);
+        //    }
+        //}
+        public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
             Stopwatch stopwatch = new Stopwatch();
+            string redisKey = $"user:role:{request.Email}";
 
-            // Kiểm tra Redis trước
-            string redisKey = $"user:role:{email}";
             stopwatch.Start();
             string roleData = await _distributedCache.GetStringAsync(redisKey);
             stopwatch.Stop();
+            Console.WriteLine($"Check redis - time: {stopwatch.ElapsedMilliseconds} ms");
 
-            Console.WriteLine($" Kiem tra Redis - Thoi gian: {stopwatch.ElapsedMilliseconds} ms");
-
+            int roleId;
             if (roleData != null)
             {
-                Console.WriteLine("Du lieu lay tu Redis:");
-                Console.WriteLine(roleData);
-
                 dynamic roleObj = JsonConvert.DeserializeObject<dynamic>(roleData);
-                Console.WriteLine($"RoleId: {roleObj.RoleId}, Type: {roleObj.RoleId.GetType()}");
-
-                int roleId;
                 if (int.TryParse(roleObj.RoleId.ToString(), out roleId))
                 {
-                    return RedirectByRole(roleId);
+                    var token = GenerateJwtToken(request.Email, roleId);
+                    var refreshToken = GenerateRefreshToken();
+
+                    return Ok(new { accessToken = token, refreshToken, roleId });
                 }
                 else
                 {
-                    return BadRequest("Invalid RoleId");
+                    return BadRequest("Co loi xay ra!");
                 }
             }
-
+            //query db nếu redis null
             stopwatch.Restart();
             using (var connection = new SqlConnection(_connectionString))
             {
                 connection.Open();
-                var query = "SELECT * FROM Users WHERE Email = @Email";
-                var user = connection.QuerySingleOrDefault(query, new { Email = email });
+                var query = "SELECT UserId, Email, Password, RoleId FROM Users Where Email = @Email";
+                var user = connection.QuerySingleOrDefault(query, new { Email = request.Email });
 
-                if (user == null)
+                if (user == null || user.Password != request.Password)
                 {
-                    TempData["ErrorMessage"] = "Email does not exist.";
-                    return RedirectToAction("Index");
-                }
-                else if (user.Password != password)
-                {
-                    TempData["ErrorMessage"] = "Password is incorrect.";
-                    return RedirectToAction("Index");
+                    return Unauthorized(new { message = "Invalid email or password" });
                 }
                 stopwatch.Stop();
-                Console.WriteLine($"Query DB - Thoi gian: {stopwatch.ElapsedMilliseconds} ms");
+                Console.WriteLine($"Query DB - Time: {stopwatch.ElapsedMilliseconds} ms");
 
-                // Tạo JWT & Refresh Token
-                var token = GenerateJwtToken(user.UserId, user.RoleId);
+                var token = GenerateJwtToken(request.Email, user.RoleId);
                 var refreshToken = GenerateRefreshToken();
 
-                // Lưu Role vào Redis
-                var roleCacheData = JsonConvert.SerializeObject(new { RoleId = user.RoleId, Permissions = "View,Edit" });
+                //cache vào redis
+                var roleCacheData = JsonConvert.SerializeObject(new { RoleId = user.RoleId });
                 await _distributedCache.SetStringAsync(redisKey, roleCacheData, new DistributedCacheEntryOptions
                 {
                     AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(1)
                 });
-
-                // Lưu Refresh Token vào Redis
-                string refreshKey = $"user:refresh:{user.UserId}";
-                await _distributedCache.SetStringAsync(refreshKey, refreshToken, new DistributedCacheEntryOptions
-                {
-                    AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(7)
-                });
-
-                // Lưu UserId vào Session
-                HttpContext.Session.SetInt32("UserId", (int)user.UserId);
-
-                // Lưu token vào Cookie
-                Response.Cookies.Append("jwt", token, new CookieOptions { HttpOnly = true, Secure = true });
-                Response.Cookies.Append("refreshToken", refreshToken, new CookieOptions { HttpOnly = true, Secure = true });
-                Console.WriteLine($"roleData: {roleData}");
-                return RedirectByRole(user.RoleId);
+                //trả về jwt 
+                return Ok(new { accessToken = token, refreshToken, roleId = user.RoleId });
             }
-        }
-        private IActionResult RedirectByRole(int roleId)
-        {
-            return roleId switch
-            {
-                2 => RedirectToAction("Index", "Manager"),
-                1 => RedirectToAction("Index", "Admin"),
-                3 => RedirectToAction("Index", "Customer"),
-                _ => RedirectToAction("Index", "Home"),
-            };  
         }
         [HttpPost]
         public IActionResult Register(string name, string email, string password)

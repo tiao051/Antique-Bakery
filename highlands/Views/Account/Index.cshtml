@@ -31,7 +31,7 @@
             </form>
         </div>
         <div class="form-container sign-in-container">
-            <form method="post" asp-action="Login" asp-controller="Account">
+            <form id="loginForm">
                 <div class="coffee-cup">
                     <div class="steam"></div>
                     <div class="steam"></div>
@@ -83,6 +83,41 @@
                 container.classList.remove('right-panel-active');
             });
         });
+
+        loginForm.addEventListener("submit", async function (e) {
+            e.preventDefault();
+
+            const formData = new FormData(this);
+            const data = {};
+            formData.forEach((value, key) => {
+                data[key] = value;
+            });
+
+            try {
+                const response = await fetch("/Account/Login", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(data),
+                });
+
+                if (!response.ok) {
+                    throw new Error("Login failed! Please check your credentials.");
+                }
+
+                const result = await response.json();
+                localStorage.setItem("accessToken", result.accessToken);
+
+                const roleRedirects = {
+                    1: "/Admin/Index",
+                    2: "/Manager/Index",
+                    3: "/Customer/Index",
+                };
+                window.location.href = roleRedirects[result.roleId] || "/Home/Index";
+            } catch (error) {
+                alert(error.message);
+            }
+        });
+
     </script>
 </body>
 </html>

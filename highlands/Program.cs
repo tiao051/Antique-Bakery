@@ -33,9 +33,14 @@ builder.Services
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey))
         };
     });
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("Admin", policy => policy.RequireRole("admin"));
+});
 
 // đăng ký rabbitmq
 builder.Services.AddHostedService<MessageConsumerService>();
+
 
 // Đăng ký DbContext & Dapper
 services.AddDbContext<AppDbContext>(options =>
@@ -88,6 +93,7 @@ services.AddControllersWithViews();
 var app = builder.Build();
 
 // Middleware
+app.UseMiddleware<JwtMiddleware>();
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
@@ -96,6 +102,6 @@ app.UseAuthorization();
 app.UseSession();
 
 // Cấu hình route mặc định
-app.MapControllerRoute(name: "default", pattern: "{controller=Customer}/{action=Index}/{id?}");
+app.MapControllerRoute(name: "default", pattern: "{controller=Account}/{action=Index}/{id?}");
 
 app.Run();

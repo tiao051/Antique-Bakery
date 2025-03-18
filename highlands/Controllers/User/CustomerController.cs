@@ -6,9 +6,12 @@ using Newtonsoft.Json;
 using RabbitMQ.Client;
 using System.Text;
 using highlands.Repository;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace highlands.Controllers.User
 {
+    [Authorize]
     public class CustomerController : Controller
     {
         private readonly string _hostname;
@@ -36,19 +39,28 @@ namespace highlands.Controllers.User
         }
         public async Task<IActionResult> Index()
         {
-            int userId = HttpContext.Session.GetInt32("UserId") ?? 0;
-            if (userId == 0)
+            var userIdClaim = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null)
             {
-                ViewBag.TotalQuantity = 0;
+                return Unauthorized(); // Không có UserId => Trả về lỗi 401
             }
-            else
-            {
-                string cacheKey = $"cart:{userId}";
-                string cachedCart = await _distributedCache.GetStringAsync(cacheKey);
-                List<CartItemTemporary> cartItems = JsonConvert.DeserializeObject<List<CartItemTemporary>>(cachedCart ?? "[]");
 
-                ViewBag.TotalQuantity = cartItems.Sum(i => i.Quantity); // Lấy tổng số lượng từ Redis
+            int userId = int.Parse(userIdClaim.Value);
+
+            // ✅Kiểm tra Role từ JWT Token
+            var roleClaim = HttpContext.User.FindFirst(ClaimTypes.Role);
+            if (roleClaim == null || roleClaim.Value != "3") // Giả sử RoleId = 3 là Customer
+            {
+                return Forbid(); // Không có quyền => Trả về lỗi 403
             }
+
+            //Đọc giỏ hàng từ Redis
+            string cacheKey = $"cart:{userId}";
+            string cachedCart = await _distributedCache.GetStringAsync(cacheKey);
+            List<CartItemTemporary> cartItems = JsonConvert.DeserializeObject<List<CartItemTemporary>>(cachedCart ?? "[]");
+
+            ViewBag.TotalQuantity = cartItems.Sum(i => i.Quantity);
+
             var subcategories = await _dapperRepository.GetSubcategoriesAsync();
             return View("~/Views/User/Customer/Index.cshtml", subcategories);
         }
