@@ -16,12 +16,13 @@ var configuration = builder.Configuration;
 // lay secretkey tu enviroment
 var secretKey = Environment.GetEnvironmentVariable("JWT_SECRET")
                 ?? builder.Configuration["JwtSettings:SecretKey"];
-
+Console.WriteLine($"[JWT VALIDATION] SecretKey: {secretKey}");
+Console.WriteLine($"[JWT VALIDATION] Key Length: {secretKey.Length}");
 // cấu hình jwt authentication 
 builder.Services 
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
-    {
+    {   
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
@@ -35,7 +36,7 @@ builder.Services
     });
 builder.Services.AddAuthorization(options =>
 {
-    options.AddPolicy("Admin", policy => policy.RequireRole("admin"));
+    options.AddPolicy("Admin", policy => policy.RequireRole("1"));
 });
 
 // đăng ký rabbitmq

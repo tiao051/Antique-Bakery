@@ -424,49 +424,6 @@ namespace highlands.Repository
 
             return customer;
         }
-        //public async Task<CustomerInfoDTO?> GetCustomerInfoAsync(int userId)
-        //{
-        //    string cacheKey = $"customer:{userId}";
-        //    Console.WriteLine($"[DEBUG] Cache key: {cacheKey}");
-
-        //    // Kiểm tra cache trước
-        //    string cachedData = await _distributedCache.GetStringAsync(cacheKey);
-        //    if (!string.IsNullOrEmpty(cachedData))
-        //    {
-        //        Console.WriteLine($"[DEBUG] Dữ liệu lấy từ cache: {cachedData}");
-        //        return JsonConvert.DeserializeObject<CustomerInfoDTO>(cachedData);
-        //    }
-
-        //    Console.WriteLine($"[DEBUG] Không tìm thấy userId={userId} trong cache. Đang truy vấn database...");
-
-        //    // Truy vấn database
-        //    string query = @"
-        //    SELECT u.UserId, u.Email, c.Address, c.Phone
-        //    FROM users u
-        //    LEFT JOIN Customers c ON u.UserId = c.UserId
-        //    WHERE u.UserId = @userId";
-
-        //    var customerinfo = await _connection.QueryFirstOrDefaultAsync<CustomerInfoDTO>(query, new { userId });
-
-        //    if (customerinfo != null)
-        //    {
-        //        Console.WriteLine($"[DEBUG] Dữ liệu từ database: {JsonConvert.SerializeObject(customerinfo)}");
-
-        //        // Lưu vào cache để dùng lại
-        //        await _distributedCache.SetStringAsync(cacheKey, JsonConvert.SerializeObject(customerinfo), new DistributedCacheEntryOptions
-        //        {
-        //            AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(1)
-        //        });
-
-        //        Console.WriteLine($"[✔] Lưu user {userId} vào cache.");
-        //    }
-        //    else
-        //    {
-        //        Console.WriteLine($"[❌] Không tìm thấy userId={userId} trong database.");
-        //    }
-
-        //    return customerinfo;
-        //}
         public async Task<int> InsertOrderAsync(Order order)
         {
             const string query = @"

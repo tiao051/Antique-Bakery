@@ -10,9 +10,8 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using Microsoft.Extensions.Caching.Distributed;
 using Newtonsoft.Json;
-using System.Diagnostics;
-using Microsoft.AspNetCore.Identity.Data;
-using Microsoft.DotNet.Scaffolding.Shared.Messaging;
+using highlands.Models.DTO;
+using highlands.Models;
 
 namespace highlands.Controllers.Account
 {
@@ -20,7 +19,7 @@ namespace highlands.Controllers.Account
     {
         private readonly string _connectionString;
         private readonly IDistributedCache _distributedCache;
-        private readonly IConfiguration _config;
+        private readonly IConfiguration _config;            
 
         public AccountController(IConfiguration config, IDistributedCache distributedCache)
         {
@@ -34,19 +33,21 @@ namespace highlands.Controllers.Account
             ViewBag.ViewToShow = view; // Lưu tham số để xác định giao diện
             return View();
         }
-        private string GenerateJwtToken(string email, int roleId)
+        private string GenerateJwtToken(int userId, string email, int roleId)
         {
             var secretKey = Environment.GetEnvironmentVariable("JWT_SECRET")
                             ?? _config["JwtSettings:SecretKey"];
             Console.WriteLine($"Secret Key Length: {secretKey.Length}");
             Console.WriteLine($"Secret Key: {secretKey}");
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
+
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
             var claims = new[]
             {
-                new Claim(ClaimTypes.NameIdentifier, email.ToString()),
-                new Claim(ClaimTypes.Role, roleId.ToString()),
+                new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
+                new Claim(ClaimTypes.Email, email),
+                new Claim(ClaimTypes.Role, roleId.ToString())
             };
 
             var token = new JwtSecurityToken(
@@ -144,60 +145,91 @@ namespace highlands.Controllers.Account
         //        return RedirectByRole(user.RoleId);
         //    }
         //}
-        public async Task<IActionResult> Login([FromBody] LoginRequest request)
+        private async Task StoreRefreshToken(string email, string refreshToken)
         {
-            Stopwatch stopwatch = new Stopwatch();
-            string redisKey = $"user:role:{request.Email}";
-
-            stopwatch.Start();
-            string roleData = await _distributedCache.GetStringAsync(redisKey);
-            stopwatch.Stop();
-            Console.WriteLine($"Check redis - time: {stopwatch.ElapsedMilliseconds} ms");
-
-            int roleId;
-            if (roleData != null)
+            string refreshKey = $"user:refresh:{email}";
+            await _distributedCache.SetStringAsync(refreshKey, refreshToken, new DistributedCacheEntryOptions
             {
-                dynamic roleObj = JsonConvert.DeserializeObject<dynamic>(roleData);
-                if (int.TryParse(roleObj.RoleId.ToString(), out roleId))
-                {
-                    var token = GenerateJwtToken(request.Email, roleId);
-                    var refreshToken = GenerateRefreshToken();
+                AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(7)
+            });
+        }
 
-                    return Ok(new { accessToken = token, refreshToken, roleId });
-                }
-                else
-                {
-                    return BadRequest("Co loi xay ra!");
-                }
-            }
-            //query db nếu redis null
-            stopwatch.Restart();
+        public async Task<IActionResult> Login([FromBody] LoginRequestDTO request)
+        {
+            string redisKey = $"user:role:{request.Email}";
+            string roleData = await _distributedCache.GetStringAsync(redisKey);
+            int roleId = 0;
+            int userId = 0;
+
             using (var connection = new SqlConnection(_connectionString))
             {
                 connection.Open();
-                var query = "SELECT UserId, Email, Password, RoleId FROM Users Where Email = @Email";
-                var user = connection.QuerySingleOrDefault(query, new { Email = request.Email });
 
-                if (user == null || user.Password != request.Password)
+                if (roleData != null)
                 {
-                    return Unauthorized(new { message = "Invalid email or password" });
+                    var roleObj = JsonConvert.DeserializeObject<dynamic>(roleData);
+
+                    // Kiểm tra cả UserId và RoleId từ Redis
+                    if (int.TryParse(roleObj.RoleId.ToString(), out roleId) &&
+                        roleObj.UserId != null && int.TryParse(roleObj.UserId.ToString(), out userId))
+                    {
+                        // Vẫn nên kiểm tra password ngay cả khi có cache
+                        var query = "SELECT Password FROM Users WHERE UserId = @UserId AND Email = @Email";
+                        var user = connection.QuerySingleOrDefault(query, new { UserId = userId, Email = request.Email });
+
+                        if (user == null || user.Password != request.Password)
+                        {
+                            return Unauthorized(new { message = "Invalid email or password" });
+                        }
+                    }
+                    else
+                    {
+                        // Nếu thiếu thông tin trong cache, lấy lại từ DB
+                        var query = "SELECT UserId, Email, Password, RoleId FROM Users WHERE Email = @Email";
+                        var user = connection.QuerySingleOrDefault(query, new { Email = request.Email });
+
+                        if (user == null || user.Password != request.Password)
+                        {
+                            return Unauthorized(new { message = "Invalid email or password" });
+                        }
+
+                        userId = user.Id;
+                        roleId = user.RoleId;
+                    }
                 }
-                stopwatch.Stop();
-                Console.WriteLine($"Query DB - Time: {stopwatch.ElapsedMilliseconds} ms");
-
-                var token = GenerateJwtToken(request.Email, user.RoleId);
-                var refreshToken = GenerateRefreshToken();
-
-                //cache vào redis
-                var roleCacheData = JsonConvert.SerializeObject(new { RoleId = user.RoleId });
-                await _distributedCache.SetStringAsync(redisKey, roleCacheData, new DistributedCacheEntryOptions
+                else
                 {
-                    AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(1)
-                });
-                //trả về jwt 
-                return Ok(new { accessToken = token, refreshToken, roleId = user.RoleId });
+                    // Không có cache, lấy toàn bộ thông tin từ database
+                    var query = "SELECT UserId, Email, Password, RoleId FROM Users WHERE Email = @Email";
+                    var user = connection.QuerySingleOrDefault(query, new { Email = request.Email });
+
+                    if (user == null || user.Password != request.Password)
+                    {
+                        return Unauthorized(new { message = "Invalid email or password" });
+                    }
+
+                    userId = user.Id;
+                    roleId = user.RoleId;
+
+                    // Cache userId và roleId vào Redis
+                    var roleCacheData = JsonConvert.SerializeObject(new { UserId = userId, RoleId = roleId });
+                    await _distributedCache.SetStringAsync(redisKey, roleCacheData, new DistributedCacheEntryOptions
+                    {
+                        AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(1)
+                    });
+                }
             }
+
+            // Đảm bảo đã có userId và roleId
+            var token = GenerateJwtToken(userId, request.Email, roleId);
+            var refreshToken = GenerateRefreshToken();
+
+            // Lưu Refresh Token vào Redis
+            await StoreRefreshToken(request.Email, refreshToken);
+
+            return Ok(new { accessToken = token, refreshToken, roleId });
         }
+
         [HttpPost]
         public IActionResult Register(string name, string email, string password)
         {

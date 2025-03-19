@@ -20,7 +20,6 @@ namespace highlands.Repository
         Task<bool> AddToCartAsync(int userId, string itemName, string size, decimal price, int quantity, string itemImg);
         Task<bool> IncreaseCartItem(int userId, string itemName, string itemSize);
         Task<CustomerDetailsForEmail?> GetCustomerDetailsAsync(int userId);
-        //Task<CustomerInfoDTO?> GetCustomerInfoAsync(int userId);
         Task<List<RecipeWithIngredientDetail>> GetIngredientsBySizeAsync(string itemName, string size);
         Task<int> InsertOrderAsync(Order order);
     }

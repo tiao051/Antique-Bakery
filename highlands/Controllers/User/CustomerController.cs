@@ -39,23 +39,27 @@ namespace highlands.Controllers.User
         }
         public async Task<IActionResult> Index()
         {
+            var authHeader = HttpContext.Request.Headers["Authorization"].ToString();
+            Console.WriteLine($"Authorization Header: {authHeader}");
             var userIdClaim = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier);
             if (userIdClaim == null)
             {
-                return Unauthorized(); // Không có UserId => Trả về lỗi 401
+                return Unauthorized();
             }
+            var emailClaim = HttpContext.User.FindFirst(ClaimTypes.Email);
+            string userId = userIdClaim.Value; // Giữ UserId ở dạng string
+            Console.WriteLine($"UserIdClaim Value: {userId}");
 
-            int userId = int.Parse(userIdClaim.Value);
-
-            // ✅Kiểm tra Role từ JWT Token
+            // ✅ Kiểm tra Role từ JWT Token
             var roleClaim = HttpContext.User.FindFirst(ClaimTypes.Role);
-            if (roleClaim == null || roleClaim.Value != "3") // Giả sử RoleId = 3 là Customer
+            Console.WriteLine($"User Role: {roleClaim?.Value ?? "null"}");
+            if (roleClaim == null || roleClaim.Value != "3")
             {
-                return Forbid(); // Không có quyền => Trả về lỗi 403
+                return Forbid();
             }
 
-            //Đọc giỏ hàng từ Redis
-            string cacheKey = $"cart:{userId}";
+            // Đọc giỏ hàng từ Redis
+            string cacheKey = $"cart:{userId}"; // Sử dụng string thay vì int
             string cachedCart = await _distributedCache.GetStringAsync(cacheKey);
             List<CartItemTemporary> cartItems = JsonConvert.DeserializeObject<List<CartItemTemporary>>(cachedCart ?? "[]");
 
@@ -64,6 +68,7 @@ namespace highlands.Controllers.User
             var subcategories = await _dapperRepository.GetSubcategoriesAsync();
             return View("~/Views/User/Customer/Index.cshtml", subcategories);
         }
+
         [HttpGet]
         public async Task<IActionResult> MenuItems(string subcategory)
         {

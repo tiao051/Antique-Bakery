@@ -106,6 +106,7 @@
 
                 const result = await response.json();
                 localStorage.setItem("accessToken", result.accessToken);
+                localStorage.setItem("refreshToken", result.refreshToken);
 
                 const roleRedirects = {
                     1: "/Admin/Index",
