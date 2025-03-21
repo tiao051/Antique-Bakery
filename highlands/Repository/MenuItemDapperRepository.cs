@@ -195,20 +195,26 @@ namespace highlands.Repository
         {
             string cacheKey = $"customer:{customer.UserId}";
 
-            // Xóa customer cũ trong cache
+            // Xóa cache trước khi cập nhật
             await _distributedCache.RemoveAsync(cacheKey);
             Console.WriteLine($"Cache REMOVED - Key: {cacheKey}");
 
-            // Xóa dữ liệu cũ trong DB
-            string deleteSql = "DELETE FROM Customer WHERE UserId = @UserId";
-            await _connection.ExecuteAsync(deleteSql, new { customer.UserId });
+            // Cập nhật trước, nếu không có thì thêm mới
+            string updateSql = @"
+    UPDATE Customer
+    SET FullName = @FullName, Phone = @Phone, Address = @Address, Message = @Message
+    WHERE UserId = @UserId";
 
-            // Thêm customer mới vào DB
-            string insertSql = @"
+            int rowsAffected = await _connection.ExecuteAsync(updateSql, customer);
+
+            if (rowsAffected == 0)
+            {
+                string insertSql = @"
         INSERT INTO Customer (FullName, Phone, Address, Message, UserId)
-        VALUES (@FullName, @Phone, @Address, @Message, @UserId);
-    ";
-            int rowsAffected = await _connection.ExecuteAsync(insertSql, customer);
+        VALUES (@FullName, @Phone, @Address, @Message, @UserId)";
+
+                rowsAffected = await _connection.ExecuteAsync(insertSql, customer);
+            }
 
             if (rowsAffected > 0)
             {
@@ -222,6 +228,7 @@ namespace highlands.Repository
 
             return rowsAffected > 0;
         }
+
         public async Task<decimal?> GetPriceAsync(string itemName, string size)
         {
             if (string.IsNullOrEmpty(itemName) || string.IsNullOrEmpty(size))
