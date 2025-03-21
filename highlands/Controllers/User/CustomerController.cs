@@ -72,7 +72,7 @@ namespace highlands.Controllers.User
             string cachedCart = await _distributedCache.GetStringAsync(cacheKey);
             List<CartItemTemporary> cartItems = JsonConvert.DeserializeObject<List<CartItemTemporary>>(cachedCart ?? "[]");
 
-            //ViewBag.TotalQuantity = cartItems?.Sum(i => i.Quantity) ?? 0;
+            ViewBag.TotalQuantity = cartItems?.Sum(i => i.Quantity) ?? 0;
 
             var subcategories = await _dapperRepository.GetSubcategoriesAsync();
             return View("~/Views/User/Customer/Index.cshtml", subcategories);

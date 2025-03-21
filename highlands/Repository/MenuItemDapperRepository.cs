@@ -279,6 +279,7 @@ namespace highlands.Repository
         {
             // lấy lại giỏ hàng để lấy tổng số lượng
             var cartItems = await GetCartItemsAsync(userId);
+            Console.WriteLine($"Tong so luong trong GetTotalQuantityAsync: {cartItems}");
             return cartItems.Sum(i => i.Quantity);
         }
 
