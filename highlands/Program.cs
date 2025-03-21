@@ -18,26 +18,39 @@ var secretKey = Environment.GetEnvironmentVariable("JWT_SECRET")
                 ?? builder.Configuration["JwtSettings:SecretKey"];
 Console.WriteLine($"[JWT VALIDATION] SecretKey: {secretKey}");
 Console.WriteLine($"[JWT VALIDATION] Key Length: {secretKey.Length}");
+
 // cấu hình jwt authentication 
-builder.Services 
-    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
-    {   
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            ValidIssuer = builder.Configuration["JwtSettings:Issuer"],
-            ValidAudience = builder.Configuration["JwtSettings:Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey))
-        };
-    });
-builder.Services.AddAuthorization(options =>
-{
-    options.AddPolicy("Admin", policy => policy.RequireRole("1"));
-});
+//builder.Services.AddAuthentication(options =>
+//{
+//    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+//    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+//})
+//.AddJwtBearer(options =>
+//{
+//    options.Events = new JwtBearerEvents
+//    {
+//        OnMessageReceived = context =>
+//        {
+//            var token = context.Request.Cookies["accessToken"];
+//            if (!string.IsNullOrEmpty(token))
+//            {
+//                context.Token = token;
+//            }
+//            return Task.CompletedTask;
+//        }
+//    };
+
+//    options.TokenValidationParameters = new TokenValidationParameters
+//    {
+//        ValidateIssuer = true,
+//        ValidateAudience = true,
+//        ValidateLifetime = true,
+//        ValidateIssuerSigningKey = true,
+//        ValidIssuer = builder.Configuration["JwtSettings:Issuer"],
+//        ValidAudience = builder.Configuration["JwtSettings:Audience"],
+//        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:SecretKey"])),
+//    };
+//});
 
 // đăng ký rabbitmq
 builder.Services.AddHostedService<MessageConsumerService>();
@@ -61,11 +74,54 @@ services.AddScoped<IEnumerable<IMenuItemRepository>>(sp => new List<IMenuItemRep
 });
 
 // Thiết lập OAuth Google
-services.AddAuthentication(options =>
+//services.AddAuthentication(options =>
+//{
+//    options.DefaultAuthenticateScheme = "Cookies";
+//    options.DefaultSignInScheme = "Cookies";
+//    options.DefaultChallengeScheme = "Google";
+//})
+//.AddCookie()
+//.AddGoogle(options =>
+//{
+//    options.ClientId = "1057258473272-hnj6l7up7rv12crbh259h0o15pu8btep.apps.googleusercontent.com";
+//    options.ClientSecret = "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";
+//    options.Events.OnRedirectToAuthorizationEndpoint = context =>
+//    {
+//        context.Response.Redirect(context.RedirectUri + "&prompt=select_account");
+//        return Task.CompletedTask;
+//    };
+//});
+
+builder.Services.AddAuthentication(options =>
 {
-    options.DefaultAuthenticateScheme = "Cookies";
-    options.DefaultSignInScheme = "Cookies";
-    options.DefaultChallengeScheme = "Google";
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.Events = new JwtBearerEvents
+    {
+        OnMessageReceived = context =>
+        {
+            var token = context.Request.Cookies["accessToken"];
+            if (!string.IsNullOrEmpty(token))
+            {
+                context.Token = token;
+            }
+            return Task.CompletedTask;
+        }
+    };
+
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = builder.Configuration["JwtSettings:Issuer"],
+        ValidAudience = builder.Configuration["JwtSettings:Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey)),
+    };
 })
 .AddCookie()
 .AddGoogle(options =>
@@ -77,6 +133,13 @@ services.AddAuthentication(options =>
         context.Response.Redirect(context.RedirectUri + "&prompt=select_account");
         return Task.CompletedTask;
     };
+});
+
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("Admin", policy => policy.RequireRole("1"));
+    options.AddPolicy("Manager", policy => policy.RequireRole("2"));
+    options.AddPolicy("Customer", policy => policy.RequireRole("3"));
 });
 
 // Đăng ký Session
@@ -94,7 +157,6 @@ services.AddControllersWithViews();
 var app = builder.Build();
 
 // Middleware
-app.UseMiddleware<JwtMiddleware>();
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();

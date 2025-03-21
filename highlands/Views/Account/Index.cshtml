@@ -113,7 +113,16 @@
                     2: "/Manager/Index",
                     3: "/Customer/Index",
                 };
-                window.location.href = roleRedirects[result.roleId] || "/Home/Index";
+
+                if (!result.roleId || !roleRedirects[result.roleId]) {
+                    console.error("❌ Invalid roleId:", result.roleId);
+                    alert("Login successful, but no valid role found!");
+                    return;
+                }
+
+                // Redirect ngay mà không cần thêm token vào header
+                window.location.href = roleRedirects[result.roleId];
+
             } catch (error) {
                 alert(error.message);
             }

@@ -207,89 +207,75 @@
         // });
     });
         $(document).ready(function () {
-        $("#addToOrderBtn").click(function () {
-            let itemName = $(".item-name-track").text().trim();
-            let size = $(".size-button.selected").data("size");
-            let itemImg = document.querySelector(".item-img")?.getAttribute("src") || "";
-            console.log("[DEBUG] Image Src:", itemImg);
-            console.log("Size gửi lên server:", size);
+           $("#addToOrderBtn").click(async function () {
+        let itemName = $(".item-name-track").text().trim();
+        let size = $(".size-button.selected").data("size");
+        let itemImg = document.querySelector(".item-img")?.getAttribute("src") || "";
 
-            if (!itemName || !size) {
-                alert("Please select an item and size.");
+        if (!itemName || !size) {
+            alert("Please select an item and size.");
+            return;
+        }
+
+        console.log("[DEBUG] Add to Order Clicked:", { itemName, size });
+
+        try {
+            // Bước 1: Lấy userId
+            let userResponse = await $.get("/Customer/GetUserId");
+
+            if (!userResponse.success || userResponse.userId === 0) {
+                alert("User not authenticated!");
                 return;
             }
 
-            console.log("[DEBUG] Add to Order Clicked:", { itemName, size });
-            // Bước 1: Gọi API để lấy userId
-            $.ajax({
-                url: "/Customer/GetUserId",
-                type: "GET",
-                success: function (userResponse) {
-                    if (!userResponse.success || userResponse.userId === 0) {
-                        alert("User not authenticated!");
-                        return;
-                    }
+            let userId = userResponse.userId;
 
-                    let userId = userResponse.userId; // Lấy userId từ API
+            // Bước 2: Lấy giá sản phẩm
+            let priceResponse = await $.get("/Customer/GetPrice", { itemName, size });
 
-                    // Bước 2: Gọi API để lấy giá (price)
-                    $.ajax({
-                        url: "/Customer/GetPrice",
-                        type: "GET",
-                        data: { itemName: itemName, size: size },
-                        success: function (priceResponse) {
-                            if (!priceResponse.success) {
-                                alert("Iu thu thao");
-                                return;
-                            }
+            if (!priceResponse.success) {
+                alert("Failed to fetch price.");
+                return;
+            }
 
-                            let price = priceResponse.price;
+            let price = priceResponse.price;
 
-                            // Bước 3: Gửi yêu cầu thêm vào giỏ hàng
-                             $.ajax({
-                                url: "/Customer/AddToOrder",
-                                type: "POST",
-                                data: { userId: userId, itemName: itemName, size: size, price: price, quantity: 1, itemImg: itemImg},
-                                success: function (orderResponse) {
-                                    console.log("[DEBUG] Order Response:", orderResponse); // Kiểm tra response trả về
-
-                                    if (orderResponse.success) {
-                                        const cartCountElement = document.querySelector('.cart-count');
-
-                                        console.log("[DEBUG] Updated Cart Count:", orderResponse.cartCount);
-
-                                        if (cartCountElement) {
-                                            cartCountElement.classList.add('cart-count-animated');
-
-                                            setTimeout(function () {
-                                                cartCountElement.textContent = orderResponse.cartCount;
-                                            }, 250);
-
-                                            setTimeout(function () {
-                                                cartCountElement.classList.remove('cart-count-animated');
-                                            }, 500);
-                                        }
-
-                                        // Bắn event để các nơi khác có thể cập nhật UI
-                                        $(document).trigger("cartUpdated");
-                                    } else {
-                                        alert(orderResponse.message);
-                                    }
-                                },
-                                error: function () {
-                                    alert("Failed to add item!");
-                                }
-                            });
-                        },
-                        error: function () {
-                            alert("Failed to fetch price.");
-                        }
-                    });
-                },
-                error: function () {
-                    alert("Failed to fetch user ID.");
-                }
+            // Bước 3: Thêm vào giỏ hàng
+            let orderResponse = await $.post("/Customer/AddToOrder", {
+                userId,
+                itemName,
+                size,
+                price,
+                quantity: 1,
+                itemImg
             });
-        });
+
+            console.log("[DEBUG] Order Response:", orderResponse);
+
+            if (orderResponse.success) {
+                const cartCountElement = document.querySelector('.cart-count');
+
+                if (cartCountElement) {
+                    cartCountElement.classList.add('cart-count-animated');
+
+                    setTimeout(() => {
+                        cartCountElement.textContent = orderResponse.cartCount;
+                    }, 250);
+
+                    setTimeout(() => {
+                        cartCountElement.classList.remove('cart-count-animated');
+                    }, 500);
+                }
+
+                // Bắn event để các nơi khác có thể cập nhật UI
+                $(document).trigger("cartUpdated");
+            } else {
+                alert(orderResponse.message);
+            }
+        } catch (error) {
+            console.error("Error during add to cart:", error);
+            alert("An unexpected error occurred!");
+        }
+    });
     });
 </script>

@@ -156,79 +156,120 @@ namespace highlands.Controllers.Account
 
         public async Task<IActionResult> Login([FromBody] LoginRequestDTO request)
         {
+            Console.WriteLine("🔵 Login API called");
+            Console.WriteLine($"🔹 Email: {request.Email}");
+
             string redisKey = $"user:role:{request.Email}";
             string roleData = await _distributedCache.GetStringAsync(redisKey);
+
             int roleId = 0;
             int userId = 0;
 
             using (var connection = new SqlConnection(_connectionString))
             {
                 connection.Open();
+                Console.WriteLine("✅ Database connection opened");
 
                 if (roleData != null)
                 {
-                    var roleObj = JsonConvert.DeserializeObject<dynamic>(roleData);
+                    Console.WriteLine("🔹 Found cached role data in Redis");
+                    Console.WriteLine($"🔹 Cached Data: {roleData}");
 
-                    // Kiểm tra cả UserId và RoleId từ Redis
-                    if (int.TryParse(roleObj.RoleId.ToString(), out roleId) &&
-                        roleObj.UserId != null && int.TryParse(roleObj.UserId.ToString(), out userId))
+                    try
                     {
-                        // Vẫn nên kiểm tra password ngay cả khi có cache
-                        var query = "SELECT Password FROM Users WHERE UserId = @UserId AND Email = @Email";
-                        var user = connection.QuerySingleOrDefault(query, new { UserId = userId, Email = request.Email });
+                        var roleObj = JsonConvert.DeserializeObject<dynamic>(roleData);
 
-                        if (user == null || user.Password != request.Password)
+                        // Kiểm tra cả UserId và RoleId từ Redis
+                        if (int.TryParse(roleObj.RoleId.ToString(), out roleId) &&
+                            roleObj.UserId != null && int.TryParse(roleObj.UserId.ToString(), out userId))
                         {
-                            return Unauthorized(new { message = "Invalid email or password" });
+                            Console.WriteLine($"✅ Retrieved from Redis - UserId: {userId}, RoleId: {roleId}");
+
+                            // Kiểm tra password từ DB ngay cả khi có cache
+                            var query = "SELECT Password FROM Users WHERE UserId = @UserId AND Email = @Email";
+                            var user = connection.QuerySingleOrDefault(query, new { UserId = userId, Email = request.Email });
+
+                            if (user == null || user.Password != request.Password)
+                            {
+                                Console.WriteLine("🔴 Invalid email or password (cached UserId)");
+                                return Unauthorized(new { message = "Invalid email or password" });
+                            }
+                        }
+                        else
+                        {
+                            Console.WriteLine("🔴 Invalid cache format, fetching from DB");
+                            await FetchUserFromDB(request.Email, request.Password, connection, redisKey);
                         }
                     }
-                    else
+                    catch (Exception ex)
                     {
-                        // Nếu thiếu thông tin trong cache, lấy lại từ DB
-                        var query = "SELECT UserId, Email, Password, RoleId FROM Users WHERE Email = @Email";
-                        var user = connection.QuerySingleOrDefault(query, new { Email = request.Email });
-
-                        if (user == null || user.Password != request.Password)
-                        {
-                            return Unauthorized(new { message = "Invalid email or password" });
-                        }
-
-                        userId = user.Id;
-                        roleId = user.RoleId;
+                        Console.WriteLine($"🔴 Error parsing Redis data: {ex.Message}");
+                        await FetchUserFromDB(request.Email, request.Password, connection, redisKey);
                     }
                 }
                 else
                 {
-                    // Không có cache, lấy toàn bộ thông tin từ database
-                    var query = "SELECT UserId, Email, Password, RoleId FROM Users WHERE Email = @Email";
-                    var user = connection.QuerySingleOrDefault(query, new { Email = request.Email });
-
-                    if (user == null || user.Password != request.Password)
-                    {
-                        return Unauthorized(new { message = "Invalid email or password" });
-                    }
-
-                    userId = user.Id;
-                    roleId = user.RoleId;
-
-                    // Cache userId và roleId vào Redis
-                    var roleCacheData = JsonConvert.SerializeObject(new { UserId = userId, RoleId = roleId });
-                    await _distributedCache.SetStringAsync(redisKey, roleCacheData, new DistributedCacheEntryOptions
-                    {
-                        AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(1)
-                    });
+                    Console.WriteLine("🔴 No cache found, fetching from DB");
+                    await FetchUserFromDB(request.Email, request.Password, connection, redisKey);
                 }
             }
 
             // Đảm bảo đã có userId và roleId
+            Console.WriteLine($"✅ Generating JWT for UserId: {userId}, RoleId: {roleId}");
             var token = GenerateJwtToken(userId, request.Email, roleId);
             var refreshToken = GenerateRefreshToken();
 
             // Lưu Refresh Token vào Redis
             await StoreRefreshToken(request.Email, refreshToken);
 
+            // Lưu token vào HttpOnly cookie (Secure = true nếu dùng HTTPS)
+            var cookieOptions = new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = false, // Đặt true nếu đang dùng HTTPS
+                SameSite = SameSiteMode.Strict,
+                Expires = DateTime.UtcNow.AddHours(1)
+            };
+
+            Response.Cookies.Append("accessToken", token, cookieOptions);
+
             return Ok(new { accessToken = token, refreshToken, roleId });
         }
+
+        // Hàm hỗ trợ lấy User từ Database khi Redis không có hoặc bị lỗi
+        private async Task FetchUserFromDB(string email, string password, SqlConnection connection, string redisKey)
+        {
+            try
+            {
+                Console.WriteLine("🔵 Querying user from database...");
+                var query = "SELECT UserId, Email, Password, RoleId FROM Users WHERE Email = @Email";
+                var user = connection.QuerySingleOrDefault(query, new { Email = email });
+
+                if (user == null || user.Password != password)
+                {
+                    Console.WriteLine("🔴 Invalid email or password (DB check)");
+                    throw new UnauthorizedAccessException("Invalid email or password");
+                }
+
+                int userId = user.UserId;
+                int roleId = user.RoleId;
+                Console.WriteLine($"✅ Fetched from DB - UserId: {userId}, RoleId: {roleId}");
+
+                // Cache userId và roleId vào Redis
+                var roleCacheData = JsonConvert.SerializeObject(new { UserId = userId, RoleId = roleId });
+                await _distributedCache.SetStringAsync(redisKey, roleCacheData, new DistributedCacheEntryOptions
+                {
+                    AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(1)
+                });
+                Console.WriteLine("✅ User role cached in Redis");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"🔴 Error fetching user from DB: {ex.Message}");
+                throw;
+            }
+        }
+
 
         [HttpPost]
         public IActionResult Register(string name, string email, string password)

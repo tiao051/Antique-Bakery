@@ -8,10 +8,12 @@ using System.Text;
 using highlands.Repository;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using System.IdentityModel.Tokens.Jwt;
 
 namespace highlands.Controllers.User
 {
-    [Authorize]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "Customer")]
     public class CustomerController : Controller
     {
         private readonly string _hostname;
@@ -37,10 +39,18 @@ namespace highlands.Controllers.User
             _dapperRepository = repositories.OfType<MenuItemDapperRepository>().FirstOrDefault();
             _distributedCache = distributedCache;
         }
+
+        [HttpGet]
         public async Task<IActionResult> Index()
         {
+            foreach (var claim in HttpContext.User.Claims)
+            {
+                Console.WriteLine($"Claim Type: {claim.Type}, Claim Value: {claim.Value}");
+            }
+
             var authHeader = HttpContext.Request.Headers["Authorization"].ToString();
             Console.WriteLine($"Authorization Header: {authHeader}");
+
             var userIdClaim = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier);
             if (userIdClaim == null)
             {
@@ -50,22 +60,26 @@ namespace highlands.Controllers.User
             string userId = userIdClaim.Value; // Giữ UserId ở dạng string
             Console.WriteLine($"UserIdClaim Value: {userId}");
 
-            // ✅ Kiểm tra Role từ JWT Token
-            var roleClaim = HttpContext.User.FindFirst(ClaimTypes.Role);
+            // Kiểm tra Role từ JWT Token
+            var roleClaim = HttpContext.User.Claims.FirstOrDefault(c => c.Type == "http://schemas.microsoft.com/ws/2008/06/identity/claims/role");
             Console.WriteLine($"User Role: {roleClaim?.Value ?? "null"}");
+
+            // Kiểm tra Role trong Token
             if (roleClaim == null || roleClaim.Value != "3")
             {
                 return Forbid();
             }
 
             // Đọc giỏ hàng từ Redis
-            string cacheKey = $"cart:{userId}"; // Sử dụng string thay vì int
+            string cacheKey = $"cart:{userId}";
             string cachedCart = await _distributedCache.GetStringAsync(cacheKey);
             List<CartItemTemporary> cartItems = JsonConvert.DeserializeObject<List<CartItemTemporary>>(cachedCart ?? "[]");
 
             ViewBag.TotalQuantity = cartItems.Sum(i => i.Quantity);
-
+            ViewBag.UserId = userIdClaim.Value;
+            ViewBag.UserRole = roleClaim.Value;
             var subcategories = await _dapperRepository.GetSubcategoriesAsync();
+            Console.WriteLine($"subcategories: {subcategories}");
             return View("~/Views/User/Customer/Index.cshtml", subcategories);
         }
 
@@ -226,25 +240,38 @@ namespace highlands.Controllers.User
         [HttpGet]
         public async Task<IActionResult> GetUserId()
         {
+            // Thử lấy userId từ Session
             int? userId = HttpContext.Session.GetInt32("UserId");
 
+            // Nếu không có, hãy thử lấy từ JWT token (HttpContext.User)
             if (userId == null || userId == 0)
             {
-                // Kiểm tra Redis xem user có refresh token không
-                var refreshKey = $"user:refresh:{userId}";
-                var refreshToken = await _distributedCache.GetStringAsync(refreshKey);
-
-                if (string.IsNullOrEmpty(refreshToken))
+                var userIdClaim = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (!string.IsNullOrEmpty(userIdClaim) && int.TryParse(userIdClaim, out int parsedUserId))
                 {
+                    userId = parsedUserId;
+                    // Lưu lại vào Session để lần sau không cần lấy lại từ token
+                    HttpContext.Session.SetInt32("UserId", userId.Value);
+                }
+                else
+                {
+                    // Nếu không lấy được từ token, kiểm tra Redis (nếu cần)
+                    // Chú ý: Khi userId vẫn null, không thể sử dụng nó trong refreshKey
                     return Json(new { success = false, message = "User session expired!", userId = 0 });
                 }
-
-                // Nếu có refresh token -> User vẫn còn hợp lệ
-                return Json(new { success = true, userId });
             }
+
+            // Nếu cần kiểm tra thêm refresh token từ Redis (nếu userId được lấy được nhưng vẫn cần refresh token)
+            // var refreshKey = $"user:refresh:{userId}";
+            // var refreshToken = await _distributedCache.GetStringAsync(refreshKey);
+            // if (string.IsNullOrEmpty(refreshToken))
+            // {
+            //     return Json(new { success = false, message = "User session expired!", userId = 0 });
+            // }
 
             return Json(new { success = true, userId });
         }
+
 
         // lấy giá về để phản hồi cho js
         [HttpGet]
