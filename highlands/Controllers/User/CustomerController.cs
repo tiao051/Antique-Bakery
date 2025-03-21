@@ -48,9 +48,6 @@ namespace highlands.Controllers.User
                 Console.WriteLine($"Claim Type: {claim.Type}, Claim Value: {claim.Value}");
             }
 
-            var authHeader = HttpContext.Request.Headers["Authorization"].ToString();
-            Console.WriteLine($"Authorization Header: {authHeader}");
-
             var userIdClaim = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier);
             if (userIdClaim == null)
             {
@@ -75,11 +72,9 @@ namespace highlands.Controllers.User
             string cachedCart = await _distributedCache.GetStringAsync(cacheKey);
             List<CartItemTemporary> cartItems = JsonConvert.DeserializeObject<List<CartItemTemporary>>(cachedCart ?? "[]");
 
-            ViewBag.TotalQuantity = cartItems.Sum(i => i.Quantity);
-            ViewBag.UserId = userIdClaim.Value;
-            ViewBag.UserRole = roleClaim.Value;
+            //ViewBag.TotalQuantity = cartItems?.Sum(i => i.Quantity) ?? 0;
+
             var subcategories = await _dapperRepository.GetSubcategoriesAsync();
-            Console.WriteLine($"subcategories: {subcategories}");
             return View("~/Views/User/Customer/Index.cshtml", subcategories);
         }
 
