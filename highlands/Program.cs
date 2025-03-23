@@ -2,6 +2,7 @@
 using highlands.Interfaces;
 using highlands.Models;
 using highlands.Repository;
+using highlands.Repository.OrderRepository;
 using highlands.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Data.SqlClient;
@@ -21,8 +22,10 @@ Console.WriteLine($"[JWT VALIDATION] SecretKey: {secretKey}");
 Console.WriteLine($"[JWT VALIDATION] Key Length: {secretKey.Length}");
 
 // đăng ký rabbitmq
-builder.Services.AddHostedService<MessageConsumerService>();
+services.AddHostedService<MessageConsumerService>();
 
+//đăng ký repo cho order
+services.AddScoped<OrderRepository>();
 
 // Đăng ký DbContext & Dapper
 services.AddDbContext<AppDbContext>(options =>
@@ -41,7 +44,7 @@ services.AddScoped<IEnumerable<IMenuItemRepository>>(sp => new List<IMenuItemRep
     sp.GetRequiredService<MenuItemDapperRepository>()
 });
 
-builder.Services.AddAuthentication(options =>
+services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -88,7 +91,7 @@ builder.Services.AddAuthentication(options =>
 });
 
 //Autho của jwt
-builder.Services.AddAuthorization(options =>
+services.AddAuthorization(options =>
 {
     options.AddPolicy("Admin", policy => policy.RequireRole("1"));
     options.AddPolicy("Manager", policy => policy.RequireRole("2"));

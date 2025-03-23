@@ -1,5 +1,5 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
+﻿using highlands.Repository.OrderRepository;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace highlands.Controllers.User.Admin
@@ -9,18 +9,16 @@ namespace highlands.Controllers.User.Admin
     [ApiController]
     public class AdminApiController : ControllerBase
     {
-        [HttpGet("getOrder")]
-        public IActionResult GetOrder()
+        private readonly OrderRepository _orderRepository;
+        public AdminApiController(OrderRepository orderRepository)
         {
-            var orders = new List<object>
-            {
-                new { id = 1, email = "john@example.com", amount = 100, status = "Pending" },
-                new { id = 2, email = "alice@example.com", amount = 200, status = "Completed" },
-                new { id = 3, email = "bob@example.com", amount = 150, status = "Cancelled" }
-            };
-
+            _orderRepository = orderRepository;
+        }
+        [HttpGet("getOrder")]
+        public async Task<IActionResult> GetOrder()
+        {
+            var orders = await _orderRepository.GetOrderAsync();
             return Ok(orders);
         }
-
     }
 }
