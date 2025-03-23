@@ -90,12 +90,12 @@ services.AddAuthentication(options =>
 });
 
 //Autho của jwt
-services.AddAuthorization(options =>
-{
-    options.AddPolicy("Admin", policy => policy.RequireRole("1"));
-    options.AddPolicy("Manager", policy => policy.RequireRole("2"));
-    options.AddPolicy("Customer", policy => policy.RequireRole("3"));
-});
+//services.AddAuthorization(options =>
+//{
+//    options.AddPolicy("Admin", policy => policy.RequireRole("1"));
+//    options.AddPolicy("Manager", policy => policy.RequireRole("2"));
+//    options.AddPolicy("Customer", policy => policy.RequireRole("3"));
+//});
 
 // Đăng ký Session
 services.AddDistributedMemoryCache();
@@ -107,7 +107,7 @@ services.AddSession(options =>
 });
 
 // Đăng ký SignalR
-builder.Services.AddSignalR();
+services.AddSignalR();
 
 // Đăng ký MVC
 services.AddControllersWithViews();
@@ -121,11 +121,12 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.UseSession();
 
-// Cấu hình route mặc định
-app.MapControllerRoute(name: "default", pattern: "{controller=Account}/{action=Index}/{id?}");
 app.UseEndpoints(endpoints =>
 {
     endpoints.MapHub<OrderHub>("/orderHub");
+    endpoints.MapControllerRoute(
+        name: "default",
+        pattern: "{controller=Account}/{action=Index}/{id?}");
 });
 
 app.Run();

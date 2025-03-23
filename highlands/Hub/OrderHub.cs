@@ -3,8 +3,8 @@ using System.Threading.Tasks;
 
 public class OrderHub : Hub
 {
-    public async Task SendOrderUpdate(string orderId)
+    public async Task SendNewOrder(string message)
     {
-        await Clients.All.SendAsync("ReceiveOrderUpdate", orderId);
+        await Clients.All.SendAsync("ReceiveNewOrder", message);
     }
 }

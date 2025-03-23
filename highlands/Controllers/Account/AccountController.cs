@@ -19,7 +19,7 @@ namespace highlands.Controllers.Account
     {
         private readonly string _connectionString;
         private readonly IDistributedCache _distributedCache;
-        private readonly IConfiguration _config;            
+        private readonly IConfiguration _config;
 
         public AccountController(IConfiguration config, IDistributedCache distributedCache)
         {

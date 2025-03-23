@@ -23,6 +23,8 @@ namespace highlands.Repository.OrderRepository
         {
             string cacheKey = "orders_cache";
 
+            await _distributedCache.RemoveAsync(cacheKey);
+
             // Retrieve cached data
             var cachedData = await _distributedCache.GetStringAsync(cacheKey);
             Console.WriteLine($"Cached Data: {cachedData}");

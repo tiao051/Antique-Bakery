@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace highlands.Controllers.User.Admin
 {
-    [Authorize(Policy = "Admin")]
+    //[Authorize(Policy = "Admin")]
     public class AdminController : Controller
     {
         public IActionResult Index()

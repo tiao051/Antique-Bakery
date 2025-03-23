@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace highlands.Controllers.User.Admin
 {
-    [Authorize(Policy = "Admin")]
+    //[Authorize(Policy = "Admin")]
     [Route("api/[controller]")]
     [ApiController]
     public class AdminApiController : ControllerBase

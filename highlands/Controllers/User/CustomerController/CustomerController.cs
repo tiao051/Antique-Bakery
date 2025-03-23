@@ -9,12 +9,12 @@ using highlands.Repository;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using System.IdentityModel.Tokens.Jwt;
 using highlands.Interfaces;
+using Microsoft.AspNetCore.SignalR;
 
 namespace highlands.Controllers.User.CustomerController
 {
-    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "Customer")]
+    //[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "Customer")]
     public class CustomerController : Controller
     {
         private readonly string _hostname;
@@ -25,11 +25,13 @@ namespace highlands.Controllers.User.CustomerController
         private readonly IMenuItemRepository _dapperRepository;
         private readonly IDistributedCache _distributedCache;
         private readonly string _connectionString;
+        private readonly IHubContext<OrderHub> _hubContext;
 
         public CustomerController(
     IConfiguration configuration,
     IEnumerable<IMenuItemRepository> repositories,
-    IDistributedCache distributedCache)
+    IDistributedCache distributedCache,
+    IHubContext<OrderHub> hubContext)
         {
             _hostname = configuration["RabbitMQ:HostName"];
             _username = configuration["RabbitMQ:UserName"];
@@ -39,6 +41,7 @@ namespace highlands.Controllers.User.CustomerController
             _connectionString = configuration.GetConnectionString("DefaultConnection");
             _dapperRepository = repositories.OfType<MenuItemDapperRepository>().FirstOrDefault();
             _distributedCache = distributedCache;
+            _hubContext = hubContext;
         }
 
         [HttpGet]
@@ -50,10 +53,10 @@ namespace highlands.Controllers.User.CustomerController
             }
 
             var userIdClaim = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier);
-            if (userIdClaim == null)
-            {
-                return Unauthorized();
-            }
+            //if (userIdClaim == null)
+            //{
+            //    return Unauthorized();
+            //}
             var emailClaim = HttpContext.User.FindFirst(ClaimTypes.Email);
             string userId = userIdClaim.Value; // Giữ UserId ở dạng string
             Console.WriteLine($"UserIdClaim Value: {userId}");
@@ -63,10 +66,10 @@ namespace highlands.Controllers.User.CustomerController
             Console.WriteLine($"User Role: {roleClaim?.Value ?? "null"}");
 
             // Kiểm tra Role trong Token
-            if (roleClaim == null || roleClaim.Value != "3")
-            {
-                return Forbid();
-            }
+            //if (roleClaim == null || roleClaim.Value != "3")
+            //{
+            //    return Forbid();
+            //}
 
             // Đọc giỏ hàng từ Redis
             string cacheKey = $"cart:{userId}";
@@ -535,6 +538,10 @@ namespace highlands.Controllers.User.CustomerController
 
                 int orderId = await _dapperRepository.InsertOrderAsync(order);
                 Console.WriteLine($"Created order successfully for customer = {customerId}, OrderId = {orderId}");
+
+                var hubContext = _hubContext.Clients.All;
+                await hubContext.SendAsync("ReceiveNewOrder");
+                Console.WriteLine("SignalR: Đã gửi tín hiệu 'ReceiveNewOrder' đến tất cả client.");
 
                 return orderId;
             }

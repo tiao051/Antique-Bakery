@@ -1,7 +1,7 @@
 ﻿@model IEnumerable<MenuItem>
 
 @foreach (var subcategoryGroup in Model.GroupBy(m => m.SubCategory))
-{ 
+{
     <h3 class="menu-link">
         <a href="@Url.Action("Index", "Customer", new { area = "User" })">Menu</a> /
         <span class="subcategory-name">@subcategoryGroup.Key</span>
