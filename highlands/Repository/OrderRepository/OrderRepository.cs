@@ -1,5 +1,6 @@
 ﻿using Dapper;
 using highlands.Models;
+using highlands.Models.DTO;
 using Microsoft.Extensions.Caching.Distributed;
 using Newtonsoft.Json;
 using System.Data;
@@ -18,38 +19,53 @@ namespace highlands.Repository.OrderRepository
             Console.WriteLine($"OrderRepository initialized with connection type: {_connection.GetType().FullName}");
             _distributedCache = distributedCache;
         }
-        public async Task<IEnumerable<Order>> GetOrderAsync()
+        public async Task<IEnumerable<OrderLoadingDTO>> GetOrderAsync()
         {
             string cacheKey = "orders_cache";
 
             // Retrieve cached data
             var cachedData = await _distributedCache.GetStringAsync(cacheKey);
+            Console.WriteLine($"Cached Data: {cachedData}");
             if (!string.IsNullOrEmpty(cachedData))
             {
                 try
                 {
-                    var cachedOrders = JsonConvert.DeserializeObject<List<Order>>(cachedData);
-                    if (cachedOrders != null)
+                    // Kiểm tra nếu JSON hợp lệ trước khi deserialize
+                    if (cachedData.StartsWith("[") && cachedData.EndsWith("]"))
                     {
-                        return cachedOrders; // Return cached data if available
+                        var cachedOrders = JsonConvert.DeserializeObject<List<OrderLoadingDTO>>(cachedData);
+                        if (cachedOrders != null) return cachedOrders;
+                    }
+                    else
+                    {
+                        Console.WriteLine("Invalid cache format, removing corrupted cache.");
+                        await _distributedCache.RemoveAsync(cacheKey);
                     }
                 }
                 catch (JsonSerializationException ex)
                 {
                     Console.WriteLine($"Cache deserialization error: {ex.Message}");
-                    // Handle corrupted cache by removing it
                     await _distributedCache.RemoveAsync(cacheKey);
                 }
             }
 
             // Fetch from DB if cache is empty or corrupted
-            string sql = "SELECT * FROM [Order]";
-            var orders = (await _connection.QueryAsync<Order>(sql)).ToList();
+            string sql = @"
+                SELECT TOP 5 OrderId, OrderDate, TotalAmount, Status, CustomerId 
+                FROM [Order] 
+                ORDER BY OrderDate DESC";
+            var orders = (await _connection.QueryAsync<OrderLoadingDTO>(sql)).ToList();
 
-            // Store data in cache
-            var cacheOptions = new DistributedCacheEntryOptions()
-                .SetAbsoluteExpiration(TimeSpan.FromHours(2));
+            Console.WriteLine("Fetched Orders from DB:");
+            foreach (var order in orders)
+            {
+                Console.WriteLine(JsonConvert.SerializeObject(order, Formatting.Indented));
+            }
 
+            // Nếu không có dữ liệu thì không cache
+            if (orders == null || !orders.Any()) return orders;
+
+            var cacheOptions = new DistributedCacheEntryOptions().SetAbsoluteExpiration(TimeSpan.FromHours(2));
             await _distributedCache.SetStringAsync(cacheKey, JsonConvert.SerializeObject(orders), cacheOptions);
 
             return orders;

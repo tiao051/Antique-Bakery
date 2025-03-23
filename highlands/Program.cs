@@ -1,6 +1,5 @@
 ﻿using highlands.Data;
 using highlands.Interfaces;
-using highlands.Models;
 using highlands.Repository;
 using highlands.Repository.OrderRepository;
 using highlands.Services;
@@ -98,7 +97,6 @@ services.AddAuthorization(options =>
     options.AddPolicy("Customer", policy => policy.RequireRole("3"));
 });
 
-//Đăng ký signalR
 // Đăng ký Session
 services.AddDistributedMemoryCache();
 services.AddSession(options =>
@@ -108,12 +106,14 @@ services.AddSession(options =>
     options.Cookie.IsEssential = true;
 });
 
+// Đăng ký SignalR
+builder.Services.AddSignalR();
+
 // Đăng ký MVC
 services.AddControllersWithViews();
 
 var app = builder.Build();
 
-// Middleware
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
@@ -123,5 +123,9 @@ app.UseSession();
 
 // Cấu hình route mặc định
 app.MapControllerRoute(name: "default", pattern: "{controller=Account}/{action=Index}/{id?}");
+app.UseEndpoints(endpoints =>
+{
+    endpoints.MapHub<OrderHub>("/orderHub");
+});
 
 app.Run();

@@ -12,6 +12,7 @@
     <title>Review Order</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="~/css/customer/revieworder.css?v=@DateTime.Now.Ticks">
+    <script src="/js/CustomerJS/reviewOrder.js" defer></script>
 </head>
 <body>
     <div class="container">
@@ -197,7 +198,7 @@
 </body>
 </html>
 
-<script>
+@* <script>
     document.addEventListener("click", async function (event) {
         if (event.target.classList.contains("fa-trash-alt")) {
             let quantityElement = event.target.closest(".item-detail").querySelector(".item-quantity");
@@ -417,4 +418,4 @@
              updateTotal();
      });
 
-</script>
+</script> *@

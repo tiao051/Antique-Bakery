@@ -8,8 +8,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Antique Cafe - Admin Dashboard</title>
     <link rel="stylesheet" href="~/css/admin/adminView.css?v=@DateTime.Now.Ticks">
-    <!-- Adding Font Awesome for icons -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/js/all.min.js"></script>
+    <script src="/js/AdminJS/admin.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.0/signalr.min.js"></script>
 </head>
 <body>
     <!-- Sidebar -->
@@ -172,43 +173,13 @@
                         <thead>
                             <tr>
                                 <th>Order ID</th>
-                                <th>Email</th>
+                                <th>Customer ID</th>
                                 <th>Amount</th>
                                 <th>Order Date</th>
                                 <th>Status</th>
                             </tr>
                         </thead>
-                        <tbody id="admin-table-body">
-                            <tr>
-                                <td>#ORD-2305</td>
-                                <td>123123</td>
-                                <td>$32.50</td>
-                                <td><span class="status status-completed">Completed</span></td>
-                            </tr>
-                            <tr>
-                                <td>#ORD-2304</td>
-                                <td>Alice Johnson</td>
-                                <td>$18.00</td>
-                                <td><span class="status status-pending">Pending</span></td>
-                            </tr>
-                            <tr>
-                                <td>#ORD-2303</td>
-                                <td>Robert Williams</td>
-                                <td>$24.75</td>
-                                <td><span class="status status-completed">Completed</span></td>
-                            </tr>
-                            <tr>
-                                <td>#ORD-2302</td>
-                                <td>Emma Brown</td>
-                                <td>$42.20</td>
-                                <td><span class="status status-cancelled">Cancelled</span></td>
-                            </tr>
-                            <tr>
-                                <td>#ORD-2301</td>
-                                <td>Michael Davis</td>
-                                <td>$15.50</td>
-                                <td><span class="status status-completed">Completed</span></td>
-                            </tr>
+                        <tbody id="admin-table-body">                          
                         </tbody>
                     </table>
                 </div>
@@ -428,51 +399,6 @@
             </div>
         </div>
     </div>
-<script>
-    document.addEventListener("DOMContentLoaded", function () {
-        getCustomerOrder();
-    });
-
-    function getCustomerOrder() {
-        fetch('/api/AdminApi/getOrder')
-            .then(response => response.json())
-            .then(data => {
-                const tableBody = document.getElementById('admin-table-body');
-                tableBody.innerHTML = "";
-
-                data.forEach(order => {
-                    const row = document.createElement('tr');
-                    row.classList.add("table-row"); 
-
-                    let statusClass = "";
-                    switch (order.status.toLowerCase()) {
-                        case "completed":
-                            statusClass = "status-completed";
-                            break;
-                        case "pending":
-                            statusClass = "status-pending";
-                            break;
-                        case "cancelled":
-                            statusClass = "status-cancelled";
-                            break;
-                        default:
-                            statusClass = "status-unknown"; 
-                    }
-
-                    row.innerHTML = `
-                        <td>#USR-${order.id}</td>
-                        <td>${order.email}</td>
-                        <td>$${order.amount.toLocaleString()}</td>
-                        <td>${order.orderDate}</td>
-                        <td><span class="status ${statusClass}">${order.status}</span></td>
-                    `;
-
-                    tableBody.appendChild(row);
-                });
-            })
-            .catch(error => console.error('Error:', error));
-    }
-</script>
 </body>
 </html>
 
