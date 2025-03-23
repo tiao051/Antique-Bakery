@@ -6,9 +6,7 @@ using Microsoft.Extensions.Caching.Distributed;
 using Newtonsoft.Json;
 using System.Diagnostics;
 using System.Data;
-using Microsoft.CodeAnalysis.Elfie.Model.Map;
-using System.Drawing;
-using Microsoft.AspNetCore.Mvc;
+using highlands.Interfaces;
 
 namespace highlands.Repository
 {

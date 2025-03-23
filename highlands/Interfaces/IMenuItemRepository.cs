@@ -1,7 +1,7 @@
 ﻿using highlands.Models;
 using highlands.Models.DTO;
 
-namespace highlands.Repository
+namespace highlands.Interfaces
 {
     public interface IMenuItemRepository
     {
@@ -9,7 +9,6 @@ namespace highlands.Repository
         Task<List<SubcategoryDTO>> GetSubcategoriesAsync();
         Task<List<MenuItem>> GetMenuItemsBySubcategoryAsync(string subcategory);
         Task<bool> CreateCustomerAsync(Customer customer);
-        //Task<List<RecipeWithIngredientDetail>> GetIngredientsBySizeAsync(string itemName, string size);
         Task<(MenuItem?, List<MenuItemPrice>, List<RecipeWithIngredientDetail>)>
             GetItemDetailsAsync(string subcategory, string itemName, string size);
         Task<decimal?> GetPriceAsync(string itemName, string size);

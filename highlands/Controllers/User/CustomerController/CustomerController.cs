@@ -10,8 +10,9 @@ using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using System.IdentityModel.Tokens.Jwt;
+using highlands.Interfaces;
 
-namespace highlands.Controllers.User
+namespace highlands.Controllers.User.CustomerController
 {
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "Customer")]
     public class CustomerController : Controller
@@ -419,7 +420,7 @@ namespace highlands.Controllers.User
             HttpContext.Session.SetString("Tax", cartData.Tax);
             HttpContext.Session.SetString("Total", cartData.Total);
             HttpContext.Session.SetString("TotalQuantity", cartData.TotalQuantity);
-            HttpContext.Session.SetString("SubscribeEmails", cartData.SubscribeEmails.ToString()); 
+            HttpContext.Session.SetString("SubscribeEmails", cartData.SubscribeEmails.ToString());
 
             return Json(new { success = true });
         }
@@ -487,7 +488,7 @@ namespace highlands.Controllers.User
                 var paymentInfo = new
                 {
                     CustomerEmail = userDetails.Email,
-                    UserName = userDetails.UserName,
+                    userDetails.UserName,
                     Time = DateTime.UtcNow
                 };
 
@@ -535,12 +536,12 @@ namespace highlands.Controllers.User
                 int orderId = await _dapperRepository.InsertOrderAsync(order);
                 Console.WriteLine($"Created order successfully for customer = {customerId}, OrderId = {orderId}");
 
-                return orderId;  
+                return orderId;
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"ERROR: {ex.Message}");
-                return -1;  
+                return -1;
             }
         }
     }
