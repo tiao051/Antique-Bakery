@@ -90,12 +90,12 @@ services.AddAuthentication(options =>
 });
 
 //Autho của jwt
-//services.AddAuthorization(options =>
-//{
-//    options.AddPolicy("Admin", policy => policy.RequireRole("1"));
-//    options.AddPolicy("Manager", policy => policy.RequireRole("2"));
-//    options.AddPolicy("Customer", policy => policy.RequireRole("3"));
-//});
+services.AddAuthorization(options =>
+{
+    options.AddPolicy("Admin", policy => policy.RequireRole("1"));
+    options.AddPolicy("Manager", policy => policy.RequireRole("2"));
+    options.AddPolicy("Customer", policy => policy.RequireRole("3"));
+});
 
 // Đăng ký Session
 services.AddDistributedMemoryCache();
@@ -126,7 +126,7 @@ app.UseEndpoints(endpoints =>
     endpoints.MapHub<OrderHub>("/orderHub");
     endpoints.MapControllerRoute(
         name: "default",
-        pattern: "{controller=Account}/{action=Index}/{id?}");
+        pattern: "{controller=Home}/{action=Index}/{id?}");
 });
 
 app.Run();

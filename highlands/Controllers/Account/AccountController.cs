@@ -11,7 +11,6 @@ using System.Text;
 using Microsoft.Extensions.Caching.Distributed;
 using Newtonsoft.Json;
 using highlands.Models.DTO;
-using highlands.Models;
 
 namespace highlands.Controllers.Account
 {
@@ -65,86 +64,6 @@ namespace highlands.Controllers.Account
         {
             return Convert.ToBase64String(Guid.NewGuid().ToByteArray());
         }
-        // Xử lý đăng nhập
-        //public async Task<IActionResult> Login(string email, string password)
-        //{
-        //    Stopwatch stopwatch = new Stopwatch();
-
-        //    // Kiểm tra Redis trước
-        //    string redisKey = $"user:role:{email}";
-        //    stopwatch.Start();
-        //    string roleData = await _distributedCache.GetStringAsync(redisKey);
-        //    stopwatch.Stop();
-
-        //    Console.WriteLine($" Kiem tra Redis - Thoi gian: {stopwatch.ElapsedMilliseconds} ms");
-
-        //    if (roleData != null)
-        //    {
-        //        Console.WriteLine("Du lieu lay tu Redis:");
-        //        Console.WriteLine(roleData);
-
-        //        dynamic roleObj = JsonConvert.DeserializeObject<dynamic>(roleData);
-        //        Console.WriteLine($"RoleId: {roleObj.RoleId}, Type: {roleObj.RoleId.GetType()}");
-
-        //        int roleId;
-        //        if (int.TryParse(roleObj.RoleId.ToString(), out roleId))
-        //        {
-        //            return RedirectByRole(roleId);
-        //        }
-        //        else
-        //        {
-        //            return BadRequest("Invalid RoleId");
-        //        }
-        //    }
-
-        //    stopwatch.Restart();
-        //    using (var connection = new SqlConnection(_connectionString))
-        //    {
-        //        connection.Open();
-        //        var query = "SELECT * FROM Users WHERE Email = @Email";
-        //        var user = connection.QuerySingleOrDefault(query, new { Email = email });
-
-        //        if (user == null)
-        //        {
-        //            TempData["ErrorMessage"] = "Email does not exist.";
-        //            return RedirectToAction("Index");
-        //        }
-        //        else if (user.Password != password)
-        //        {
-        //            TempData["ErrorMessage"] = "Password is incorrect.";
-        //            return RedirectToAction("Index");
-        //        }
-        //        stopwatch.Stop();
-        //        Console.WriteLine($"Query DB - Thoi gian: {stopwatch.ElapsedMilliseconds} ms");
-
-        //        // Tạo JWT & Refresh Token
-        //        var token = GenerateJwtToken(user.UserId, user.RoleId);
-        //        var refreshToken = GenerateRefreshToken();
-
-        //        // Lưu Role vào Redis
-        //        var roleCacheData = JsonConvert.SerializeObject(new { RoleId = user.RoleId, Permissions = "View,Edit" });
-        //        await _distributedCache.SetStringAsync(redisKey, roleCacheData, new DistributedCacheEntryOptions
-        //        {
-        //            AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(1)
-        //        });
-
-        //        // Lưu Refresh Token vào Redis
-        //        string refreshKey = $"user:refresh:{user.UserId}";
-        //        await _distributedCache.SetStringAsync(refreshKey, refreshToken, new DistributedCacheEntryOptions
-        //        {
-        //            AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(7)
-        //        });
-
-        //        // Lưu UserId vào Session
-        //        HttpContext.Session.SetInt32("UserId", (int)user.UserId);
-
-        //        // Lưu token vào Cookie
-        //        Response.Cookies.Append("jwt", token, new CookieOptions { HttpOnly = true, Secure = true });
-        //        Response.Cookies.Append("refreshToken", refreshToken, new CookieOptions { HttpOnly = true, Secure = true });
-        //        Console.WriteLine($"roleData: {roleData}");
-        //        return RedirectByRole(user.RoleId);
-        //    }
-        //}
         private async Task StoreRefreshToken(string email, string refreshToken)
         {
             string refreshKey = $"user:refresh:{email}";

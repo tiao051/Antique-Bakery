@@ -14,7 +14,7 @@ using Microsoft.AspNetCore.SignalR;
 
 namespace highlands.Controllers.User.CustomerController
 {
-    //[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "Customer")]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "Customer")]
     public class CustomerController : Controller
     {
         private readonly string _hostname;
@@ -53,10 +53,10 @@ namespace highlands.Controllers.User.CustomerController
             }
 
             var userIdClaim = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier);
-            //if (userIdClaim == null)
-            //{
-            //    return Unauthorized();
-            //}
+            if (userIdClaim == null)
+            {
+                return Unauthorized();
+            }
             var emailClaim = HttpContext.User.FindFirst(ClaimTypes.Email);
             string userId = userIdClaim.Value; // Giữ UserId ở dạng string
             Console.WriteLine($"UserIdClaim Value: {userId}");
@@ -66,10 +66,10 @@ namespace highlands.Controllers.User.CustomerController
             Console.WriteLine($"User Role: {roleClaim?.Value ?? "null"}");
 
             // Kiểm tra Role trong Token
-            //if (roleClaim == null || roleClaim.Value != "3")
-            //{
-            //    return Forbid();
-            //}
+            if (roleClaim == null || roleClaim.Value != "3")
+            {
+                return Forbid();
+            }
 
             // Đọc giỏ hàng từ Redis
             string cacheKey = $"cart:{userId}";
@@ -334,11 +334,6 @@ namespace highlands.Controllers.User.CustomerController
         public async Task<IActionResult> ReviewOrder()
         {
             int userId = HttpContext.Session.GetInt32("UserId") ?? 0;
-            if (userId == 0)
-            {
-                return RedirectToAction("Login", "Account");
-            }
-
             List<CartItemTemporary> cartItems = await _dapperRepository.GetCartItemsAsync(userId);
 
             Console.WriteLine($"[DEBUG] Cart Items trong review order: {JsonConvert.SerializeObject(cartItems)}");
