@@ -1,5 +1,6 @@
 ﻿using Dapper;
 using highlands.Models.DTO;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Distributed;
 using Newtonsoft.Json;
 using System.Data;
@@ -69,6 +70,18 @@ namespace highlands.Repository.OrderRepository
             await _distributedCache.SetStringAsync(cacheKey, JsonConvert.SerializeObject(orders), cacheOptions);
 
             return orders;
+        }
+        public async Task<IEnumerable<RevenueBySubCategoryDTO>> GetRevenueBySubCategory()
+        {
+            const string query = @"
+                SELECT mi.SubCategory, SUM(od.Price * od.Quantity) AS TotalRevenue
+                FROM OrderDetail od
+                JOIN MenuItem mi ON od.ItemName = mi.ItemName
+                GROUP BY mi.SubCategory
+                ORDER BY TotalRevenue DESC;";
+
+            var result = await _connection.QueryAsync<RevenueBySubCategoryDTO>(query);
+            return result;
         }
     }
 }

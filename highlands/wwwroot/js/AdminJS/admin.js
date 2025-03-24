@@ -1,8 +1,11 @@
 ﻿document.addEventListener("DOMContentLoaded", function () {
+    console.log("DOM fully loaded. Calling functions...");
     try {
         getAuthHeaders();
         getCustomerOrder();
         getRealtimeOrders();
+        console.log("Calling getCustomerOrderDetail...");
+        getCustomerOrderDetail();
     } catch (error) {
         alert(error.message);
     }
@@ -98,4 +101,29 @@ function getCustomerOrder() {
         console.error('Error:', error);
         alert("Error fetching orders: " + error.message);
     });
+}
+
+async function getCustomerOrderDetail() {
+    try {
+        const response = await fetch('/api/AdminApi/getOrderDetail', {
+            method: 'GET',
+            headers: getAuthHeaders()
+        });
+
+        if (response.status === 403) {
+            throw new Error("You don't have permission to access this resource.");
+        } else if (response.status === 401) {
+            throw new Error("Your session has expired. Please log in again.");
+        } else if (!response.ok) {
+            const errorMessage = await response.text();
+            throw new Error(`Error: ${errorMessage}`);
+        }
+
+        const orderDetail = await response.json();
+        console.table(orderDetail);
+
+    } catch (error) {
+        console.error("Failed to fetch order details:", error);
+        alert(error.message);
+    }
 }

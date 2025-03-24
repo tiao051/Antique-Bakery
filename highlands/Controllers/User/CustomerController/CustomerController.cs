@@ -476,7 +476,14 @@ namespace highlands.Controllers.User.CustomerController
                 {
                     return StatusCode(500, "Failed to create order");
                 }
-                Console.WriteLine($"Order created successfully: orderId={orderId}");
+
+                //await _distributedCache.SetStringAsync("latest_order", orderId.ToString(),
+                //    new DistributedCacheEntryOptions
+                //    {
+                //        AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(30)
+                //    }
+                //);
+                Console.WriteLine($"[DEBUG] Order created successfully: orderId={orderId}");
 
                 // Nếu user không đăng ký nhận email => Trả về luôn
                 if (!subscribeEmails)
@@ -539,7 +546,11 @@ namespace highlands.Controllers.User.CustomerController
                 //    AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10)
                 //});
 
-                return Ok("Thanh toán thành công và email xác nhận đã được gửi.");
+                return Ok(new
+                {
+                    Message = "Thanh toán thành công và email xác nhận đã được gửi.",
+                    OrderId = orderId
+                });
             }
             catch (Exception ex)
             {
