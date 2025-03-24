@@ -1,5 +1,6 @@
 ﻿using highlands.Models;
 using highlands.Models.DTO;
+using System.Data;
 
 namespace highlands.Interfaces
 {
@@ -19,7 +20,11 @@ namespace highlands.Interfaces
         Task<bool> AddToCartAsync(int userId, string itemName, string size, decimal price, int quantity, string itemImg);
         Task<bool> IncreaseCartItem(int userId, string itemName, string itemSize);
         Task<CustomerDetailsForEmail?> GetCustomerDetailsAsync(int userId);
-        Task<List<RecipeWithIngredientDetail>> GetIngredientsBySizeAsync(string itemName, string size);
+        Task<List<RecipeWithIngredientDetail>> GetIngredientsBySizeAsync(string itemName, string size);      
+        void BeginTransaction();
+        void CommitTransaction();
+        void RollbackTransaction();
         Task<int> InsertOrderAsync(Order order);
+        Task InsertOrderDetailAsync(OrderDetail detail);
     }
 }

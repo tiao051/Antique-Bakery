@@ -11,6 +11,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/js/all.min.js"></script>
     <script src="/js/AdminJS/admin.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.0/signalr.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.js">
+    </script>
 </head>
 <body>
     <!-- Sidebar -->
@@ -158,9 +160,7 @@
                         </div>
                     </div>
                     <div class="chart">
-                        <div class="placeholder-chart">
-                            <img src="/api/placeholder/600/300" alt="Revenue Chart Placeholder" />
-                        </div>
+                        <canvas id="revenueChart" class="placeholder-chart"></canvas>
                     </div>
                 </div>
 

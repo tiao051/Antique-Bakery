@@ -130,8 +130,6 @@ namespace highlands.Controllers.Account
                 {
                     Console.WriteLine("No cache found, fetching from DB");
                     (userId, roleId) = await FetchUserFromDB(request.Email, request.Password, connection, redisKey);
-
-                    Console.WriteLine($"Generating JWT for UserId: {userId}, RoleId: {roleId}");
                 }
             }
 

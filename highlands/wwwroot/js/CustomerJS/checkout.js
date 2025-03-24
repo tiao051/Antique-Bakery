@@ -6,13 +6,13 @@ async function payNow() {
         const totalPaymentElement = document.querySelector('.total-row span:last-child');
         let totalAmount = parseFloat(totalPaymentElement.textContent.replace('$', '')) || 0;
 
-        console.log("🔹 Tổng tiền gửi lên server:", totalAmount);
+        console.log("Tổng tiền gửi lên server:", totalAmount);
         // Gửi request để lấy userId từ server
         let userResponse = await fetch("/Customer/GetUserId");
         let userData = await userResponse.json();
 
         if (!userData.success || !userData.userId || isNaN(userData.userId) || userData.userId <= 0) {
-            alert("❌ Không thể lấy userId! Vui lòng đăng nhập lại.");
+            alert("Không thể lấy userId! Vui lòng đăng nhập lại.");
             return;
         }
 

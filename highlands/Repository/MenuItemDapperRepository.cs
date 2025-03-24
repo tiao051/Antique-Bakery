@@ -7,6 +7,7 @@ using Newtonsoft.Json;
 using System.Diagnostics;
 using System.Data;
 using highlands.Interfaces;
+using Microsoft.AspNetCore.Mvc;
 
 namespace highlands.Repository
 {
@@ -14,12 +15,33 @@ namespace highlands.Repository
     {
         private readonly IDbConnection _connection;
         private readonly IDistributedCache _distributedCache;
-
+        private IDbTransaction _transaction;
         public MenuItemDapperRepository(IDbConnection connection, IDistributedCache distributedCache)
         {
             _connection = connection;
             _distributedCache = distributedCache;
         }
+        public void BeginTransaction()
+        {
+            if (_connection.State != ConnectionState.Open)
+            {
+                _connection.Open();
+            }
+            _transaction = _connection.BeginTransaction();
+        }
+
+        public void CommitTransaction()
+        {
+            _transaction?.Commit();
+            _transaction = null;
+        }
+
+        public void RollbackTransaction()
+        {
+            _transaction?.Rollback();
+            _transaction = null;
+        }
+
         private string GetCacheKey(int userId) => $"cart:{userId}";
         public Task<List<MenuItem>> GetAllMenuItemsAsync()
         {
@@ -148,11 +170,11 @@ namespace highlands.Repository
                 await _distributedCache.SetStringAsync(cacheKey, JsonConvert.SerializeObject(result), cacheOptions);
 
                 Console.WriteLine($"Cache MISS - Key: {cacheKey} (Size: {size}), Cached for: 30 minutes");
-                Console.WriteLine("Recipe List:");
-                foreach (var recipe in result)
-                {
-                    Console.WriteLine(JsonConvert.SerializeObject(recipe, Formatting.Indented));
-                }
+                //Console.WriteLine("Recipe List:");
+                //foreach (var recipe in result)
+                //{
+                //    Console.WriteLine(JsonConvert.SerializeObject(recipe, Formatting.Indented));
+                //}
 
                 return result;
             }
@@ -274,6 +296,7 @@ namespace highlands.Repository
 
             return price;
         }
+        [HttpGet]
         public async Task<List<CartItemTemporary>> GetCartItemsAsync(int userId)
         {
             string cacheKey = GetCacheKey(userId);
@@ -284,10 +307,8 @@ namespace highlands.Repository
         {
             // lấy lại giỏ hàng để lấy tổng số lượng
             var cartItems = await GetCartItemsAsync(userId);
-            Console.WriteLine($"Tong so luong trong GetTotalQuantityAsync: {cartItems}");
             return cartItems.Sum(i => i.Quantity);
         }
-
         public async Task<Dictionary<string, int>> GetSizeQuantitiesAsync(int userId)
         {
             // lấy lại giỏ hàng để group size
@@ -433,10 +454,19 @@ namespace highlands.Repository
         public async Task<int> InsertOrderAsync(Order order)
         {
             const string query = @"
-                   INSERT INTO [Order] (OrderDate, TotalAmount, Status, CustomerId)
-                   VALUES (@OrderDate, @TotalAmount, @Status, @CustomerId);
-                   SELECT CAST(SCOPE_IDENTITY() as int);";
-            return await _connection.ExecuteScalarAsync<int>(query, order);
+            INSERT INTO [Order] (OrderDate, TotalAmount, Status, CustomerId)
+            VALUES (@OrderDate, @TotalAmount, @Status, @CustomerId);
+            SELECT CAST(SCOPE_IDENTITY() as int);";
+
+            return await _connection.ExecuteScalarAsync<int>(query, order, _transaction);
+        }
+        public async Task InsertOrderDetailAsync(OrderDetail detail)
+        {
+            const string query = @"
+            INSERT INTO OrderDetail (OrderId, ItemName, Quantity, Price, Size)
+            VALUES (@OrderId, @ItemName, @Quantity, @Price, @Size);";
+
+            await _connection.ExecuteAsync(query, detail, _transaction);
         }
     }
 }

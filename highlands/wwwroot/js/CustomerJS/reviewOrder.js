@@ -178,7 +178,7 @@ function sendCartDataToServerAndRedirect() {
     })
         .then(response => response.json())
         .then(data => {
-            console.log("[DEBUG] Server response:", data); // Check phản hồi server
+            console.log("[DEBUG] Server response:", data);
             if (data.success) {
                 window.location.href = "/Customer/Checkout";
             }

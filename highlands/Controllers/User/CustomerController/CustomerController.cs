@@ -270,8 +270,6 @@ namespace highlands.Controllers.User.CustomerController
 
             return Json(new { success = true, userId });
         }
-
-
         // lấy giá về để phản hồi cho js
         [HttpGet]
         public async Task<IActionResult> GetPrice(string itemName, string size)
@@ -345,21 +343,31 @@ namespace highlands.Controllers.User.CustomerController
         {
             Console.WriteLine($"[DEBUG] Received request: userId={userId}, itemName={itemName}, itemSize={itemSize}");
             bool success = await _dapperRepository.RemoveCartItemAsync(userId, itemName, itemSize);
+
+            // Xóa cache cũ
+            string cacheKey = $"cart_{userId}";
+            await _distributedCache.RemoveAsync(cacheKey);
+
+            // Lấy giỏ hàng mới từ DB
             var cart = await _dapperRepository.GetCartItemsAsync(userId);
-            Console.WriteLine($"[DEBUG] Cart after delete/remove: {JsonConvert.SerializeObject(cart)}");
+
+            // Cập nhật lại cache với dữ liệu mới
+            string cartJson = JsonConvert.SerializeObject(cart);
+            await _distributedCache.SetStringAsync(cacheKey, cartJson, new DistributedCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(30)
+            });
+
+            Console.WriteLine($"[DEBUG] Cart after delete/remove: {cartJson}");
 
             // Chuẩn hóa size
             Dictionary<string, string> sizeMapping = new Dictionary<string, string>
-    {
-        { "Small", "S" }, { "Medium", "M" }, { "Large", "L" }
-    };
-            string normalizedSize = itemSize;
-            if (sizeMapping.ContainsKey(itemSize))
             {
-                normalizedSize = sizeMapping[itemSize];
-            }
+                { "Small", "S" }, { "Medium", "M" }, { "Large", "L" }
+            };
+            string normalizedSize = sizeMapping.ContainsKey(itemSize) ? sizeMapping[itemSize] : itemSize;
 
-            // Tìm kiếm item dựa trên cả tên và size
+            // Tìm kiếm item trong giỏ hàng
             var updatedItem = cart.FirstOrDefault(i =>
                 i.ItemName.Trim().ToLower() == itemName.Trim().ToLower() &&
                 i.Size == normalizedSize);
@@ -377,21 +385,31 @@ namespace highlands.Controllers.User.CustomerController
         {
             Console.WriteLine($"[DEBUG] Received request: userId={userId}, itemName={itemName}, itemSize={itemSize}");
             bool success = await _dapperRepository.IncreaseCartItem(userId, itemName, itemSize);
+
             if (success)
             {
+                // Xóa cache cũ
+                string cacheKey = $"cart_{userId}";
+                await _distributedCache.RemoveAsync(cacheKey);
+
+                // Lấy giỏ hàng mới từ DB
                 var cart = await _dapperRepository.GetCartItemsAsync(userId);
-                Console.WriteLine($"[DEBUG] Cart after update: {JsonConvert.SerializeObject(cart)}");
+
+                // Cập nhật lại cache
+                string cartJson = JsonConvert.SerializeObject(cart);
+                await _distributedCache.SetStringAsync(cacheKey, cartJson, new DistributedCacheEntryOptions
+                {
+                    AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(30)
+                });
+
+                Console.WriteLine($"[DEBUG] Cart after update: {cartJson}");
 
                 // Chuẩn hóa size trước khi tìm kiếm
                 Dictionary<string, string> sizeMapping = new Dictionary<string, string>
-        {
-            { "Small", "S" }, { "Medium", "M" }, { "Large", "L" }
-        };
-                string normalizedSize = itemSize;
-                if (sizeMapping.ContainsKey(itemSize))
                 {
-                    normalizedSize = sizeMapping[itemSize];
-                }
+                    { "Small", "S" }, { "Medium", "M" }, { "Large", "L" }
+                };
+                string normalizedSize = sizeMapping.ContainsKey(itemSize) ? sizeMapping[itemSize] : itemSize;
 
                 // Tìm sản phẩm dựa trên cả tên và size
                 var updatedItem = cart.FirstOrDefault(i =>
@@ -414,6 +432,7 @@ namespace highlands.Controllers.User.CustomerController
         {
             Console.WriteLine($"Subtotal: {cartData.Subtotal}, Tax: {cartData.Tax}, Total: {cartData.Total}, TotalQuantity: {cartData.TotalQuantity}, SubscribeEmails: {cartData.SubscribeEmails}");
 
+
             HttpContext.Session.SetString("Subtotal", cartData.Subtotal);
             HttpContext.Session.SetString("Tax", cartData.Tax);
             HttpContext.Session.SetString("Total", cartData.Total);
@@ -430,7 +449,17 @@ namespace highlands.Controllers.User.CustomerController
 
             int userId = request.UserID;
             decimal totalAmount = request.TotalAmount;
+            List<CartItemTemporary> cartItems = await _dapperRepository.GetCartItemsAsync(userId);
+            Console.WriteLine($"[DEBUG] Cart Items trong review order: {JsonConvert.SerializeObject(cartItems)}");
             Console.WriteLine($"[DEBUG] Received payment request: userId={userId}, totalAmount={totalAmount}");
+
+            List<OrderDetail> orderDetails = cartItems.Select(cartItem => new OrderDetail
+            {
+                ItemName = cartItem.ItemName, 
+                Size = cartItem.Size, 
+                Price = cartItem.Price,
+                Quantity = cartItem.Quantity
+            }).ToList();
 
             try
             {
@@ -442,7 +471,7 @@ namespace highlands.Controllers.User.CustomerController
                 }
                 int? customerId = userDetails.CustomerId;
                 // Gọi hàm riêng để tạo đơn hàng
-                int orderId = await CreateOrder((int)customerId, totalAmount);
+                int orderId = await CreateOrder((int)customerId, totalAmount, orderDetails);
                 if (orderId == -1)
                 {
                     return StatusCode(500, "Failed to create order");
@@ -502,7 +531,7 @@ namespace highlands.Controllers.User.CustomerController
                     basicProperties: properties,
                     body: body);
 
-                Console.WriteLine($"[✔] Sent payment message: {message}");
+                Console.WriteLine($"Sent payment message: {message}");
 
                 // Lưu vào Redis để tránh gửi lại
                 //await _distributedCache.SetStringAsync(cacheKey, "sent", new DistributedCacheEntryOptions
@@ -514,15 +543,17 @@ namespace highlands.Controllers.User.CustomerController
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[❌] Error: {ex.Message}");
+                Console.WriteLine($"Error: {ex.Message}");
                 return StatusCode(500, "Lỗi khi xử lý thanh toán.");
             }
         }
         [HttpPost]
-        public async Task<int> CreateOrder(int customerId, decimal totalAmount)
+        public async Task<int> CreateOrder(int customerId, decimal totalAmount, List<OrderDetail> orderDetails)
         {
             try
             {
+                _dapperRepository.BeginTransaction();
+
                 var order = new Order
                 {
                     OrderDate = DateTime.Now,
@@ -534,6 +565,14 @@ namespace highlands.Controllers.User.CustomerController
                 int orderId = await _dapperRepository.InsertOrderAsync(order);
                 Console.WriteLine($"Created order successfully for customer = {customerId}, OrderId = {orderId}");
 
+                foreach (var detail in orderDetails)
+                {
+                    detail.OrderId = orderId;
+                    await _dapperRepository.InsertOrderDetailAsync(detail);
+                }
+
+                _dapperRepository.CommitTransaction();
+
                 var hubContext = _hubContext.Clients.All;
                 await hubContext.SendAsync("ReceiveNewOrder");
                 Console.WriteLine("SignalR: Đã gửi tín hiệu 'ReceiveNewOrder' đến tất cả client.");
@@ -542,6 +581,7 @@ namespace highlands.Controllers.User.CustomerController
             }
             catch (Exception ex)
             {
+                _dapperRepository.RollbackTransaction();
                 Console.WriteLine($"ERROR: {ex.Message}");
                 return -1;
             }
