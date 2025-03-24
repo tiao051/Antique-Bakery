@@ -75,8 +75,8 @@ namespace highlands.Controllers.Account
 
         public async Task<IActionResult> Login([FromBody] LoginRequestDTO request)
         {
-            Console.WriteLine("🔵 Login API called");
-            Console.WriteLine($"🔹 Email: {request.Email}");
+            Console.WriteLine("Login API called");
+            Console.WriteLine($"Email: {request.Email}");
 
             string redisKey = $"user:role:{request.Email}";
             string roleData = await _distributedCache.GetStringAsync(redisKey);
@@ -87,12 +87,12 @@ namespace highlands.Controllers.Account
             using (var connection = new SqlConnection(_connectionString))
             {
                 connection.Open();
-                Console.WriteLine("✅ Database connection opened");
+                Console.WriteLine("Database connection opened");
 
                 if (roleData != null)
                 {
-                    Console.WriteLine("🔹 Found cached role data in Redis");
-                    Console.WriteLine($"🔹 Cached Data: {roleData}");
+                    Console.WriteLine("Found cached role data in Redis");
+                    Console.WriteLine($"Cached Data: {roleData}");
 
                     try
                     {
@@ -102,7 +102,7 @@ namespace highlands.Controllers.Account
                         if (int.TryParse(roleObj.RoleId.ToString(), out roleId) &&
                             roleObj.UserId != null && int.TryParse(roleObj.UserId.ToString(), out userId))
                         {
-                            Console.WriteLine($"✅ Retrieved from Redis - UserId: {userId}, RoleId: {roleId}");
+                            Console.WriteLine($"Retrieved from Redis - UserId: {userId}, RoleId: {roleId}");
 
                             // Kiểm tra password từ DB ngay cả khi có cache
                             var query = "SELECT Password FROM Users WHERE UserId = @UserId AND Email = @Email";
@@ -110,31 +110,33 @@ namespace highlands.Controllers.Account
 
                             if (user == null || user.Password != request.Password)
                             {
-                                Console.WriteLine("🔴 Invalid email or password (cached UserId)");
+                                Console.WriteLine("Invalid email or password (cached UserId)");
                                 return Unauthorized(new { message = "Invalid email or password" });
                             }
                         }
                         else
                         {
-                            Console.WriteLine("🔴 Invalid cache format, fetching from DB");
+                            Console.WriteLine("Invalid cache format, fetching from DB");
                             await FetchUserFromDB(request.Email, request.Password, connection, redisKey);
                         }
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine($"🔴 Error parsing Redis data: {ex.Message}");
+                        Console.WriteLine($"Error parsing Redis data: {ex.Message}");
                         await FetchUserFromDB(request.Email, request.Password, connection, redisKey);
                     }
                 }
                 else
                 {
-                    Console.WriteLine("🔴 No cache found, fetching from DB");
-                    await FetchUserFromDB(request.Email, request.Password, connection, redisKey);
+                    Console.WriteLine("No cache found, fetching from DB");
+                    (userId, roleId) = await FetchUserFromDB(request.Email, request.Password, connection, redisKey);
+
+                    Console.WriteLine($"Generating JWT for UserId: {userId}, RoleId: {roleId}");
                 }
             }
 
             // Đảm bảo đã có userId và roleId
-            Console.WriteLine($"✅ Generating JWT for UserId: {userId}, RoleId: {roleId}");
+            Console.WriteLine($"Generating JWT for UserId: {userId}, RoleId: {roleId}");
             var token = GenerateJwtToken(userId, request.Email, roleId);
             var refreshToken = GenerateRefreshToken();
 
@@ -156,23 +158,23 @@ namespace highlands.Controllers.Account
         }
 
         // Hàm hỗ trợ lấy User từ Database khi Redis không có hoặc bị lỗi
-        private async Task FetchUserFromDB(string email, string password, SqlConnection connection, string redisKey)
+        private async Task<(int userId, int roleId)> FetchUserFromDB(string email, string password, SqlConnection connection, string redisKey)
         {
             try
             {
-                Console.WriteLine("🔵 Querying user from database...");
+                Console.WriteLine("Querying user from database...");
                 var query = "SELECT UserId, Email, Password, RoleId FROM Users WHERE Email = @Email";
                 var user = connection.QuerySingleOrDefault(query, new { Email = email });
 
                 if (user == null || user.Password != password)
                 {
-                    Console.WriteLine("🔴 Invalid email or password (DB check)");
+                    Console.WriteLine("Invalid email or password (DB check)");
                     throw new UnauthorizedAccessException("Invalid email or password");
                 }
 
                 int userId = user.UserId;
                 int roleId = user.RoleId;
-                Console.WriteLine($"✅ Fetched from DB - UserId: {userId}, RoleId: {roleId}");
+                Console.WriteLine($"Fetched from DB - UserId: {userId}, RoleId: {roleId}");
 
                 // Cache userId và roleId vào Redis
                 var roleCacheData = JsonConvert.SerializeObject(new { UserId = userId, RoleId = roleId });
@@ -180,16 +182,23 @@ namespace highlands.Controllers.Account
                 {
                     AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(1)
                 });
-                Console.WriteLine("✅ User role cached in Redis");
+
+                var dataCached = await _distributedCache.GetStringAsync(redisKey);
+                if (!string.IsNullOrEmpty(dataCached))
+                {
+                    var data = JsonConvert.DeserializeObject<dynamic>(dataCached);
+                    Console.WriteLine($"UserId: {data.UserId}");
+                    Console.WriteLine($"RoleId: {data.RoleId}");
+                }
+
+                return (userId, roleId);
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"🔴 Error fetching user from DB: {ex.Message}");
+                Console.WriteLine($"Error fetching user from DB: {ex.Message}");
                 throw;
             }
         }
-
-
         [HttpPost]
         public IActionResult Register(string name, string email, string password)
         {

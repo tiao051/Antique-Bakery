@@ -1,10 +1,8 @@
 ﻿using Dapper;
-using highlands.Models;
 using highlands.Models.DTO;
 using Microsoft.Extensions.Caching.Distributed;
 using Newtonsoft.Json;
 using System.Data;
-using System.Data.SqlClient;
 
 namespace highlands.Repository.OrderRepository
 {

@@ -1,5 +1,4 @@
 {
-  // cái nút add items ở trang review order không hoạt động
   // chưa bắt buộc customer phải chọn in store hoặc drive-thru (vấn đề là cái in store thì phải sửa lại layout checkout)
   // chưa giải quyết được cái nút edit item (nặng)
   // chưa giải quyết được phần pickup store

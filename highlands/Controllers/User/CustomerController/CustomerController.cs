@@ -447,7 +447,7 @@ namespace highlands.Controllers.User.CustomerController
                 {
                     return StatusCode(500, "Failed to create order");
                 }
-                Console.WriteLine($"[✔] Order created successfully: orderId={orderId}");
+                Console.WriteLine($"Order created successfully: orderId={orderId}");
 
                 // Nếu user không đăng ký nhận email => Trả về luôn
                 if (!subscribeEmails)
