@@ -73,15 +73,59 @@ namespace highlands.Repository.OrderRepository
         }
         public async Task<IEnumerable<RevenueBySubCategoryDTO>> GetRevenueBySubCategory()
         {
-            const string query = @"
-                SELECT mi.SubCategory, SUM(od.Price * od.Quantity) AS TotalRevenue
-                FROM OrderDetail od
-                JOIN MenuItem mi ON od.ItemName = mi.ItemName
-                GROUP BY mi.SubCategory
-                ORDER BY TotalRevenue DESC;";
+            const string cacheKey = "revenue_by_subcategory";
+            const string timestampKey = "revenue_last_updated";
 
-            var result = await _connection.QueryAsync<RevenueBySubCategoryDTO>(query);
-            return result;
+            // Lấy dữ liệu từ cache
+            var cachedData = await _distributedCache.GetStringAsync(cacheKey);
+            var lastUpdatedStr = await _distributedCache.GetStringAsync(timestampKey);
+
+            DateTime lastUpdated = string.IsNullOrEmpty(lastUpdatedStr)
+                ? new DateTime(1753, 1, 1) // Giá trị mặc định rất xa nếu cache rỗng
+                : DateTime.Parse(lastUpdatedStr);
+
+            Console.WriteLine($"LastUpdatedStr từ cache: {lastUpdatedStr}");
+            Console.WriteLine($"LastUpdated sau khi parse: {lastUpdated}");
+
+            // Query lấy dữ liệu mới
+            const string query = @"
+            SELECT mi.SubCategory, SUM(od.Price * od.Quantity) AS TotalRevenue
+            FROM OrderDetail od
+            JOIN MenuItem mi ON od.ItemName = mi.ItemName
+            JOIN [Order] o ON od.OrderId = o.OrderId
+            WHERE o.OrderDate > @LastUpdated
+            GROUP BY mi.SubCategory
+            ORDER BY TotalRevenue DESC;";
+
+            var newData = await _connection.QueryAsync<RevenueBySubCategoryDTO>(query, new { LastUpdated = lastUpdated });
+
+            Console.WriteLine("Dữ liệu mới từ DB:");
+            foreach (var item in newData)
+            {
+                Console.WriteLine($"- {item.SubCategory}: {item.TotalRevenue}");
+            }
+
+            //Lấy OrderDate mới nhất để cập nhật cache
+            const string maxDateQuery = @"SELECT MAX(OrderDate) FROM [Order];";
+            var latestOrderDate = await _connection.ExecuteScalarAsync<DateTime?>(maxDateQuery) ?? lastUpdated;
+
+            Console.WriteLine($"MAX(OrderDate) từ DB: {latestOrderDate}");
+
+            // Nếu có dữ liệu mới, cập nhật lại cache
+            if (newData.Any())
+            {
+                await _distributedCache.SetStringAsync(cacheKey, JsonConvert.SerializeObject(newData));
+                await _distributedCache.SetStringAsync(timestampKey, latestOrderDate.ToString("o")); // Format ISO 8601
+
+                Console.WriteLine("Cache đã được cập nhật!");
+            }
+            else
+            {
+                Console.WriteLine("Không có dữ liệu mới, cache không thay đổi.");
+            }
+
+            return newData;
         }
+
     }
 }
