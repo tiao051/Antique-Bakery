@@ -98,7 +98,21 @@ namespace highlands.Repository.OrderRepository
             ORDER BY TotalRevenue DESC;";
 
             var newData = await _connection.QueryAsync<RevenueBySubCategoryDTO>(query, new { LastUpdated = lastUpdated });
-
+            const string query = @"
+            SELECT mi.SubCategory, SUM(od.Price * od.Quantity) AS TotalRevenue
+            FROM OrderDetail od
+            JOIN MenuItem mi ON od.ItemName = mi.ItemName
+            JOIN [Order] o ON od.OrderId = o.OrderId
+            WHERE o.OrderDate > @LastUpdated
+            GROUP BY mi.SubCategory
+            ORDER BY TotalRevenue DESC;"; const string query = @"
+            SELECT mi.SubCategory, SUM(od.Price * od.Quantity) AS TotalRevenue
+            FROM OrderDetail od
+            JOIN MenuItem mi ON od.ItemName = mi.ItemName
+            JOIN [Order] o ON od.OrderId = o.OrderId
+            WHERE o.OrderDate > @LastUpdated
+            GROUP BY mi.SubCategory
+            ORDER BY TotalRevenue DESC;";
             Console.WriteLine("Dữ liệu mới từ DB:");
             foreach (var item in newData)
             {
