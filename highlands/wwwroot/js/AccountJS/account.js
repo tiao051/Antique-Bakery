@@ -32,8 +32,8 @@ loginForm.addEventListener("submit", async function (e) {
         }
 
         const result = await response.json();
-        localStorage.setItem("accessToken", result.accessToken);
-        localStorage.setItem("refreshToken", result.refreshToken);
+        //localStorage.setItem("accessToken", result.accessToken);
+        //localStorage.setItem("refreshToken", result.refreshToken);
 
         const roleRedirects = {
             1: "/Admin/Index",

@@ -134,10 +134,10 @@ function updateTotal() {
         headerElement.textContent = `Guest checkout (${totalQuantity})`;
     }
     // luu vao localstorage
-    localStorage.setItem("subtotal", subtotal.toFixed(2));
-    localStorage.setItem("tax", tax.toFixed(2));
-    localStorage.setItem("total", total.toFixed(2));
-    localStorage.setItem("totalQuantity", totalQuantity);
+    sessionStorage.setItem("subtotal", subtotal.toFixed(2));
+    sessionStorage.setItem("tax", tax.toFixed(2));
+    sessionStorage.setItem("total", total.toFixed(2));
+    sessionStorage.setItem("totalQuantity", totalQuantity);
 }
 // Function to show empty cart view
 function showEmptyCartView() {
@@ -158,10 +158,10 @@ function showEmptyCartView() {
     rightPanel.innerHTML = emptyCartHTML;
 }
 function sendCartDataToServerAndRedirect() {
-    let subtotal = localStorage.getItem("subtotal") || "0.00";
-    let tax = localStorage.getItem("tax") || "0.00";
-    let total = localStorage.getItem("total") || "0.00";
-    let totalQuantity = localStorage.getItem("totalQuantity") || "0";
+    let subtotal = sessionStorage.getItem("subtotal") || "0.00";
+    let tax = sessionStorage.getItem("tax") || "0.00";
+    let total = sessionStorage.getItem("total") || "0.00";
+    let totalQuantity = sessionStorage.getItem("totalQuantity") || "0";
     let checkbox = document.getElementById("subscribeEmails");
     if (!checkbox) {
         console.error("[ERROR] Checkbox không tồn tại!");
