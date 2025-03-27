@@ -1,6 +1,5 @@
 ﻿using Dapper;
 using highlands.Models.DTO;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Distributed;
 using Newtonsoft.Json;
 using System.Data;
@@ -89,11 +88,10 @@ namespace highlands.Repository.OrderRepository
 
             // Query lấy dữ liệu mới
             const string query = @"
-            SELECT mi.SubCategory, SUM(od.Price * od.Quantity) AS TotalRevenue
+            SELECT TOP 5 mi.SubCategory, SUM(od.Price * od.Quantity) AS TotalRevenue
             FROM OrderDetail od
             JOIN MenuItem mi ON od.ItemName = mi.ItemName
             JOIN [Order] o ON od.OrderId = o.OrderId
-            WHERE o.OrderDate > @LastUpdated
             GROUP BY mi.SubCategory
             ORDER BY TotalRevenue DESC;";
 
@@ -126,6 +124,5 @@ namespace highlands.Repository.OrderRepository
 
             return newData;
         }
-
     }
 }

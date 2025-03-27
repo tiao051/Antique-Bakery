@@ -4,7 +4,6 @@
         getAuthHeaders();
         getCustomerOrder();
         getRealtimeOrders();
-        console.log("Calling getCustomerOrderDetail...");
         getCustomerOrderDetail();
     } catch (error) {
         alert(error.message);
@@ -110,17 +109,60 @@ async function getCustomerOrderDetail() {
             headers: getAuthHeaders()
         });
 
-        if (response.status === 403) {
-            throw new Error("You don't have permission to access this resource.");
-        } else if (response.status === 401) {
-            throw new Error("Your session has expired. Please log in again.");
-        } else if (!response.ok) {
-            const errorMessage = await response.text();
-            throw new Error(`Error: ${errorMessage}`);
+        if (!response.ok) {
+            throw new Error(`Error: ${response.statusText}`);
         }
 
-        const orderDetail = await response.json();
-        console.table(orderDetail);
+        const orderDetail = await response.json(); // Lấy dữ liệu từ API
+
+        // 🟢 Lấy danh sách subCategory và totalRevenue từ dữ liệu API
+        const labels = orderDetail.map(item => item.subCategory);
+        const dataValues = orderDetail.map(item => item.totalRevenue);
+
+        // 🟢 Lấy canvas và vẽ biểu đồ
+        const ctx = document.getElementById('revenueChart').getContext('2d');
+        window.revenueChart = new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Total Revenue',
+                    data: dataValues,
+                    backgroundColor: [
+                        "#00BFFF", 
+                        "#FFD700", 
+                        "#8B4513", 
+                        "#228B22",
+                        "#D2691E"  
+                    ],
+                    borderColor: "#fff",
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                layout: {
+                    padding: {
+                        left: 50, 
+                        right: 50
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: "right", 
+                        labels: {
+                            padding: 20,
+                            boxWidth: 20,
+                            font: {
+                                size: 14
+                            }
+                        }
+                    }
+                }
+            }
+        });
 
     } catch (error) {
         console.error("Failed to fetch order details:", error);
