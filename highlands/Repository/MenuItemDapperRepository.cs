@@ -195,9 +195,9 @@ namespace highlands.Repository
                 return JsonConvert.DeserializeObject<List<SubcategoryDTO>>(cachedData);
             }
             string query = @"
-        SELECT DISTINCT Category, Subcategory, SubcategoryImg
-        FROM MenuItem
-        ORDER BY Category, Subcategory";
+                SELECT DISTINCT Category, Subcategory, SubcategoryImg
+                FROM MenuItem
+                ORDER BY Category, Subcategory";
 
             var subcategories = await _connection.QueryAsync<SubcategoryDTO>(query);
             var result = subcategories.ToList();
@@ -221,17 +221,17 @@ namespace highlands.Repository
 
             // Cập nhật trước, nếu không có thì thêm mới
             string updateSql = @"
-    UPDATE Customer
-    SET FullName = @FullName, Phone = @Phone, Address = @Address, Message = @Message
-    WHERE UserId = @UserId";
+                UPDATE Customer
+                SET FullName = @FullName, Phone = @Phone, Address = @Address, Message = @Message
+                WHERE UserId = @UserId";
 
             int rowsAffected = await _connection.ExecuteAsync(updateSql, customer);
 
             if (rowsAffected == 0)
             {
                 string insertSql = @"
-        INSERT INTO Customer (FullName, Phone, Address, Message, UserId)
-        VALUES (@FullName, @Phone, @Address, @Message, @UserId)";
+                    INSERT INTO Customer (FullName, Phone, Address, Message, UserId)
+                    VALUES (@FullName, @Phone, @Address, @Message, @UserId)";
 
                 rowsAffected = await _connection.ExecuteAsync(insertSql, customer);
             }
@@ -427,10 +427,10 @@ namespace highlands.Repository
 
             // Truy vấn database
             string query = @"
-                        SELECT u.UserId, u.UserName, u.Email, c.CustomerId
-                        FROM Users u
-                        LEFT JOIN Customer c ON u.UserId = c.UserId
-                        WHERE u.UserId = @userId";
+                SELECT u.UserId, u.UserName, u.Email, c.CustomerId
+                FROM Users u
+                LEFT JOIN Customer c ON u.UserId = c.UserId
+                WHERE u.UserId = @userId";
             var customer = await _connection.QueryFirstOrDefaultAsync<CustomerDetailsForEmail>(query, new { userId });
 
             if (customer != null)
@@ -442,11 +442,11 @@ namespace highlands.Repository
                 {
                     AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(1)
                 });
-                Console.WriteLine($"[✔] Luu user {userId} vao cache.");
+                Console.WriteLine($"Luu user {userId} vao cache.");
             }
             else
             {
-                Console.WriteLine($"[❌] Không tìm thấy userId={userId} trong database.");
+                Console.WriteLine($"Không tìm thấy userId={userId} trong database.");
             }
 
             return customer;
@@ -454,17 +454,17 @@ namespace highlands.Repository
         public async Task<int> InsertOrderAsync(Order order)
         {
             const string query = @"
-            INSERT INTO [Order] (OrderDate, TotalAmount, Status, CustomerId)
-            VALUES (@OrderDate, @TotalAmount, @Status, @CustomerId);
-            SELECT CAST(SCOPE_IDENTITY() as int);";
+                INSERT INTO [Order] (OrderDate, TotalAmount, Status, CustomerId)
+                VALUES (@OrderDate, @TotalAmount, @Status, @CustomerId);
+                SELECT CAST(SCOPE_IDENTITY() as int);";
 
             return await _connection.ExecuteScalarAsync<int>(query, order, _transaction);
         }
         public async Task InsertOrderDetailAsync(OrderDetail detail)
         {
             const string query = @"
-            INSERT INTO OrderDetail (OrderId, ItemName, Quantity, Price, Size)
-            VALUES (@OrderId, @ItemName, @Quantity, @Price, @Size);";
+                INSERT INTO OrderDetail (OrderId, ItemName, Quantity, Price, Size)
+                VALUES (@OrderId, @ItemName, @Quantity, @Price, @Size);";
 
             await _connection.ExecuteAsync(query, detail, _transaction);
         }

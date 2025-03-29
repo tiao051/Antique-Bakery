@@ -24,16 +24,22 @@ namespace highlands.Controllers.User.Admin
             var orders = await _orderRepository.GetOrderAsync();
             return Ok(orders);
         }
-        [HttpGet("getOrderDetail")]
-        public async Task<IActionResult> GetOrderDetail()
+        [HttpGet("getOrderDetail/{timeFrame}")]
+        public async Task<IActionResult> GetOrderDetail(string timeFrame)
         {
-            //string orderIdStr = await _distributedCache.GetStringAsync("latest_order");
-            //if (string.IsNullOrEmpty(orderIdStr)) return NotFound("Không tìm thấy đơn hàng gần đây.");
+            if (!new[] { "day", "week", "month", "year" }.Contains(timeFrame.ToLower()))
+            {
+                return BadRequest("Invalid time frame. Use 'day', 'week', 'month', or 'year'.");
+            }
 
-            //int orderId = int.Parse(orderIdStr);
-            //Console.WriteLine($"OrderId trong GetOrderDetail: {orderId}");
-            var orderDetail = await _orderRepository.GetRevenueBySubCategory();
-            return Ok(orderDetail);
+            var data = await _orderRepository.GetRevenueBySubCategory(timeFrame.ToLower());
+            return Ok(data);
+        }
+        [HttpGet("getMonthDetail")]
+        public async Task<IActionResult> GetTotalByMonth()
+        {
+            var data = await _orderRepository.GetRevenueAndTotalOrdersByMonth();
+            return Ok(data);
         }
     }
 }
