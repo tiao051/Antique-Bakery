@@ -663,6 +663,14 @@ body {
 .store-container:hover i {
     transform: rotate(180deg) scale(1.5);
 }
+.option-button:hover {
+    background-color: #f0f0f0;
+}
+    .option-button.active .option-icon {
+        stroke: white;
+        transform: rotate(360deg); 
+        transition: stroke 0.3s ease-in-out, transform 0.5s ease-in-out;
+    }
 
 @keyframes shake {
 
@@ -708,3 +716,4 @@ body {
         opacity: 1;
     }
 }
+

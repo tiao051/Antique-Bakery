@@ -430,14 +430,20 @@ namespace highlands.Controllers.User.CustomerController
         [HttpPost]
         public IActionResult SaveCartData([FromBody] CheckoutDataViewModel cartData)
         {
-            Console.WriteLine($"Subtotal: {cartData.Subtotal}, Tax: {cartData.Tax}, Total: {cartData.Total}, TotalQuantity: {cartData.TotalQuantity}, SubscribeEmails: {cartData.SubscribeEmails}");
+            if (cartData == null)
+            {
+                Console.WriteLine("[ERROR] cartData is null");
+                return BadRequest(new { success = false, message = "Invalid cart data" });
+            }
 
+            Console.WriteLine($"Subtotal: {cartData.Subtotal}, Tax: {cartData.Tax}, Total: {cartData.Total}, TotalQuantity: {cartData.TotalQuantity}, SubscribeEmails: {cartData.SubscribeEmails}, deliveryMethod: {cartData.deliveryMethod}");
 
             HttpContext.Session.SetString("Subtotal", cartData.Subtotal);
             HttpContext.Session.SetString("Tax", cartData.Tax);
             HttpContext.Session.SetString("Total", cartData.Total);
             HttpContext.Session.SetString("TotalQuantity", cartData.TotalQuantity);
             HttpContext.Session.SetString("SubscribeEmails", cartData.SubscribeEmails.ToString());
+            HttpContext.Session.SetString("DeliveryMethod", cartData.deliveryMethod.ToString());
 
             return Json(new { success = true });
         }

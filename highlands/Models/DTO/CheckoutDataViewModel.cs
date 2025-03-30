@@ -7,5 +7,6 @@
         public string Total { get; set; }
         public string TotalQuantity { get; set; }
         public bool SubscribeEmails { get; set; }
+        public string deliveryMethod {  get; set; }
     }
 }

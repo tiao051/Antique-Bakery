@@ -9,6 +9,7 @@
 
 document.addEventListener("DOMContentLoaded", function () {
     initializeOptionButtons();
+    loadDeliveryMethod()
     updateTotal();
 });
 
@@ -151,18 +152,23 @@ function showEmptyCartView() {
     }
 }
 
-
 function sendCartDataToServerAndRedirect() {
     let subtotal = sessionStorage.getItem("subtotal") || "0.00";
     let tax = sessionStorage.getItem("tax") || "0.00";
     let total = sessionStorage.getItem("total") || "0.00";
     let totalQuantity = sessionStorage.getItem("totalQuantity") || "0";
     let subscribeEmails = document.getElementById("subscribeEmails")?.checked || false;
+    let deliveryMethod = sessionStorage.getItem("deliveryMethod") || null;
 
+    if (!deliveryMethod) {
+        alert("Please select a delivery method before proceeding.");
+        return;
+    }
+    
     fetch("/Customer/SaveCartData", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ subtotal, tax, total, totalQuantity, subscribeEmails })
+        body: JSON.stringify({ subtotal, tax, total, totalQuantity, subscribeEmails, deliveryMethod})
     })
         .then(response => response.json())
         .then(data => {
@@ -173,6 +179,25 @@ function sendCartDataToServerAndRedirect() {
         .catch(error => console.error("[ERROR]", error));
 }
 
+function setDeliveryMethod(method, button) {
+    sessionStorage.setItem("deliveryMethod", method);
+    document.querySelectorAll(".option-button").forEach(btn => btn.classList.remove("active"));
+    button.classList.add("active");
+
+    console.log(`[DEBUG] Selected delivery method: ${method}`);
+}
+
+function loadDeliveryMethod() {
+    let savedMethod = sessionStorage.getItem("deliveryMethod");
+    if (savedMethod) {
+        let buttons = document.querySelectorAll(".option-button");
+        buttons.forEach(btn => {
+            if (btn.textContent.trim() === savedMethod) {
+                btn.classList.add("active");
+            }
+        });
+    }
+}
 function initializeOptionButtons() {
     document.querySelectorAll(".option-button").forEach(div => {
         div.addEventListener("click", function () {
