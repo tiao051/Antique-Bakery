@@ -1,175 +1,163 @@
 ﻿document.addEventListener("click", async function (event) {
     if (event.target.classList.contains("fa-trash-alt")) {
-        let quantityElement = event.target.closest(".item-detail").querySelector(".item-quantity");
-        let itemName = event.target.getAttribute("data-itemname");
-        let itemSize = event.target.getAttribute("data-size");
-        try {
-            let userResponse = await fetch("/Customer/GetUserId");
-            let userData = await userResponse.json();
-
-            if (!userData.success) {
-                alert("Không thể lấy userId! Vui lòng đăng nhập lại.");
-                return;
-            }
-
-            let userId = userData.userId;
-
-            // Fix the URL template syntax and add itemSize
-            let url = `/Customer/RemoveCartItem?userId=${userId}&itemName=${encodeURIComponent(itemName)}&itemSize=${encodeURIComponent(itemSize)}`;
-            console.log("Fetch URL:", url);
-
-            let response = await fetch(url, {
-                method: "DELETE"
-            });
-
-            let data = await response.json();
-            if (data.success) {
-                // Check if we have an updated quantity
-                if (data.updatedQuantity !== undefined) {
-                    if (data.updatedQuantity > 0) {
-                        // Update the quantity display
-                        quantityElement.textContent = data.updatedQuantity;
-                    }
-                    else {
-                        // Remove the item from the DOM if quantity is 0
-                        let itemToRemove = event.target.closest("li");
-                        if (itemToRemove) {
-                            itemToRemove.remove();
-                        }
-                    }
-                    updateTotal();
-                }
-                else {
-                    // If backend doesn't return a quantity, refresh the page
-                    window.location.reload();
-                }
-            }
-            else {
-                alert("Lỗi: " + data.message);
-            }
-        }
-        catch (error) {
-            console.error("Lỗi:", error);
-        }
+        await removeCartItem(event);
     }
     if (event.target.classList.contains("fa-plus-circle")) {
-        let itemName = event.target.getAttribute("data-itemname");
-        let itemSize = event.target.getAttribute("data-size");
-        let quantityElement = event.target.closest(".item-detail").querySelector(".item-quantity");
-        if (!itemName || !quantityElement) {
-            console.error("Không thể lấy itemName hoặc item-quantity!");
-            return;
-        }
-        try {
-            // Lấy userId từ backend (Redis)
-            let userResponse = await fetch("/Customer/GetUserId");
-            let userData = await userResponse.json();
-
-            if (!userData.success) {
-                alert("Không thể lấy userId! Vui lòng đăng nhập lại.");
-                return;
-            }
-
-            let userId = userData.userId; // Lấy userId từ Redis
-
-            // Gửi request tăng số lượng sản phẩm
-            let url = `/Customer/IncreaseCartItem?userId=${userId}&itemName=${encodeURIComponent(itemName)}&itemSize=${encodeURIComponent(itemSize)}`;
-            console.log("Fetch URL:", url);
-
-            let response = await fetch(url, {
-                method: "PUT"
-            });
-
-            let data = await response.json();
-            console.log("Full Response:", data);
-            if (data.success) {
-                quantityElement.textContent = data.updatedQuantity;
-                updateTotal();
-
-            } else {
-                alert("Lỗi: " + data.message);
-            }
-        } catch (error) {
-            console.error("Lỗi:", error);
-        }
+        await increaseCartItem(event);
     }
 });
+
+document.addEventListener("DOMContentLoaded", function () {
+    initializeOptionButtons();
+    updateTotal();
+});
+
+document.getElementById("subscribeEmails").addEventListener("change", function () {
+    console.log("[DEBUG] Checkbox checked:", this.checked);
+});
+
+async function getUserId() {
+    try {
+        let response = await fetch("/Customer/GetUserId");
+        let data = await response.json();
+        if (!data.success) throw new Error("Không thể lấy userId! Vui lòng đăng nhập lại.");
+        return data.userId;
+    } catch (error) {
+        alert(error.message);
+        return null;
+    }
+}
+
+async function removeCartItem(event) {
+    let quantityElement = event.target.closest(".item-detail").querySelector(".item-quantity");
+    let itemName = event.target.getAttribute("data-itemname");
+    let itemSize = event.target.getAttribute("data-size");
+    let userId = await getUserId();
+    if (!userId) return;
+
+    let url = `/Customer/RemoveCartItem?userId=${userId}&itemName=${encodeURIComponent(itemName)}&itemSize=${encodeURIComponent(itemSize)}`;
+    console.log("Fetch URL:", url);
+
+    try {
+        let response = await fetch(url, { method: "DELETE" });
+        let data = await response.json();
+        console.log("[DEBUG]: 123");
+        if (data.success) {
+            console.log("[DEBUG]: 456");
+            updateCartItemUI(quantityElement, data.updatedQuantity, event);
+        } else {
+            alert("Lỗi: " + data.message);
+        }
+    } catch (error) {
+        console.error("Lỗi:", error);
+    }
+}
+
+async function increaseCartItem(event) {
+    let itemName = event.target.getAttribute("data-itemname");
+    let itemSize = event.target.getAttribute("data-size");
+    let quantityElement = event.target.closest(".item-detail").querySelector(".item-quantity");
+    let userId = await getUserId();
+    if (!userId) return;
+
+    let url = `/Customer/IncreaseCartItem?userId=${userId}&itemName=${encodeURIComponent(itemName)}&itemSize=${encodeURIComponent(itemSize)}`;
+    console.log("Fetch URL:", url);
+
+    try {
+        let response = await fetch(url, { method: "PUT" });
+        let data = await response.json();
+        if (data.success) {
+            quantityElement.textContent = data.updatedQuantity;
+            updateTotal();
+        } else {
+            alert("Lỗi: " + data.message);
+        }
+    } catch (error) {
+        console.error("Lỗi:", error);
+    }
+}
+
+function updateCartItemUI(quantityElement, updatedQuantity, event) {
+    console.log("[DEBUG]: Tới đây rồi");
+    if (updatedQuantity > 0) {
+        quantityElement.textContent = updatedQuantity;
+    } else {
+        let itemToRemove = event.target.closest("li");
+        if (itemToRemove) {
+            itemToRemove.remove();
+        }
+    }
+    console.log("[DEBUG]: Gọi updatetotal");
+    updateTotal();
+}
+
 function updateTotal() {
     let subtotal = 0;
     let totalQuantity = 0;
     let cartItems = document.querySelectorAll(".cart-items li");
-    // Check if there are any items left
+
+    console.log("[DEBUG] Cart items count:", cartItems.length);
+
     if (cartItems.length === 0) {
-        let headerElement = document.querySelector("h1");
-        if (headerElement) {
-            headerElement.textContent = "Guest checkout (0)";
-        }
-        // No items left - show empty cart view
         showEmptyCartView();
         return;
     }
 
     cartItems.forEach(item => {
-        let priceText = item.querySelector(".item-price-number")?.textContent || "$0";
-        let quantityText = item.querySelector(".item-quantity")?.textContent || "0";
-
-        let price = parseFloat(priceText.replace(/[^0-9.]/g, ""));
-        let quantity = parseInt(quantityText.trim());
-
+        let price = parseFloat(item.querySelector(".item-price-number")?.textContent.replace(/[^0-9.]/g, "") || "0");
+        let quantity = parseInt(item.querySelector(".item-quantity")?.textContent.trim() || "0");
         if (!isNaN(price) && !isNaN(quantity)) {
             subtotal += price * quantity;
             totalQuantity += quantity;
         }
     });
+
     let tax = subtotal * 0.05;
     let total = subtotal + tax;
-    // Update UI
+
     document.querySelector(".subtotal-number").textContent = `$${subtotal.toFixed(2)}`;
     document.querySelector(".tax-number").textContent = `$${tax.toFixed(2)}`;
     document.querySelector(".total-number").textContent = `$${total.toFixed(2)}`;
+    document.querySelector("h1").textContent = `Guest checkout (${totalQuantity})`;
 
-    // Update checkout title
-    let headerElement = document.querySelector("h1");
-    if (headerElement) {
-        headerElement.textContent = `Guest checkout (${totalQuantity})`;
-    }
-    // luu vao localstorage
     sessionStorage.setItem("subtotal", subtotal.toFixed(2));
     sessionStorage.setItem("tax", tax.toFixed(2));
     sessionStorage.setItem("total", total.toFixed(2));
     sessionStorage.setItem("totalQuantity", totalQuantity);
 }
-// Function to show empty cart view
+
 function showEmptyCartView() {
-    // Create the empty cart HTML
-    const emptyCartHTML = `
-    <div class="content-center">
-        <svg class="coffee-icon" viewBox="0 0 24 24" fill="none" stroke="#00754a" stroke-width="2">
-            <path d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
-        </svg>
-        <h2>Start your next order</h2>
-        <p>As you add menu items, they'll appear here. You'll have a chance to review before placing your order.</p>
-        <button class="add-items-button">Add items</button>
-    </div>
-    `;
-    // Get the right panel
+    console.log("[DEBUG] showEmptyCartView() was called"); 
+
+    const emptyCartHTML =
+        `<div class="content-center">
+            <span class="coffee-icon">☕</span>
+            <h2>Start your next order</h2> 
+            <p>As you add menu items, they'll appear here. You'll have a chance to review before placing your order.</p>
+                <button type="button" class="add-items-button" id="addItemsBtn">
+                    Add items
+                </button>
+        </div>`;
+
     const rightPanel = document.querySelector(".right-panel");
-    // Replace its contents
-    rightPanel.innerHTML = emptyCartHTML;
+
+    if (rightPanel) {
+        rightPanel.innerHTML = emptyCartHTML;
+        document.getElementById("addItemsBtn").addEventListener("click", function () {
+            window.location.href = "/Customer/Index"; 
+        });
+    } else {
+        console.log("[ERROR] .right-panel not found");
+    }
 }
+
+
 function sendCartDataToServerAndRedirect() {
     let subtotal = sessionStorage.getItem("subtotal") || "0.00";
     let tax = sessionStorage.getItem("tax") || "0.00";
     let total = sessionStorage.getItem("total") || "0.00";
     let totalQuantity = sessionStorage.getItem("totalQuantity") || "0";
-    let checkbox = document.getElementById("subscribeEmails");
-    if (!checkbox) {
-        console.error("[ERROR] Checkbox không tồn tại!");
-        return;
-    }
-
-    let subscribeEmails = checkbox.checked;
-    console.log("[DEBUG] Checkbox checked:", subscribeEmails);
+    let subscribeEmails = document.getElementById("subscribeEmails")?.checked || false;
 
     fetch("/Customer/SaveCartData", {
         method: "POST",
@@ -178,45 +166,18 @@ function sendCartDataToServerAndRedirect() {
     })
         .then(response => response.json())
         .then(data => {
-            console.log("[DEBUG] Server response:", data);
             if (data.success) {
                 window.location.href = "/Customer/Checkout";
             }
         })
         .catch(error => console.error("[ERROR]", error));
 }
-document.getElementById("subscribeEmails").addEventListener("change", function () {
-    console.log("[DEBUG] Checkbox checked:", this.checked);
-});
 
-document.addEventListener('DOMContentLoaded', function () {
-    const divs = document.querySelectorAll(".option-button");
-    divs.forEach(div => {
+function initializeOptionButtons() {
+    document.querySelectorAll(".option-button").forEach(div => {
         div.addEventListener("click", function () {
-            divs.forEach(d => d.classList.remove("active"));
+            document.querySelectorAll(".option-button").forEach(d => d.classList.remove("active"));
             this.classList.add("active");
         });
     });
-    // const icon = document.querySelector('.coffee-icon');
-    // if (icon && icon.tagName !== "SPAN") {
-    //     let newIcon = document.createElement("span");
-    //     newIcon.className = "coffee-icon";
-    //     newIcon.textContent = "☕";
-    //     icon.replaceWith(newIcon);
-    // }
-    // Reset the animation every 9 seconds to maintain the pattern
-    // setInterval(() => {
-    //     icon.style.animation = 'none';
-    //     void icon.offsetWidth; // Trigger reflow
-    //     icon.style.animation = `
-    //         shake 2s ease-in-out 0s 1,
-    //         fly-up 1.5s ease-in-out 2s forwards,
-    //         reset-position 0s ease-in-out 3.5s forwards,
-    //         shake 2s ease-in-out 3.5s 1,
-    //         fly-up 1.5s ease-in-out 5.5s forwards,
-    //         reset-position 0s ease-in-out 7s forwards,
-    //         shake 2s ease-in-out 7s 1
-    //     `;
-    // }, 9000);
-    updateTotal();
-});
+}

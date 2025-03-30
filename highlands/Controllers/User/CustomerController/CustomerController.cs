@@ -444,10 +444,11 @@ namespace highlands.Controllers.User.CustomerController
 
         [HttpPost]
         public async Task<IActionResult> Pay([FromBody] PaymentRequestDTO request)
-        {
+        {   
             bool subscribeEmails = HttpContext.Session.GetString("SubscribeEmails") == "True";
 
             int userId = request.UserID;
+            string cartKey = $"cart:{userId}";
             decimal totalAmount = request.TotalAmount;
             List<CartItemTemporary> cartItems = await _dapperRepository.GetCartItemsAsync(userId);
             Console.WriteLine($"[DEBUG] Cart Items trong review order: {JsonConvert.SerializeObject(cartItems)}");
@@ -488,6 +489,8 @@ namespace highlands.Controllers.User.CustomerController
                 // Nếu user không đăng ký nhận email => Trả về luôn
                 if (!subscribeEmails)
                 {
+                    await _distributedCache.RemoveAsync(cartKey);
+                    Console.WriteLine($"[DEBUG] Cart cleared from Redis for userId={userId}");
                     return Ok("Thanh toán thành công.");
                 }
 
@@ -546,8 +549,11 @@ namespace highlands.Controllers.User.CustomerController
                 //    AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10)
                 //});
 
+                await _distributedCache.RemoveAsync(cartKey);
+                Console.WriteLine($"[DEBUG] Cart cleared from Redis for userId={userId}");
+
                 return Ok(new
-                {
+                {   
                     Message = "Thanh toán thành công và email xác nhận đã được gửi.",
                     OrderId = orderId
                 });

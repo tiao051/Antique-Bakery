@@ -92,11 +92,11 @@
                                             <p class="item-name">@item.ItemName</p>
                                             @{
                                                 var sizeMapping = new Dictionary<string, string>
-                                    {
-                                    { "S", "Small" },
-                                    { "M", "Medium" },
-                                    { "L", "Large" }
-                                    };
+                                                {
+                                                    { "S", "Small" },
+                                                    { "M", "Medium" },
+                                                    { "L", "Large" }
+                                                };
                                                 var displaySize = sizeMapping.ContainsKey(item.Size) ? sizeMapping[item.Size] : item.Size;
                                             }
                                             <div class="item-quantity-size">
