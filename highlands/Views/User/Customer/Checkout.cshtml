@@ -98,76 +98,79 @@
 
             <!-- Right Side - Payment Details -->
             <div class="order-summary">
-                <h2 class="section-title">Payment Information</h2>
-                <div class="summary-content">
-                    <p>Please fill in all the required details to complete the payment process.</p>
+                <!-- Thẻ bao chung để giữ CSS -->
+                <form id="payment-form">
+                    <h2 class="section-title">Payment Information</h2>
+                    <div class="summary-content">
+                        <p>Please fill in all the required details to complete the payment process.</p>
 
-                    <div id="phone-container" class="form-group">
-                        <label class="form-label">Phone Number:</label>
-                        <input id="phone" type="text" class="form-input" placeholder="E.g.: +84 987 654 321">
-                    </div>
-
-                    <div class="payment-details">
-                        <div class="form-group">
-                            <label class="form-label">Cardholder Name:</label>
-                            <input type="text" class="form-input" placeholder="Name on card">
+                        <div id="phone-container" class="form-group">
+                            <label class="form-label">Phone Number:</label>
+                            <input id="phone" type="text" class="form-input" placeholder="E.g.: +84 987 654 321" required>
                         </div>
 
-                        <div class="form-group">
-                            <label class="form-label">Card Number:</label>
-                            <input type="text" class="form-input" placeholder="E.g.: 4111 1111 1111 1111">
-                        </div>
-
-                        <div class="card-date-cvv">
+                        <div class="payment-details">
                             <div class="form-group">
-                                <label class="form-label">Expiration Date:</label>
-                                <input type="text" class="form-input" placeholder="MM/YY">
+                                <label class="form-label">Cardholder Name:</label>
+                                <input type="text" class="form-input" placeholder="Name on card" required>
                             </div>
 
                             <div class="form-group">
-                                <label class="form-label">CVV Code:</label>
-                                <input type="text" class="form-input" placeholder="E.g.: 123">
+                                <label class="form-label">Card Number:</label>
+                                <input type="text" class="form-input" placeholder="E.g.: 4111 1111 1111 1111" required>
+                            </div>
+
+                            <div class="card-date-cvv">
+                                <div class="form-group">
+                                    <label class="form-label">Expiration Date:</label>
+                                    <input type="text" class="form-input" placeholder="MM/YY" required>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label">CVV Code:</label>
+                                    <input type="text" class="form-input" placeholder="E.g.: 123" required>
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    <div class="summary-row">
-                        <span>Quantity</span>
-                        <span>@totalQuantity items</span>
-                    </div>
-
-                    <div class="summary-row">
-                        <span>Subtotal</span>
-                        <span>$@subtotal</span>
-                    </div>
-                    <div class="summary-row">
-                        <span>Tax</span>
-                        <span>$@tax</span>
-                    </div>
-                    <div class="summary-row">
-                        <span>Delivery Preferences Fee</span>
-                        <span>$0</span>
-                    </div>
-
-                    <div class="total-row">
-                        <span>Total Payment</span>
-                        <span id="totalAmount" data-value="@total">$@total</span>
-                    </div>
-
-                    <button class="submit-btn" onclick="payNow()">Pay Now</button>
-
-                    <div class="gift-option">
-                        <div class="coffee-icon">
-                            <i class="fa-solid fa-gift"></i>
+                        <div class="summary-row">
+                            <span>Quantity</span>
+                            <span>@totalQuantity items</span>
                         </div>
-                        <div class="gift-text">
-                            <h4 class="gift-title">Send this order as a gift.</h4>
-                            <p class="gift-description">The items will be delivered to the recipient.</p>
+
+                        <div class="summary-row">
+                            <span>Subtotal</span>
+                            <span>$@subtotal</span>
                         </div>
+                        <div class="summary-row">
+                            <span>Tax</span>
+                            <span>$@tax</span>
+                        </div>
+                        <div class="summary-row">
+                            <span>Delivery Preferences Fee</span>
+                            <span>$0</span>
+                        </div>
+
+                        <div class="total-row">
+                            <span>Total Payment</span>
+                            <span id="totalAmount" data-value="@total">$@total</span>
+                        </div>
+
+                        <!-- Nút Submit nằm bên trong form -->
+                        <button type="submit" class="submit-btn">Pay Now</button>
+                    </div>
+                </form> <!-- Đóng form đúng chỗ -->
+                <!-- Phần quà tặng vẫn nằm trong div chung nhưng ngoài form -->
+                <div class="gift-option">
+                    <div class="coffee-icon">
+                        <i class="fa-solid fa-gift"></i>
+                    </div>
+                    <div class="gift-text">
+                        <h4 class="gift-title">Send this order as a gift.</h4>
+                        <p class="gift-description">The items will be delivered to the recipient.</p>
                     </div>
                 </div>
             </div>
-
         </div>
     </div>
 </body>
