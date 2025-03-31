@@ -609,5 +609,32 @@ namespace highlands.Controllers.User.CustomerController
                 return -1;
             }
         }
+        [HttpGet]
+        public async Task<IActionResult> GetCustomerData()
+        {
+            var email = User.FindFirst(ClaimTypes.Email)?.Value;
+            var id = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (email == null)
+            {
+                return Unauthorized("Email not found in token");
+            }
+
+            if (id == null)
+            {
+                return Unauthorized("UserId not found in token");
+            }
+
+            var userDetail = await _dapperRepository.GetCustomerPhoneAddrPoints(id);
+
+            return Ok(new
+            {
+                Email = email,
+                UserId = id,
+                Phone = userDetail.Phone ?? "",  
+                Address = userDetail.Address ?? "", 
+                LoyaltyPoints = userDetail.LoyaltyPoints ?? 0 
+            });
+        }
     }
 }

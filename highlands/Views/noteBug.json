@@ -1,5 +1,4 @@
 {
-  // chưa bắt buộc customer phải chọn in store hoặc drive-thru (vấn đề là cái in store thì phải sửa lại layout checkout)
   // chưa giải quyết được cái nút edit item (nặng)
   // chưa giải quyết được phần pickup store
   // có thể là sẽ đổi cái phần personal details của checkout thành một partial view để xử lý in-store hoặc drive-thru

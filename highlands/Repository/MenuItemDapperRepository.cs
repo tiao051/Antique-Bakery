@@ -468,5 +468,22 @@ namespace highlands.Repository
 
             await _connection.ExecuteAsync(query, detail, _transaction);
         }
+        public async Task<CustomerCheckoutInfoDTO> GetCustomerPhoneAddrPoints(string userId)
+        {
+            const string query = @"
+                SELECT Phone, Address, LoyaltyPoints 
+                FROM Customer
+                WHERE UserId = @UserId";
+
+            // Thực hiện truy vấn cơ sở dữ liệu
+            var customerInfo = await _connection.QuerySingleOrDefaultAsync<CustomerCheckoutInfoDTO>(query, new { UserId = userId });
+
+            if (customerInfo == null)
+            {
+                customerInfo = new CustomerCheckoutInfoDTO(); 
+            }
+
+            return customerInfo;
+        }
     }
 }

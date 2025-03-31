@@ -26,5 +26,6 @@ namespace highlands.Interfaces
         void RollbackTransaction();
         Task<int> InsertOrderAsync(Order order);
         Task InsertOrderDetailAsync(OrderDetail detail);
+        Task<CustomerCheckoutInfoDTO> GetCustomerPhoneAddrPoints(string customerId);
     }
 }

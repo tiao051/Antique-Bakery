@@ -126,7 +126,7 @@ app.UseEndpoints(endpoints =>
     endpoints.MapHub<OrderHub>("/orderHub");
     endpoints.MapControllerRoute(
         name: "default",
-        pattern: "{controller=Account}/{action=Index}/{id?}");
+        pattern: "{controller=Customer}/{action=Checkout}/{id?}");
 });
 
 app.Run();

@@ -1,7 +1,6 @@
 ﻿const selectedOptions = new Set();
 
 document.addEventListener("DOMContentLoaded", function () {
-    // Gọi API lấy thông tin khách hàng khi trang tải xong
     getCustomerInfo();
 });
 
@@ -118,22 +117,39 @@ async function getUserId() {
     }
 }
 
-//async function getCustomerInfo() {
-//    try {
-//        let userId = await getUserId();
-//        if (!userId) return;
+async function getCustomerInfo() {
+    try {
+        const response = await fetch("/Customer/GetCustomerData", {
+            method: "GET",
+            headers: {
+                "Authorization": "Bearer " + localStorage.getItem("token")
+            }
+        });
 
-//        let response = await fetch(`/api/customer/get-customer-info?userId=${userId}`);
-//        if (!response.ok) throw new Error("Failed to fetch customer info");
+        if (!response.ok) {
+            console.error("Failed to fetch customer data:", response.status);
+            return;
+        }
 
-//        let data = await response.json();
-//        console.log("Customer Info:", data);
+        const data = await response.json();
+        console.log("Data from API:", data);
 
-//        updateField("email-container", "email", data.email);
-//        updateField("address-container", "address", data.deliveryAddress);
-//        updateField("phone-container", "phone", data.phone);
-//    } catch (error) {
-//        console.error("Error fetching customer info:", error);
-//        alert("❌ Lỗi khi lấy thông tin khách hàng!");
-//    }
-//}
+        document.getElementById("email").value = data.email;
+        const phoneInput = document.getElementById("phone");
+        const addressInput = document.getElementById("address");
+
+        console.log("Phone Input:", phoneInput);
+        console.log("Address Input:", addressInput);
+
+        // Kiểm tra null trước khi gán
+        if (phoneInput) phoneInput.value = data.phone || "";
+        if (addressInput) addressInput.value = data.address || "";
+
+    } catch (error) {
+        console.error("Error fetching customer info: ", error);
+    }
+}
+
+
+
+

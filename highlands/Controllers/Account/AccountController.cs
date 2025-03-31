@@ -29,7 +29,7 @@ namespace highlands.Controllers.Account
 
         public IActionResult Index(string view = "login")
         {
-            ViewBag.ViewToShow = view; // Lưu tham số để xác định giao diện
+            ViewBag.ViewToShow = view; 
             return View();
         }
         private string GenerateJwtToken(int userId, string email, int roleId)
@@ -59,7 +59,6 @@ namespace highlands.Controllers.Account
 
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
-
         private string GenerateRefreshToken()
         {
             return Convert.ToBase64String(Guid.NewGuid().ToByteArray());
@@ -72,7 +71,6 @@ namespace highlands.Controllers.Account
                 AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(7)
             });
         }
-
         public async Task<IActionResult> Login([FromBody] LoginRequestDTO request)
         {
             Console.WriteLine("Login API called");
@@ -154,8 +152,6 @@ namespace highlands.Controllers.Account
 
             return Ok(new { accessToken = token, refreshToken, roleId });
         }
-
-        // Hàm hỗ trợ lấy User từ Database khi Redis không có hoặc bị lỗi
         private async Task<(int userId, int roleId)> FetchUserFromDB(string email, string password, SqlConnection connection, string redisKey)
         {
             try
@@ -204,7 +200,6 @@ namespace highlands.Controllers.Account
             {
                 connection.Open();
 
-                // Kiểm tra email đã tồn tại
                 var checkEmailQuery = "SELECT COUNT(*) FROM Users WHERE Email = @Email";
                 int emailExists = connection.ExecuteScalar<int>(checkEmailQuery, new { Email = email });
 
@@ -214,10 +209,9 @@ namespace highlands.Controllers.Account
                     return RedirectToAction("Index", new { view = "register" });
                 }
 
-                // Lưu người dùng mới
                 var insertUserQuery = @"
-                INSERT INTO Users (Username, Email, Password, Role)
-                VALUES (@Username, @Email, @Password, @Role)";
+                    INSERT INTO Users (Username, Email, Password, Role)
+                    VALUES (@Username, @Email, @Password, @Role)";
 
                 var result = connection.Execute(insertUserQuery, new
                 {
@@ -262,12 +256,10 @@ namespace highlands.Controllers.Account
             var authenticateResult = await HttpContext.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             var claimsPrincipal = authenticateResult.Principal;
 
-            // Lấy email từ thông tin người dùng
             var email = claimsPrincipal?.FindFirst(ClaimTypes.Email)?.Value;
 
             if (email != null)
             {
-                // Kiểm tra xem người dùng đã tồn tại trong hệ thống chưa
                 using (var connection = new SqlConnection(_connectionString))
                 {
                     var query = "SELECT * FROM Users WHERE Email = @Email";
@@ -276,16 +268,15 @@ namespace highlands.Controllers.Account
                     int userId;
                     if (user == null)
                     {
-                        // Nếu người dùng chưa tồn tại, thêm người dùng mới với phương thức đăng nhập là 'Google'
                         var insertUserQuery = @"
-                INSERT INTO Users (Username, Email, Password, Role, Type)
-                VALUES (@Username, @Email, NULL, @Role, 'Google')";
+                            INSERT INTO Users (Username, Email, Password, Role, Type)
+                            VALUES (@Username, @Email, NULL, @Role, 'Google')";
 
                         userId = connection.Execute(insertUserQuery, new
                         {
-                            Username = email.Split('@')[0], // Lấy username từ email
+                            Username = email.Split('@')[0], 
                             Email = email,
-                            Role = "Customer" // Mặc định là Customer, có thể thay đổi tùy theo yêu cầu
+                            Role = "Customer" 
                         });
                     }
                     else
@@ -298,7 +289,6 @@ namespace highlands.Controllers.Account
                     HttpContext.Session.SetInt32("UserId", userId);
                 }
             }
-            // Chuyển hướng người dùng đến trang yêu cầu
             return RedirectToAction("Index", "Customer");
         }
     }
