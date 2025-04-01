@@ -1,9 +1,7 @@
 {
-  // chưa giải quyết được cái nút edit item (nặng)
-  // chưa giải quyết được phần pickup store
-  // có thể là sẽ đổi cái phần personal details của checkout thành một partial view để xử lý in-store hoặc drive-thru
-  // chưa xử lý được cái validate phần payment information
+  // chưa giải quyết được cái nút edit item
 
   // 22/3/2025: đang sử dụng cả 2 thằng là AddAuthentication trong program.cs và hiện đang commentout cái thằng google oauth
-  // khi đăng nhập bằng google chưa tạo/gửi jwt về customer/index
+  // 1/4/2025: cần xử lý khi chuyển về cái home thì gửi jwt theo để khi bấm vào account thì nó tự đăng nhập luôn chứ không bắt đăng nhập lại
+  // xử lý quên mật khẩu và đăng ký phải validate cái email (gửi mã về mail) xong mới tạo account đó trong database
 }

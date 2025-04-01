@@ -96,9 +96,7 @@
                 </div>
             </div>
 
-            <!-- Right Side - Payment Details -->
-            <div class="order-summary">
-                <!-- Thẻ bao chung để giữ CSS -->
+            <div class="order-summary" onsubmit="payNow(event)">
                 <form id="payment-form">
                     <h2 class="section-title">Payment Information</h2>
                     <div class="summary-content">
@@ -156,11 +154,10 @@
                             <span id="totalAmount" data-value="@total">$@total</span>
                         </div>
 
-                        <!-- Nút Submit nằm bên trong form -->
                         <button type="submit" class="submit-btn">Pay Now</button>
                     </div>
-                </form> <!-- Đóng form đúng chỗ -->
-                <!-- Phần quà tặng vẫn nằm trong div chung nhưng ngoài form -->
+                </form>
+
                 <div class="gift-option">
                     <div class="coffee-icon">
                         <i class="fa-solid fa-gift"></i>

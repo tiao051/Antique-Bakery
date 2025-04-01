@@ -22,6 +22,12 @@
                 handleFilterClick(this);
             });
         });
+        document.querySelectorAll(".menu-item").forEach(item => {
+            item.addEventListener("click", function () {
+                const page = this.getAttribute("data-page");
+                if (page) window.location.href = page;
+            });
+        });
     } catch (error) {
         alert(error.message);
     }

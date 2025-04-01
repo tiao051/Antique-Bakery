@@ -8,8 +8,10 @@ document.addEventListener("DOMContentLoaded", function () {
  *  XỬ LÝ THANH TOÁN
  *  ===========================
  */
-async function payNow() {
-    try {
+async function payNow(event) {
+    try {      
+        event.preventDefault();
+
         const totalPaymentElement = document.querySelector('.total-row span:last-child');
         let totalAmount = parseFloat(totalPaymentElement.textContent.replace('$', '')) || 0;
 

@@ -10,5 +10,9 @@ namespace highlands.Controllers.User.Admin
         {
             return View("~/Views/User/Admin/Index.cshtml");
         }
+        public IActionResult Product()
+        {
+            return View("~/Views/User/Admin/Product.cshtml");
+        }
     }
 }
