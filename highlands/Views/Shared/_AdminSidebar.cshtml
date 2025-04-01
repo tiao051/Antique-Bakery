@@ -4,6 +4,7 @@
 <head>
     <meta name="viewport" content="width=device-width" />
     <title>@ViewBag.Title</title>
+    <script src="/js/AdminJS/product.js" defer></script>
 </head>
 <body>
     <div class="sidebar">
@@ -23,7 +24,7 @@
 
             <ul class="menu">
                 <li class="menu-header">Core</li>
-                <li class="menu-item active">
+                <li class="menu-item" data-page="/Admin/Index">
                     <i class="fas fa-tachometer-alt"></i>
                     <span>Dashboard</span>
                 </li>
@@ -31,7 +32,7 @@
                     <i class="fas fa-users"></i>
                     <span>User Management</span>
                 </li>
-                <li class="menu-item" data-page="/admin/product">
+                <li class="menu-item" data-page="/Admin/Product">
                     <i class="fas fa-box"></i>
                     <span>Products</span>
                 </li>
