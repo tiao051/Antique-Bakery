@@ -109,6 +109,9 @@ services.AddSession(options =>
 // Đăng ký SignalR
 services.AddSignalR();
 
+// Đăng ký HttpClient
+builder.Services.AddHttpClient();
+
 // Đăng ký MVC
 services.AddControllersWithViews();
 

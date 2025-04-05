@@ -26,12 +26,14 @@ namespace highlands.Controllers.User.CustomerController
         private readonly IDistributedCache _distributedCache;
         private readonly string _connectionString;
         private readonly IHubContext<OrderHub> _hubContext;
+        private readonly HttpClient _httpClient;
 
         public CustomerController(
-    IConfiguration configuration,
-    IEnumerable<IMenuItemRepository> repositories,
-    IDistributedCache distributedCache,
-    IHubContext<OrderHub> hubContext)
+            IConfiguration configuration,
+            IEnumerable<IMenuItemRepository> repositories,
+            IDistributedCache distributedCache,
+            IHubContext<OrderHub> hubContext,
+            HttpClient httpClient)
         {
             _hostname = configuration["RabbitMQ:HostName"];
             _username = configuration["RabbitMQ:UserName"];
@@ -42,6 +44,7 @@ namespace highlands.Controllers.User.CustomerController
             _dapperRepository = repositories.OfType<MenuItemDapperRepository>().FirstOrDefault();
             _distributedCache = distributedCache;
             _hubContext = hubContext;
+            _httpClient = httpClient;
         }
 
         [HttpGet]
@@ -81,7 +84,6 @@ namespace highlands.Controllers.User.CustomerController
             var subcategories = await _dapperRepository.GetSubcategoriesAsync();
             return View("~/Views/User/Customer/Index.cshtml", subcategories);
         }
-
         [HttpGet]
         public async Task<IActionResult> MenuItems(string subcategory)
         {
@@ -161,7 +163,6 @@ namespace highlands.Controllers.User.CustomerController
                 return Content($"An error occurred: {ex.Message}");
             }
         }
-
         public async Task<ActionResult> LoadRecipePartial(string itemName, string size)
         {
             if (string.IsNullOrEmpty(size))
@@ -181,7 +182,6 @@ namespace highlands.Controllers.User.CustomerController
                 return Content($"An error occurred: {ex.Message}");
             }
         }
-
         public async Task<IActionResult> Checkout()
         {
             ViewData["ShowNavbarMenu"] = false;
@@ -447,7 +447,6 @@ namespace highlands.Controllers.User.CustomerController
 
             return Json(new { success = true });
         }
-
         [HttpPost]
         public async Task<IActionResult> Pay([FromBody] PaymentRequestDTO request)
         {   
@@ -635,6 +634,11 @@ namespace highlands.Controllers.User.CustomerController
                 Address = userDetail.Address ?? "", 
                 LoyaltyPoints = userDetail.LoyaltyPoints ?? 0 
             });
+        }
+        [HttpGet]
+        public IActionResult ItemRcm()
+        {
+            return View("~/Views/User/Customer/ItemRcm.cshtml");
         }
     }
 }

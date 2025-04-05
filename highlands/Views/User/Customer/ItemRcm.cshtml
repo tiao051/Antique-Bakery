@@ -1,0 +1,71 @@
+﻿@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mining Association Rules</title>
+</head>
+<body>
+    <h1>Khai thác luật kết hợp sản phẩm</h1>
+
+    <button id="loadResultsBtn">Tải Kết Quả</button>
+
+    <h2>Kết quả luật kết hợp:</h2>
+    <table id="resultTable">
+        <thead>
+            <tr>
+                <th>Antecedents</th>
+                <th>Consequents</th>
+                <th>Support</th>
+                <th>Confidence</th>
+                <th>Lift</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+
+    <script>
+        document.getElementById('loadResultsBtn').addEventListener('click', async function() {
+            const data = {
+                file_path: "D:\\coffe_shop\\python\\dataSet\\dataFinal.xlsx",
+                algorithm: "fpgrowth",
+                min_support: 0.1,
+                min_confidence: 0.1
+            }; // thêm vào dữ liệu cho python được xử lý
+
+            const response = await fetch('http://127.0.0.1:5000/mine_rules', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            }); // gọi vào python
+
+            if (!response.ok) {
+                alert('Có lỗi xảy ra!');
+                return;
+            }
+
+            const result = await response.json();
+
+            const tableBody = document.getElementById('resultTable').getElementsByTagName('tbody')[0];
+            tableBody.innerHTML = ''; 
+
+            result.forEach(rule => {
+                const row = tableBody.insertRow();
+                row.innerHTML = `
+                    <td>${rule.antecedents.join(', ')}</td>
+                    <td>${rule.consequents.join(', ')}</td>
+                    <td>${rule.support}</td>
+                    <td>${rule.confidence}</td>
+                    <td>${rule.lift}</td>
+                `;
+            });
+        });
+    </script>
+</body>
+</html>
