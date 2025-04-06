@@ -59,12 +59,17 @@
                     </div>
                 </div>
             </div>
+            <div class="first-divider"></div>
+            <div class="item-rec">
+                <div class="section-title">Frequently bought together</div>
+                <div class="rec-products">
+                </div>
+            </div>
         </div>
         @if (Model == null || !Model.Any())
         {
             <div class="right-panel">
                 <div class="content-center">
-                    @* bị lỗi con cặc gì ở đây rồi đéo hiểu*@
                     <span class="coffee-icon">☕</span>
                     <h2>Start your next order</h2>
                     <p>As you add menu items, they'll appear here. You'll have a chance to review before placing your order.</p>
@@ -149,7 +154,6 @@
                 <div class="checkout">
                     <h1>Checkout</h1>
                     <div class="divider"></div>
-
                     <div class="checkbox-container">
                         <input type="checkbox" id="subscribeEmails" name="subscribeEmails" class="checkbox" />
                         <div class="signup-text">

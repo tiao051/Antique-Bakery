@@ -8,6 +8,7 @@ using System.Diagnostics;
 using System.Data;
 using highlands.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using System.Net.Http;
 
 namespace highlands.Repository
 {
@@ -16,10 +17,12 @@ namespace highlands.Repository
         private readonly IDbConnection _connection;
         private readonly IDistributedCache _distributedCache;
         private IDbTransaction _transaction;
-        public MenuItemDapperRepository(IDbConnection connection, IDistributedCache distributedCache)
+        private readonly HttpClient _httpClient;
+        public MenuItemDapperRepository(IDbConnection connection, IDistributedCache distributedCache, HttpClient httpClient)
         {
             _connection = connection;
             _distributedCache = distributedCache;
+            _httpClient = httpClient;
         }
         public void BeginTransaction()
         {
@@ -484,6 +487,35 @@ namespace highlands.Repository
             }
 
             return customerInfo;
+        }
+        public async Task<List<string>> GetSuggestedProducts(List<string> cartItems)
+        {
+            try
+            {
+                // Gọi API Python (hoặc API của bạn) với danh sách các sản phẩm trong giỏ hàng
+                var response = await _httpClient.PostAsJsonAsync("http://127.0.0.1:5000/get_mining_results", cartItems);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    // Giả sử API trả về đối tượng có cấu trúc như sau
+                    var result = await response.Content.ReadFromJsonAsync<ProductSuggestionsResponseDTO>();
+
+                    // Trả về danh sách các sản phẩm gợi ý
+                    return result?.SuggestedProducts ?? new List<string>();
+                }
+                else
+                {
+                    // Nếu API không trả về thành công, bạn có thể log hoặc xử lý lỗi
+                    Console.WriteLine($"Error: {response.StatusCode}");
+                    return new List<string>();
+                }
+            }
+            catch (Exception ex)
+            {
+                // Xử lý lỗi khi gọi API
+                Console.WriteLine($"Exception: {ex.Message}");
+                return new List<string>();
+            }
         }
     }
 }

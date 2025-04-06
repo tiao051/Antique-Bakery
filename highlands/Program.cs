@@ -110,7 +110,7 @@ services.AddSession(options =>
 services.AddSignalR();
 
 // Đăng ký HttpClient
-builder.Services.AddHttpClient();
+services.AddHttpClient();
 
 // Đăng ký MVC
 services.AddControllersWithViews();

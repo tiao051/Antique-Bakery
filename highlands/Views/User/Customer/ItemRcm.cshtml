@@ -28,44 +28,35 @@
         </tbody>
     </table>
 
-    <script>
-        document.getElementById('loadResultsBtn').addEventListener('click', async function() {
-            const data = {
-                file_path: "D:\\coffe_shop\\python\\dataSet\\dataFinal.xlsx",
-                algorithm: "fpgrowth",
-                min_support: 0.1,
-                min_confidence: 0.1
-            }; // thêm vào dữ liệu cho python được xử lý
-
-            const response = await fetch('http://127.0.0.1:5000/mine_rules', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(data)
-            }); // gọi vào python
-
-            if (!response.ok) {
-                alert('Có lỗi xảy ra!');
-                return;
-            }
-
-            const result = await response.json();
-
-            const tableBody = document.getElementById('resultTable').getElementsByTagName('tbody')[0];
-            tableBody.innerHTML = ''; 
-
-            result.forEach(rule => {
-                const row = tableBody.insertRow();
-                row.innerHTML = `
-                    <td>${rule.antecedents.join(', ')}</td>
-                    <td>${rule.consequents.join(', ')}</td>
-                    <td>${rule.support}</td>
-                    <td>${rule.confidence}</td>
-                    <td>${rule.lift}</td>
-                `;
-            });
+<script>
+    document.getElementById('loadResultsBtn').addEventListener('click', async function() {
+    const response = await fetch('http://127.0.0.1:5000/get_mining_results', {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json'
+        }
         });
-    </script>
+    const result = await response.json();
+
+    if (!result.association_rules || result.association_rules.length === 0) {
+        alert('Không có luật kết hợp nào được tìm thấy.');
+        return;
+    }
+
+    const tableBody = document.getElementById('resultTable').getElementsByTagName('tbody')[0];
+    tableBody.innerHTML = '';
+
+        result.association_rules.forEach(rule => {
+            const row = tableBody.insertRow();
+            row.innerHTML = `
+                <td>${rule.antecedents.join(', ')}</td>
+                <td>${rule.consequents.join(', ')}</td>
+                <td>${rule.support}</td>
+                <td>${rule.confidence}</td>
+                <td>${rule.lift}</td>
+            `;
+        });
+    });
+</script>
 </body>
 </html>

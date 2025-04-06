@@ -91,7 +91,6 @@ function updateCartItemUI(quantityElement, updatedQuantity, event) {
     console.log("[DEBUG]: Gọi updatetotal");
     updateTotal();
 }
-
 function updateTotal() {
     let subtotal = 0;
     let totalQuantity = 0;

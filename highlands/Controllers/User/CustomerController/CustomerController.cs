@@ -26,14 +26,13 @@ namespace highlands.Controllers.User.CustomerController
         private readonly IDistributedCache _distributedCache;
         private readonly string _connectionString;
         private readonly IHubContext<OrderHub> _hubContext;
-        private readonly HttpClient _httpClient;
+        private readonly IHttpClientFactory _clientFactory;
 
         public CustomerController(
             IConfiguration configuration,
             IEnumerable<IMenuItemRepository> repositories,
             IDistributedCache distributedCache,
-            IHubContext<OrderHub> hubContext,
-            HttpClient httpClient)
+            IHubContext<OrderHub> hubContext)
         {
             _hostname = configuration["RabbitMQ:HostName"];
             _username = configuration["RabbitMQ:UserName"];
@@ -44,7 +43,6 @@ namespace highlands.Controllers.User.CustomerController
             _dapperRepository = repositories.OfType<MenuItemDapperRepository>().FirstOrDefault();
             _distributedCache = distributedCache;
             _hubContext = hubContext;
-            _httpClient = httpClient;
         }
 
         [HttpGet]
@@ -320,6 +318,7 @@ namespace highlands.Controllers.User.CustomerController
         [HttpGet]
         public async Task<IActionResult> GetCartQuantity()
         {
+            Console.WriteLine("test12312312312321");
             int userId = HttpContext.Session.GetInt32("UserId") ?? 0;
             if (userId == 0)
             {

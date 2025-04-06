@@ -178,10 +178,6 @@ async function getCustomerOrderDetail(timeFrame) {
 
         const orderDetail = await response.json(); 
 
-        //if (window.revenueChart) {
-        //    window.revenueChart.destroy();
-        //}
-
         const labels = orderDetail.map(item => item.subCategory);
         const dataValues = orderDetail.map(item => item.totalRevenue);
 

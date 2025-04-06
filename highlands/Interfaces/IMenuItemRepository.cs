@@ -27,5 +27,6 @@ namespace highlands.Interfaces
         Task<int> InsertOrderAsync(Order order);
         Task InsertOrderDetailAsync(OrderDetail detail);
         Task<CustomerCheckoutInfoDTO> GetCustomerPhoneAddrPoints(string customerId);
+        Task<List<string>> GetSuggestedProducts(List<string> cartItems);
     }
 }
