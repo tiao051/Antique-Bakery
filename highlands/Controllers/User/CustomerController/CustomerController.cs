@@ -247,8 +247,10 @@ namespace highlands.Controllers.User.CustomerController
                 if (!string.IsNullOrEmpty(userIdClaim) && int.TryParse(userIdClaim, out int parsedUserId))
                 {
                     userId = parsedUserId;
+                    Console.WriteLine("Luu lai vao session");
                     // Lưu lại vào Session để lần sau không cần lấy lại từ token
                     HttpContext.Session.SetInt32("UserId", userId.Value);
+                    Console.WriteLine("Luu lai vao session thanh cong");
                 }
                 else
                 {
@@ -318,14 +320,26 @@ namespace highlands.Controllers.User.CustomerController
         [HttpGet]
         public async Task<IActionResult> GetCartQuantity()
         {
-            Console.WriteLine("test12312312312321");
             int userId = HttpContext.Session.GetInt32("UserId") ?? 0;
+
             if (userId == 0)
             {
-                return Json(new { success = false, quantity = 0 });
-            }
+                var userIdClaim = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
+                if (!string.IsNullOrEmpty(userIdClaim) && int.TryParse(userIdClaim, out int parsedUserId))
+                {
+                    userId = parsedUserId;
+                    HttpContext.Session.SetInt32("UserId", userId);
+                    Console.WriteLine("Lưu lại vào session thành công");
+                }
+                else
+                {
+                    return Json(new { success = false, message = "User session expired!", userId = 0 });
+                }
+            }
             int totalQuantity = await _dapperRepository.GetTotalQuantityAsync(userId);
+            Console.WriteLine($"Số lượng giỏ hàng hiện tại là: {totalQuantity}");
+
             return Json(new { success = true, quantity = totalQuantity });
         }
         public async Task<IActionResult> ReviewOrder()
