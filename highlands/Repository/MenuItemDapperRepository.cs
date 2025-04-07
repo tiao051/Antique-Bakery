@@ -9,6 +9,7 @@ using System.Data;
 using highlands.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using System.Net.Http;
+using System.Text.Json;
 
 namespace highlands.Repository
 {
@@ -488,32 +489,62 @@ namespace highlands.Repository
 
             return customerInfo;
         }
-        public async Task<List<string>> GetSuggestedProducts(List<string> cartItems)
+        public async Task<List<string>> GetSuggestedProductsDapper(List<string> productNames)
         {
             try
             {
-                // Gọi API Python (hoặc API của bạn) với danh sách các sản phẩm trong giỏ hàng
-                var response = await _httpClient.PostAsJsonAsync("http://127.0.0.1:5000/get_mining_results", cartItems);
+                Console.WriteLine("test api");
+
+                if (productNames == null || !productNames.Any())
+                {
+                    Console.WriteLine("❗ productNames null hoặc rỗng.");
+                    return new List<string>();
+                }
+
+                Console.WriteLine("🛒 Tên sản phẩm gửi tới Python API: " + string.Join(", ", productNames));
+
+                var requestUri = "http://127.0.0.1:5000/get_mining_results";
+
+                // Gửi danh sách tên sản phẩm
+                var response = await _httpClient.PostAsJsonAsync(requestUri, productNames);
 
                 if (response.IsSuccessStatusCode)
                 {
-                    // Giả sử API trả về đối tượng có cấu trúc như sau
-                    var result = await response.Content.ReadFromJsonAsync<ProductSuggestionsResponseDTO>();
+                    var rawJson = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine("📦 Raw JSON từ Python: " + rawJson);
 
-                    // Trả về danh sách các sản phẩm gợi ý
-                    return result?.SuggestedProducts ?? new List<string>();
+                    try
+                    {
+                        using (var jsonDoc = JsonDocument.Parse(rawJson))
+                        {
+                            var suggestedProducts = jsonDoc.RootElement
+                                .GetProperty("suggested_products")
+                                .EnumerateArray()
+                                .Select(x => x.GetString())
+                                .ToList();
+
+                            Console.WriteLine("✅ Suggested products: " + string.Join(", ", suggestedProducts));
+
+                            return suggestedProducts;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"❌ Lỗi khi parse JSON: {ex.Message}");
+                        return new List<string>();
+                    }
                 }
                 else
                 {
-                    // Nếu API không trả về thành công, bạn có thể log hoặc xử lý lỗi
-                    Console.WriteLine($"Error: {response.StatusCode}");
+                    Console.WriteLine($"❌ Request lỗi - Status Code: {response.StatusCode}");
+                    var errorContent = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine($"Nội dung lỗi: {errorContent}");
                     return new List<string>();
                 }
             }
             catch (Exception ex)
             {
-                // Xử lý lỗi khi gọi API
-                Console.WriteLine($"Exception: {ex.Message}");
+                Console.WriteLine($"💥 Exception khi gọi API: {ex.Message}");
                 return new List<string>();
             }
         }

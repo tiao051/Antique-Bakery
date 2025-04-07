@@ -330,12 +330,41 @@ namespace highlands.Controllers.User.CustomerController
         }
         public async Task<IActionResult> ReviewOrder()
         {
+            try
+            {
+                int userId = HttpContext.Session.GetInt32("UserId") ?? 0;
+                List<CartItemTemporary> cartItems = await _dapperRepository.GetCartItemsAsync(userId);
+
+                Console.WriteLine($"[DEBUG] Cart Items trong review order: {JsonConvert.SerializeObject(cartItems)}");
+
+                return View("~/Views/User/Customer/ReviewOrder.cshtml", cartItems);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ERROR] ReviewOrder exception: {ex.Message}");
+                return StatusCode(500, "Lỗi khi xử lý.");
+            }
+        }
+        [HttpGet]
+        public async Task<IActionResult> GetSuggestedProducts()
+        {
+            Console.WriteLine("goi api");
             int userId = HttpContext.Session.GetInt32("UserId") ?? 0;
             List<CartItemTemporary> cartItems = await _dapperRepository.GetCartItemsAsync(userId);
 
-            Console.WriteLine($"[DEBUG] Cart Items trong review order: {JsonConvert.SerializeObject(cartItems)}");
+            Console.WriteLine($"[DEBUG] Cart Items trong GetSuggestedProducts: {JsonConvert.SerializeObject(cartItems)}");
 
-            return View("~/Views/User/Customer/ReviewOrder.cshtml", cartItems);
+            // Chuyển danh sách cart item thành tên sản phẩm
+            var productNames = cartItems.Select(item => item.ItemName).ToList();
+
+            Console.WriteLine($"[DEBUG] Tên sản phẩm gửi sang Python: {JsonConvert.SerializeObject(productNames)}");
+
+            // Gọi API Python để lấy gợi ý sản phẩm
+            var suggestedProducts = await _dapperRepository.GetSuggestedProductsDapper(productNames);
+
+            Console.WriteLine($"[DEBUG] Gợi ý từ Python: {JsonConvert.SerializeObject(suggestedProducts)}");
+
+            return Ok(new { suggested_products = suggestedProducts });
         }
         [HttpDelete]
         public async Task<IActionResult> RemoveCartItem([FromQuery] int userId, [FromQuery] string itemName, [FromQuery] string itemSize)

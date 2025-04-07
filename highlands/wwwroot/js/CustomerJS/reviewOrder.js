@@ -9,7 +9,8 @@
 
 document.addEventListener("DOMContentLoaded", function () {
     initializeOptionButtons();
-    loadDeliveryMethod()
+    loadDeliveryMethod();
+    loadItemRcm();
     updateTotal();
 });
 
@@ -205,3 +206,73 @@ function initializeOptionButtons() {
         });
     });
 }
+
+async function loadItemRcm() {
+    try {
+        const response = await fetch("https://localhost:44351/Customer/GetSuggestedProducts", {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+
+        if (response.ok) {
+            const data = await response.json();  // Giải mã dữ liệu trả về
+            console.log('Raw Data:', data);  // Debug raw response
+            const suggestedProducts = data.suggested_products || [];  // Lấy danh sách sản phẩm gợi ý
+            console.log('Suggested Products:', suggestedProducts);
+
+            const recProductsContainer = document.querySelector('.rec-products');
+            recProductsContainer.innerHTML = '';  // Xóa nội dung cũ trước khi thêm mới
+
+            // Duyệt qua từng sản phẩm và tạo các phần tử HTML để hiển thị
+            suggestedProducts.forEach((product, index) => {
+                // Tạo phần tử div cho từng sản phẩm
+                const productDiv = document.createElement('div');
+                productDiv.classList.add('rec-product');  // Thêm lớp CSS cho sản phẩm
+
+                // Tạo phần tử div cho hình ảnh sản phẩm (sẽ tạm thời trống)
+                const productImgDiv = document.createElement('div');
+                productImgDiv.classList.add('rec-product-img');  // Thêm lớp CSS cho ảnh sản phẩm
+                // (Bạn có thể thêm ảnh vào đây nếu có URL hình ảnh thực tế)
+                const productImg = document.createElement('img');
+                productImg.src = "/api/placeholder/50/50";  // Đặt ảnh tạm thời
+                productImg.alt = "";  // Có thể đặt alt cho ảnh
+                productImgDiv.appendChild(productImg);
+
+                // Tạo phần tử div cho tên sản phẩm
+                const productNameDiv = document.createElement('div');
+                productNameDiv.classList.add('rec-product-name');  // Thêm lớp CSS cho tên sản phẩm
+                productNameDiv.textContent = product;  // Đặt tên sản phẩm vào phần tử div
+
+                // Tạo phần tử <i> cho biểu tượng thêm sản phẩm
+                const addProductIcon = document.createElement('i');
+                addProductIcon.classList.add('fas', 'fa-plus-circle');  // Thêm class cho biểu tượng (có thể chỉnh sửa)
+                addProductIcon.setAttribute('data-itemname', product);  // Lưu tên sản phẩm vào thuộc tính data-itemname
+
+                // Thêm phần tử "10% off" vào 2 sản phẩm đầu tiên
+                if (index < 2) {
+                    const promoBadgeDiv = document.createElement('div');
+                    promoBadgeDiv.classList.add('promo-badge');
+                    promoBadgeDiv.textContent = '10% off'; // Thêm badge 10% off
+                    productDiv.appendChild(promoBadgeDiv);
+                }
+                // Thêm các phần tử con vào phần tử sản phẩm
+                productDiv.appendChild(productImgDiv);
+                productDiv.appendChild(productNameDiv);
+                productDiv.appendChild(addProductIcon);
+
+                // Thêm phần tử sản phẩm vào container
+                recProductsContainer.appendChild(productDiv);
+            });
+        } else {
+            console.log('Error fetching suggested products:', response.status, await response.text());
+        }
+    } catch (error) {
+        console.error('Request failed', error);
+    }
+}
+
+
+
+
