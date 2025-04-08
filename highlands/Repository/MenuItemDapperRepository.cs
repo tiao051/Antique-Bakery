@@ -10,6 +10,7 @@ using highlands.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using System.Net.Http;
 using System.Text.Json;
+using Microsoft.Data.SqlClient;
 
 namespace highlands.Repository
 {
@@ -545,6 +546,35 @@ namespace highlands.Repository
             catch (Exception ex)
             {
                 Console.WriteLine($"💥 Exception khi gọi API: {ex.Message}");
+                return new List<string>();
+            }
+        }
+        public async Task<List<string>> GetSuggestedProductImg(List<string> productNames)
+        {
+            try
+            {
+                if (productNames == null || !productNames.Any())
+                {
+                    return new List<string>();
+                }
+
+                var query = "SELECT ItemImg FROM MenuItem WHERE ItemName IN @ProductNames";
+                var result = await _connection.QueryAsync<string>(query, new { ProductNames = productNames });
+
+                var imageList = result.ToList();
+
+                // 🔍 Log ra danh sách hình ảnh
+                Console.WriteLine("[DEBUG] ItemImg list:");
+                foreach (var img in imageList)
+                {
+                    Console.WriteLine(img);
+                }
+
+                return imageList;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error: {ex.Message}");
                 return new List<string>();
             }
         }

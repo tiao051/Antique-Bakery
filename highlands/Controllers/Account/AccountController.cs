@@ -22,7 +22,7 @@ namespace highlands.Controllers.Account
 
         public AccountController(IConfiguration config, IDistributedCache distributedCache)
         {
-            _connectionString = config.GetConnectionString("DefaultConnection");
+            _connectionString = config.GetConnectionString("DefaultConnection"); 
             _config = config;
             _distributedCache = distributedCache;
         }

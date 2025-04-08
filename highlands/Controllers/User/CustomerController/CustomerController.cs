@@ -363,23 +363,33 @@ namespace highlands.Controllers.User.CustomerController
         public async Task<IActionResult> GetSuggestedProducts()
         {
             Console.WriteLine("goi api");
+
             int userId = HttpContext.Session.GetInt32("UserId") ?? 0;
             List<CartItemTemporary> cartItems = await _dapperRepository.GetCartItemsAsync(userId);
 
             Console.WriteLine($"[DEBUG] Cart Items trong GetSuggestedProducts: {JsonConvert.SerializeObject(cartItems)}");
 
-            // Chuyển danh sách cart item thành tên sản phẩm
             var productNames = cartItems.Select(item => item.ItemName).ToList();
 
             Console.WriteLine($"[DEBUG] Tên sản phẩm gửi sang Python: {JsonConvert.SerializeObject(productNames)}");
 
-            // Gọi API Python để lấy gợi ý sản phẩm
             var suggestedProducts = await _dapperRepository.GetSuggestedProductsDapper(productNames);
 
             Console.WriteLine($"[DEBUG] Gợi ý từ Python: {JsonConvert.SerializeObject(suggestedProducts)}");
 
-            return Ok(new { suggested_products = suggestedProducts });
+            // 🔁 Lấy ảnh tương ứng với sản phẩm gợi ý
+            var productImages = await _dapperRepository.GetSuggestedProductImg(suggestedProducts);
+
+            // Gộp tên + ảnh lại thành 1 danh sách object
+            var result = suggestedProducts.Select((name, index) => new
+            {
+                Name = name,
+                Img = productImages.ElementAtOrDefault(index) ?? "default.jpg"
+            }).ToList();
+
+            return Ok(new { suggested_products = result });
         }
+
         [HttpDelete]
         public async Task<IActionResult> RemoveCartItem([FromQuery] int userId, [FromQuery] string itemName, [FromQuery] string itemSize)
         {
@@ -676,11 +686,6 @@ namespace highlands.Controllers.User.CustomerController
                 Address = userDetail.Address ?? "", 
                 LoyaltyPoints = userDetail.LoyaltyPoints ?? 0 
             });
-        }
-        [HttpGet]
-        public IActionResult ItemRcm()
-        {
-            return View("~/Views/User/Customer/ItemRcm.cshtml");
         }
     }
 }

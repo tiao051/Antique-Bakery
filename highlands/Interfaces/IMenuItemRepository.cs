@@ -28,5 +28,6 @@ namespace highlands.Interfaces
         Task InsertOrderDetailAsync(OrderDetail detail);
         Task<CustomerCheckoutInfoDTO> GetCustomerPhoneAddrPoints(string customerId);
         Task<List<string>> GetSuggestedProductsDapper(List<string> productNames);
+        Task<List<string>> GetSuggestedProductImg(List<string> productNames);
     }
 }

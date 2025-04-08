@@ -226,30 +226,29 @@ async function loadItemRcm() {
             recProductsContainer.innerHTML = ''; 
 
             suggestedProducts.forEach((product, index) => {
-
                 const productDiv = document.createElement('div');
-                productDiv.classList.add('rec-product'); 
+                productDiv.classList.add('rec-product');
 
                 const productImgDiv = document.createElement('div');
-                productImgDiv.classList.add('rec-product-img');  
+                productImgDiv.classList.add('rec-product-img');
 
                 const productImg = document.createElement('img');
-                productImg.src = "/api/placeholder/50/50";
-                productImg.alt = ""; 
+                productImg.src = product.img || "/api/placeholder/50/50";  // ← Sửa chỗ này
+                productImg.alt = product.name || "";
                 productImgDiv.appendChild(productImg);
 
                 const productNameDiv = document.createElement('div');
-                productNameDiv.classList.add('rec-product-name');  
-                productNameDiv.textContent = product;  
+                productNameDiv.classList.add('rec-product-name');
+                productNameDiv.textContent = product.name;  // ← Và sửa chỗ này
 
                 const addProductIcon = document.createElement('i');
-                addProductIcon.classList.add('fas', 'fa-plus-circle'); 
-                addProductIcon.setAttribute('data-itemname', product); 
+                addProductIcon.classList.add('fas', 'fa-plus-circle');
+                addProductIcon.setAttribute('data-itemname', product.name);
 
                 if (index < 2) {
                     const promoBadgeDiv = document.createElement('div');
                     promoBadgeDiv.classList.add('promo-badge');
-                    promoBadgeDiv.textContent = '10% off'; // Thêm badge 10% off
+                    promoBadgeDiv.textContent = '10% off';
                     productDiv.appendChild(promoBadgeDiv);
                 }
 
@@ -257,7 +256,6 @@ async function loadItemRcm() {
                 productDiv.appendChild(productNameDiv);
                 productDiv.appendChild(addProductIcon);
 
-                // Thêm phần tử sản phẩm vào container
                 recProductsContainer.appendChild(productDiv);
             });
         } else {
