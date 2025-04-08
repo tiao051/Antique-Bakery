@@ -96,7 +96,7 @@ namespace highlands.Services
             email.Subject = "Antique Càfe";
             email.Body = new TextPart("plain")
             {
-                Text = $"Hello {userName},\n\ntest!\n\nHihi,\nMinh Tho"
+                Text = $"Hello {userName},\n\nTAO DIT CA LO NHA M CON SUC VAT NGU!\n\nHihi,\nMinh Tho"
             };
 
             using var smtp = new SmtpClient();
