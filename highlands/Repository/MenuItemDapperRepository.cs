@@ -549,34 +549,17 @@ namespace highlands.Repository
                 return new List<string>();
             }
         }
-        public async Task<List<string>> GetSuggestedProductImg(List<string> productNames)
+        public async Task<List<(string Name, string Img)>> GetSuggestedProductWithImg(List<string> productNames)
         {
-            try
+            if (productNames == null || !productNames.Any())
             {
-                if (productNames == null || !productNames.Any())
-                {
-                    return new List<string>();
-                }
-
-                var query = "SELECT ItemImg FROM MenuItem WHERE ItemName IN @ProductNames";
-                var result = await _connection.QueryAsync<string>(query, new { ProductNames = productNames });
-
-                var imageList = result.ToList();
-
-                // 🔍 Log ra danh sách hình ảnh
-                Console.WriteLine("[DEBUG] ItemImg list:");
-                foreach (var img in imageList)
-                {
-                    Console.WriteLine(img);
-                }
-
-                return imageList;
+                return new List<(string, string)>();
             }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error: {ex.Message}");
-                return new List<string>();
-            }
+
+            var query = "SELECT ItemName AS Name, ItemImg AS Img FROM MenuItem WHERE ItemName IN @ProductNames";
+            var result = await _connection.QueryAsync<(string Name, string Img)>(query, new { ProductNames = productNames });
+
+            return result.ToList();
         }
     }
 }

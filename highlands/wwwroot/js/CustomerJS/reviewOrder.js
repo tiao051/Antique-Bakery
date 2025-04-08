@@ -217,13 +217,12 @@ async function loadItemRcm() {
         });
 
         if (response.ok) {
-            const data = await response.json(); 
-            console.log('Raw Data:', data);  
-            const suggestedProducts = data.suggested_products || []; 
-            console.log('Suggested Products:', suggestedProducts);
+            const data = await response.json();
+            console.log('Raw Data:', data);
+            const suggestedProducts = data.suggested_products || [];
 
             const recProductsContainer = document.querySelector('.rec-products');
-            recProductsContainer.innerHTML = ''; 
+            recProductsContainer.innerHTML = '';
 
             suggestedProducts.forEach((product, index) => {
                 const productDiv = document.createElement('div');
@@ -233,13 +232,13 @@ async function loadItemRcm() {
                 productImgDiv.classList.add('rec-product-img');
 
                 const productImg = document.createElement('img');
-                productImg.src = product.img || "/api/placeholder/50/50";  // ← Sửa chỗ này
-                productImg.alt = product.name || "";
+                productImg.src = product.img || "/img/placeholder.jpg";  // ✅ Dùng ảnh thật
+                productImg.alt = product.name || "Product";
                 productImgDiv.appendChild(productImg);
 
                 const productNameDiv = document.createElement('div');
                 productNameDiv.classList.add('rec-product-name');
-                productNameDiv.textContent = product.name;  // ← Và sửa chỗ này
+                productNameDiv.textContent = product.name || "";
 
                 const addProductIcon = document.createElement('i');
                 addProductIcon.classList.add('fas', 'fa-plus-circle');
@@ -265,6 +264,7 @@ async function loadItemRcm() {
         console.error('Request failed', error);
     }
 }
+
 
 
 

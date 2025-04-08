@@ -363,31 +363,27 @@ namespace highlands.Controllers.User.CustomerController
         public async Task<IActionResult> GetSuggestedProducts()
         {
             Console.WriteLine("goi api");
-
             int userId = HttpContext.Session.GetInt32("UserId") ?? 0;
             List<CartItemTemporary> cartItems = await _dapperRepository.GetCartItemsAsync(userId);
 
-            Console.WriteLine($"[DEBUG] Cart Items trong GetSuggestedProducts: {JsonConvert.SerializeObject(cartItems)}");
-
             var productNames = cartItems.Select(item => item.ItemName).ToList();
-
             Console.WriteLine($"[DEBUG] Tên sản phẩm gửi sang Python: {JsonConvert.SerializeObject(productNames)}");
 
-            var suggestedProducts = await _dapperRepository.GetSuggestedProductsDapper(productNames);
+            var suggestedNames = await _dapperRepository.GetSuggestedProductsDapper(productNames);
+            Console.WriteLine($"[DEBUG] Gợi ý từ Python: {JsonConvert.SerializeObject(suggestedNames)}");
 
-            Console.WriteLine($"[DEBUG] Gợi ý từ Python: {JsonConvert.SerializeObject(suggestedProducts)}");
+            var suggestionsWithImg = await _dapperRepository.GetSuggestedProductWithImg(suggestedNames);
 
-            // 🔁 Lấy ảnh tương ứng với sản phẩm gợi ý
-            var productImages = await _dapperRepository.GetSuggestedProductImg(suggestedProducts);
+            var suggestedProducts = suggestedNames
+                .Select(name =>
+                {
+                    var matched = suggestionsWithImg.FirstOrDefault(x => x.Name == name);
+                    return new { name = name, img = matched.Img ?? "/img/placeholder.jpg" };
+                }).ToList();
 
-            // Gộp tên + ảnh lại thành 1 danh sách object
-            var result = suggestedProducts.Select((name, index) => new
-            {
-                Name = name,
-                Img = productImages.ElementAtOrDefault(index) ?? "default.jpg"
-            }).ToList();
+            Console.WriteLine($"[DEBUG] Kết quả gửi FE: {JsonConvert.SerializeObject(suggestedProducts)}");
 
-            return Ok(new { suggested_products = result });
+            return Ok(new { suggested_products = suggestedProducts });
         }
 
         [HttpDelete]
