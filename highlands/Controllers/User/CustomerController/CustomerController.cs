@@ -11,6 +11,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using highlands.Interfaces;
 using Microsoft.AspNetCore.SignalR;
+using highlands.Repository.OrderRepository;
 
 namespace highlands.Controllers.User.CustomerController
 {
@@ -26,13 +27,15 @@ namespace highlands.Controllers.User.CustomerController
         private readonly IDistributedCache _distributedCache;
         private readonly string _connectionString;
         private readonly IHubContext<OrderHub> _hubContext;
+        private readonly IHubContext<RecommendationHub> _recommendationHub;
         private readonly IHttpClientFactory _clientFactory;
 
         public CustomerController(
             IConfiguration configuration,
             IEnumerable<IMenuItemRepository> repositories,
             IDistributedCache distributedCache,
-            IHubContext<OrderHub> hubContext)
+            IHubContext<OrderHub> hubContext,
+            IHubContext<RecommendationHub> recommendationHub)
         {
             _hostname = configuration["RabbitMQ:HostName"];
             _username = configuration["RabbitMQ:UserName"];
@@ -43,6 +46,7 @@ namespace highlands.Controllers.User.CustomerController
             _dapperRepository = repositories.OfType<MenuItemDapperRepository>().FirstOrDefault();
             _distributedCache = distributedCache;
             _hubContext = hubContext;
+            _recommendationHub = recommendationHub;
         }
 
         [HttpGet]
@@ -421,6 +425,14 @@ namespace highlands.Controllers.User.CustomerController
                 i.Size == normalizedSize);
 
             int updatedQuantity = updatedItem?.Quantity ?? 0;
+
+            if (success && updatedQuantity == 0)
+            {
+                Console.WriteLine("[SignalR] Sản phẩm bị xóa hoàn toàn khỏi giỏ hàng → Gửi signal update gợi ý");
+
+                await _recommendationHub.Clients.All.SendAsync("ReceiveNewRecommention", "update");
+            }
+
             return Json(new
             {
                 success,

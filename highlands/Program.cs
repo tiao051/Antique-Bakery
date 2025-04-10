@@ -127,6 +127,7 @@ app.UseSession();
 app.UseEndpoints(endpoints =>
 {
     endpoints.MapHub<OrderHub>("/orderHub");
+    endpoints.MapHub<RecommendationHub>("/recommendationHub");
     endpoints.MapControllerRoute(
         name: "default",
         pattern: "{controller=Account}/{action=Index}/{id?}");

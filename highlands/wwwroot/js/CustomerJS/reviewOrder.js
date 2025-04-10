@@ -12,6 +12,7 @@ document.addEventListener("DOMContentLoaded", function () {
     loadDeliveryMethod();
     loadItemRcm();
     updateTotal();
+    getRealtimeOrders();
 });
 
 document.getElementById("subscribeEmails").addEventListener("change", function () {
@@ -263,6 +264,24 @@ async function loadItemRcm() {
     } catch (error) {
         console.error('Request failed', error);
     }
+}
+function getRealtimeOrders() {
+
+    console.log("signalR defined:", typeof signalR !== "undefined");
+    const connection = new signalR.HubConnectionBuilder()
+        .withUrl("/recommendationHub")
+        .build();
+
+    connection.on("ReceiveNewRecommention", function () {
+        console.log("New item rec received!");
+        loadItemRcm();
+    });
+
+    connection.start().then(function () {
+        console.log("Connection to Hub established");
+    }).catch(function (err) {
+        console.error("SignalR connection failed: " + err.toString());
+    });
 }
 
 
