@@ -498,11 +498,11 @@ namespace highlands.Repository
 
                 if (productNames == null || !productNames.Any())
                 {
-                    Console.WriteLine("❗ productNames null hoặc rỗng.");
+                    Console.WriteLine("productNames null hoặc rỗng.");
                     return new List<string>();
                 }
 
-                Console.WriteLine("🛒 Tên sản phẩm gửi tới Python API: " + string.Join(", ", productNames));
+                Console.WriteLine("Tên sản phẩm gửi tới Python API: " + string.Join(", ", productNames));
 
                 var requestUri = "http://127.0.0.1:5000/get_mining_results";
 
@@ -512,7 +512,7 @@ namespace highlands.Repository
                 if (response.IsSuccessStatusCode)
                 {
                     var rawJson = await response.Content.ReadAsStringAsync();
-                    Console.WriteLine("📦 Raw JSON từ Python: " + rawJson);
+                    Console.WriteLine("Raw JSON từ Python: " + rawJson);
 
                     try
                     {
@@ -524,20 +524,20 @@ namespace highlands.Repository
                                 .Select(x => x.GetString())
                                 .ToList();
 
-                            Console.WriteLine("✅ Suggested products: " + string.Join(", ", suggestedProducts));
+                            Console.WriteLine("Suggested products: " + string.Join(", ", suggestedProducts));
 
                             return suggestedProducts;
                         }
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine($"❌ Lỗi khi parse JSON: {ex.Message}");
+                        Console.WriteLine($"Lỗi khi parse JSON: {ex.Message}");
                         return new List<string>();
                     }
                 }
                 else
                 {
-                    Console.WriteLine($"❌ Request lỗi - Status Code: {response.StatusCode}");
+                    Console.WriteLine($"Request lỗi - Status Code: {response.StatusCode}");
                     var errorContent = await response.Content.ReadAsStringAsync();
                     Console.WriteLine($"Nội dung lỗi: {errorContent}");
                     return new List<string>();
@@ -545,19 +545,29 @@ namespace highlands.Repository
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"💥 Exception khi gọi API: {ex.Message}");
+                Console.WriteLine($"Exception khi gọi API: {ex.Message}");
                 return new List<string>();
             }
         }
-        public async Task<List<(string Name, string Img)>> GetSuggestedProductWithImg(List<string> productNames)
+        public async Task<List<(string Name, string Img, string Subcategory)>> GetSuggestedProductWithImg(List<string> productNames)
         {
             if (productNames == null || !productNames.Any())
             {
-                return new List<(string, string)>();
+                return new List<(string, string, string)>();
             }
 
-            var query = "SELECT ItemName AS Name, ItemImg AS Img FROM MenuItem WHERE ItemName IN @ProductNames";
-            var result = await _connection.QueryAsync<(string Name, string Img)>(query, new { ProductNames = productNames });
+            var query = @"
+            SELECT 
+                ItemName AS Name, 
+                ItemImg AS Img, 
+                Subcategory 
+            FROM MenuItem 
+            WHERE ItemName IN @ProductNames";
+
+            var result = await _connection.QueryAsync<(string Name, string Img, string Subcategory)>(
+                query,
+                new { ProductNames = productNames }
+            );
 
             return result.ToList();
         }

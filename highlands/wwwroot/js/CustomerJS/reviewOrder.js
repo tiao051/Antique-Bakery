@@ -233,7 +233,7 @@ async function loadItemRcm() {
                 productImgDiv.classList.add('rec-product-img');
 
                 const productImg = document.createElement('img');
-                productImg.src = product.img || "/img/placeholder.jpg";  // ✅ Dùng ảnh thật
+                productImg.src = product.img || "/img/placeholder.jpg";
                 productImg.alt = product.name || "Product";
                 productImgDiv.appendChild(productImg);
 
@@ -244,6 +244,15 @@ async function loadItemRcm() {
                 const addProductIcon = document.createElement('i');
                 addProductIcon.classList.add('fas', 'fa-plus-circle');
                 addProductIcon.setAttribute('data-itemname', product.name);
+
+                addProductIcon.addEventListener('click', () => {
+                    const itemName = product.name;
+                    const subcategory = product.subcategory || "Other";
+                    const size = "M";
+
+                    const url = `/Customer/ItemSelected?Subcategory=${encodeURIComponent(subcategory)}&ItemName=${encodeURIComponent(itemName)}&size=${size}`;
+                    window.location.href = url;
+                });
 
                 if (index < 2) {
                     const promoBadgeDiv = document.createElement('div');
@@ -265,6 +274,7 @@ async function loadItemRcm() {
         console.error('Request failed', error);
     }
 }
+
 function getRealtimeOrders() {
 
     console.log("signalR defined:", typeof signalR !== "undefined");

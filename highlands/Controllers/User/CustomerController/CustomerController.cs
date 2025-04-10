@@ -367,6 +367,7 @@ namespace highlands.Controllers.User.CustomerController
         public async Task<IActionResult> GetSuggestedProducts()
         {
             Console.WriteLine("goi api");
+
             int userId = HttpContext.Session.GetInt32("UserId") ?? 0;
             List<CartItemTemporary> cartItems = await _dapperRepository.GetCartItemsAsync(userId);
 
@@ -376,13 +377,18 @@ namespace highlands.Controllers.User.CustomerController
             var suggestedNames = await _dapperRepository.GetSuggestedProductsDapper(productNames);
             Console.WriteLine($"[DEBUG] Gợi ý từ Python: {JsonConvert.SerializeObject(suggestedNames)}");
 
-            var suggestionsWithImg = await _dapperRepository.GetSuggestedProductWithImg(suggestedNames);
+            var suggestionsWithDetails = await _dapperRepository.GetSuggestedProductWithImg(suggestedNames);
 
             var suggestedProducts = suggestedNames
                 .Select(name =>
                 {
-                    var matched = suggestionsWithImg.FirstOrDefault(x => x.Name == name);
-                    return new { name = name, img = matched.Img ?? "/img/placeholder.jpg" };
+                    var matched = suggestionsWithDetails.FirstOrDefault(x => x.Name == name);
+                    return new
+                    {
+                        name = name,
+                        img = matched.Img ?? "/img/placeholder.jpg",
+                        subcategory = matched.Subcategory ?? "Other"
+                    };
                 }).ToList();
 
             Console.WriteLine($"[DEBUG] Kết quả gửi FE: {JsonConvert.SerializeObject(suggestedProducts)}");
