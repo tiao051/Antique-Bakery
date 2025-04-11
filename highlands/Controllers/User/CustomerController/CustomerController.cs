@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using highlands.Interfaces;
 using Microsoft.AspNetCore.SignalR;
 using highlands.Repository.OrderRepository;
+using Microsoft.EntityFrameworkCore;
 
 namespace highlands.Controllers.User.CustomerController
 {
@@ -52,6 +53,7 @@ namespace highlands.Controllers.User.CustomerController
         [HttpGet]
         public async Task<IActionResult> Index()
         {
+            ViewBag.ShowSearchBox = true;
             foreach (var claim in HttpContext.User.Claims)
             {
                 Console.WriteLine($"Claim Type: {claim.Type}, Claim Value: {claim.Value}");
@@ -63,7 +65,7 @@ namespace highlands.Controllers.User.CustomerController
                 return Unauthorized();
             }
             var emailClaim = HttpContext.User.FindFirst(ClaimTypes.Email);
-            string userId = userIdClaim.Value; // Giữ UserId ở dạng string
+            string userId = userIdClaim.Value; 
             Console.WriteLine($"UserIdClaim Value: {userId}");
 
             // Kiểm tra Role từ JWT Token
@@ -104,7 +106,8 @@ namespace highlands.Controllers.User.CustomerController
             return PartialView("~/Views/User/Customer/_MenuItemsPartial.cshtml", menuItems);
         }
         public async Task<ActionResult> ItemSelected(string subcategory, string itemName, string size, int userId)
-        {
+        {   
+            ViewBag.ShowSearchBox = true;
             ViewData["ShowNavbarMenu"] = false;
             Console.WriteLine($"[DEBUG] ItemSelected received: subcategory={subcategory}, itemName={itemName}, size={size}");
 
@@ -700,6 +703,13 @@ namespace highlands.Controllers.User.CustomerController
                 Address = userDetail.Address ?? "", 
                 LoyaltyPoints = userDetail.LoyaltyPoints ?? 0 
             });
+        }
+        [HttpGet]
+        public IActionResult SearchMenuItems(string keyword)
+        {
+            var results = _dapperRepository.Search(keyword);
+
+            return PartialView("~/Views/User/Customer/_SearchResultsPartial.cshtml", results);
         }
     }
 }

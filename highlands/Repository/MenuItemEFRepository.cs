@@ -15,7 +15,7 @@ namespace highlands.Repository
 
         public async Task<List<MenuItem>> GetAllMenuItemsAsync()
         {
-            return await _context.MenuItems.AsNoTracking().Take(50).ToListAsync();
+            return await _context.MenuItems.AsNoTracking().ToListAsync();
         }
     }
 }

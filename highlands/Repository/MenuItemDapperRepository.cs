@@ -571,5 +571,10 @@ namespace highlands.Repository
 
             return result.ToList();
         }
+        public List<MenuItem> Search(string keyword)
+        {
+            var query = @"SELECT * FROM MenuItem WHERE ItemName LIKE @Keyword";
+            return _connection.Query<MenuItem>(query, new { Keyword = $"%{keyword}%" }).ToList();
+        }
     }
 }

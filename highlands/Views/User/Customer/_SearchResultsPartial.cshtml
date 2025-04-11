@@ -1,0 +1,21 @@
+﻿@model IEnumerable<highlands.Models.MenuItem>
+
+@if (!Model.Any())
+{
+    <p>No results found.</p>
+}
+else
+{
+    <h2>Search Results</h2>
+    <div class="search-result-group">
+        @foreach (var item in Model)
+        {
+            <div class="menu-item" onclick="window.location='@Url.Action("ItemSelected", "Customer", new { Subcategory = item.SubCategory, ItemName = item.ItemName, size = "M" })'">
+                <div class="img-item">
+                    <img src="@item.ItemImg" alt="@item.ItemName" />
+                </div>
+                <h3 class="menu-item-name">@item.ItemName</h3>
+            </div>
+        }
+    </div>
+}

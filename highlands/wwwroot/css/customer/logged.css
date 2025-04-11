@@ -246,7 +246,6 @@ a {
     padding-left: 100px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
     border-radius: 12px;
-    margin-bottom: 20px;
 }
 
 h1, h2, h3 {
@@ -499,7 +498,7 @@ h1, h2, h3 {
         border-radius: 20px;
         border: 2px solid #767672e8;
         outline: none;
-        font-size: 20px;
+        font-size: 16px;
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
 
@@ -507,7 +506,7 @@ h1, h2, h3 {
     position: absolute;
     top: 50%;
     left: 16px;
-    font-size:20px;
+    font-size: 16px;
     transform: translateY(-50%);
     color: gray;
 }
