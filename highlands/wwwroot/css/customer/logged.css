@@ -261,7 +261,7 @@ h1, h2, h3 {
 
     .category-group h2 {
         font-size: 22px;
-        border-bottom: 2px solid #ccc;
+        border-bottom: 2px solid #D2B48C;
         padding-bottom: 16px;
     }
 
@@ -304,6 +304,7 @@ h1, h2, h3 {
 }
 
 .img-item {
+    cursor: pointer;
     display: flex;
 }
 .navbar-user a {
@@ -545,6 +546,12 @@ h1, h2, h3 {
     font-weight: bold;
     cursor: pointer;
     transition: all 0.2s ease-in-out;
+}
+.menu-item-name{
+    cursor: pointer;
+}
+.menu-item-name:hover{
+    opacity: 0.5;
 }
 
     .page-btn:hover {

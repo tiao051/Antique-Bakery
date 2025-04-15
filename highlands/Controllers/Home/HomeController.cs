@@ -17,6 +17,11 @@ namespace highlands.Controllers.Home
         {
             return View();
         }
+        
+        public IActionResult Empty()
+        {
+            return View("~/Views/Shared/EmptyView.cshtml");
+        }
 
         public IActionResult Privacy()
         {

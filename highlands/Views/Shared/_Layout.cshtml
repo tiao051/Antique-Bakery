@@ -22,8 +22,8 @@
             </div>
             <ul class="navbar-menu">
                 <li><a href="@Url.Action("Index", "Customer", new { area = "User" })">MENU</a></li>
-                <li><a href="#">REWARDS</a></li>
-                <li><a href="/Customer/Itemrcm">GIFT CARDS</a></li>
+                <li><a href="@Url.Action("Empty", "Home")">REWARDS</a></li>
+                <li><a href="@Url.Action("Empty", "Home")">GIFT CARDS</a></li>
             </ul>
             @if (ViewBag.ShowSearchBox != null && ViewBag.ShowSearchBox == true)
             {
@@ -53,7 +53,7 @@
                             </a>
                         </li>
                         <li class="dropdown-menu-item">
-                            <a href="#">
+                            <a href="@Url.Action("Empty", "Home")">
                                 <span class="item-icon">
                                     <i class='bx bx-cog'></i>
                                 </span>
@@ -81,9 +81,9 @@
                 <nav aria-label="Menu">
                     <ul class="subnav-list">
                         <li><a aria-current="page" class="subnav-item active" href="@Url.Action("Index", "Customer", new { area = "User" })">Menu</a></li>
-                        <li><a class="subnav-item" href="https://www.starbucks.com/menu/featured">Featured</a></li>
-                        <li><a class="subnav-item" href="/menu/previous">Previous</a></li>
-                        <li><a class="subnav-item" href="/menu/favorites">Favorites</a></li>
+                        <li><a class="subnav-item" href="@Url.Action("Empty", "Home")">Featured</a></li>
+                        <li><a class="subnav-item" href="@Url.Action("Empty", "Home")">Previous</a></li>
+                        <li><a class="subnav-item" href="@Url.Action("Empty", "Home")">Favorites</a></li>
                     </ul>
                 </nav>
             </div>

@@ -11,7 +11,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Coffee Shop Checkout</title>
-    <script src="/js/CustomerJS/checkout.js"></script>
+    <script src="/js/CustomerJS/checkout.js" defer></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <link rel="stylesheet" href="~/css/customer/checkout.css?v=@DateTime.Now.Ticks">
 </head>
@@ -60,6 +60,7 @@
                     <h2 class="section-title">Delivery Preferences</h2>
                     <div class="form-content">
                         <div class="shipping-options">
+                            <!-- Tip for Driver -->
                             <div class="shipping-option">
                                 <input type="radio" class="shipping-radio">
                                 <div class="shipping-details">
@@ -75,6 +76,7 @@
                                 </div>
                             </div>
 
+                            <!-- Doorstep Delivery -->
                             <div class="shipping-option" onclick="selectShipping(this, 'door')" data-type="doorstep">
                                 <input type="radio" class="shipping-radio">
                                 <div class="shipping-details">
@@ -84,6 +86,7 @@
                                 <span class="shipping-price">$2</span>
                             </div>
 
+                            <!-- Utensils -->
                             <div class="shipping-option" onclick="selectShipping(this, 'utensils')">
                                 <input type="radio" class="shipping-radio">
                                 <div class="shipping-details">

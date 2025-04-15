@@ -70,9 +70,21 @@ function updateTotalPayment(deliveryFee) {
  *  ===========================
  */
 function selectShipping(element, type) {
-    element.classList.toggle('selected');
-    element.querySelector('.shipping-radio').checked = !element.querySelector('.shipping-radio').checked;
-    selectedOptions.has(type) ? selectedOptions.delete(type) : selectedOptions.add(type);
+    const radioButton = element.querySelector('.shipping-radio');
+
+    // Nếu đã chọn, bỏ chọn lại
+    if (radioButton.checked) {
+        element.classList.remove('selected');
+        radioButton.checked = false;
+        selectedOptions.delete(type);
+    } else {
+        // Nếu chưa chọn, đánh dấu là chọn
+        element.classList.add('selected');
+        radioButton.checked = true;
+        selectedOptions.add(type);
+    }
+
+    // Cập nhật lại phí giao hàng
     updateDeliveryFee();
 }
 
@@ -80,10 +92,26 @@ function selectTip(element, amount) {
     const shippingOption = element.closest('.shipping-option');
     if (!shippingOption) return;
 
-    shippingOption.querySelectorAll('.tip-option').forEach(option => option.classList.remove('selected'));
-    element.classList.toggle('selected');
-    shippingOption.classList.toggle('selected', element.classList.contains('selected'));
+    const radioButton = shippingOption.querySelector('.shipping-radio');
 
+    // Nếu tip đã được chọn -> bỏ chọn lại
+    if (element.classList.contains('selected')) {
+        element.classList.remove('selected');
+        shippingOption.classList.remove('selected');
+        if (radioButton) radioButton.checked = false;
+    } else {
+        // Bỏ selected ở tất cả tip-option khác
+        shippingOption.querySelectorAll('.tip-option').forEach(option => option.classList.remove('selected'));
+
+        // Thêm selected cho tip được chọn
+        element.classList.add('selected');
+        shippingOption.classList.add('selected');
+
+        // ✅ Check radio button khi chọn tip
+        if (radioButton) radioButton.checked = true;
+    }
+
+    // Custom amount
     if (amount === 'custom' && element.classList.contains('selected')) {
         const customAmount = prompt('Nhập số tiền tip (USD):', '2');
         if (customAmount && !isNaN(customAmount)) {
@@ -97,6 +125,7 @@ function selectTip(element, amount) {
 
     updateDeliveryFee();
 }
+
 
 /** ===========================
  *  API LẤY THÔNG TIN NGƯỜI DÙNG
