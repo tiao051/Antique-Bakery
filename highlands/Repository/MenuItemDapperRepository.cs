@@ -571,10 +571,24 @@ namespace highlands.Repository
 
             return result.ToList();
         }
-        public List<MenuItem> Search(string keyword)
+        public (List<MenuItem> items, int totalPages) Search(string keyword, int page = 1, int pageSize = 6)
         {
-            var query = @"SELECT * FROM MenuItem WHERE ItemName LIKE @Keyword";
-            return _connection.Query<MenuItem>(query, new { Keyword = $"%{keyword}%" }).ToList();
+            var offset = (page - 1) * pageSize;
+            var query = @"
+            SELECT * 
+            FROM MenuItem 
+            WHERE ItemName LIKE @Keyword
+            ORDER BY ItemName
+            OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY";
+
+            var items = _connection.Query<MenuItem>(query, new { Keyword = $"%{keyword}%", Offset = offset, PageSize = pageSize }).ToList();
+
+            var countQuery = @"SELECT COUNT(*) FROM MenuItem WHERE ItemName LIKE @Keyword";
+            var totalItems = _connection.QuerySingle<int>(countQuery, new { Keyword = $"%{keyword}%" });
+
+            var totalPages = (int)Math.Ceiling((double)totalItems / pageSize);
+
+            return (items, totalPages);
         }
     }
 }

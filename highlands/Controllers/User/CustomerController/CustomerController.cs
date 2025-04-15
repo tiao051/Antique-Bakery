@@ -705,9 +705,12 @@ namespace highlands.Controllers.User.CustomerController
             });
         }
         [HttpGet]
-        public IActionResult SearchMenuItems(string keyword)
+        public IActionResult SearchMenuItems(string keyword, int page = 1, int pageSize = 6)
         {
-            var results = _dapperRepository.Search(keyword);
+            var (results, totalPages) = _dapperRepository.Search(keyword, page, pageSize);
+
+            ViewBag.TotalPages = totalPages;
+            ViewBag.CurrentPage = page;
 
             return PartialView("~/Views/User/Customer/_SearchResultsPartial.cshtml", results);
         }

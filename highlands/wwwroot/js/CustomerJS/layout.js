@@ -1,22 +1,17 @@
-﻿
-// Toggling user menu
-function handleUserMenuToggle() {
+﻿function handleUserMenuToggle(e) {
+    const userBtn = document.querySelector(".user-btn");
     const menu = document.querySelector(".dropdown-menu");
+
+    if (!userBtn || !menu) return;
+
     menu.classList.toggle("show");
-}
 
-// Auto-hide menu when clicking outside
-function registerOutsideClickHandler() {
     document.addEventListener("click", function (e) {
-        const menu = document.querySelector(".dropdown-menu");
-        const button = document.querySelector(".user-btn");
-
-        if (!menu.contains(e.target) && !button.contains(e.target)) {
+        if (!menu.contains(e.target) && !userBtn.contains(e.target)) {
             menu.classList.remove("show");
         }
     });
 }
-
 // Cập nhật số lượng giỏ hàng
 function updateCartQuantity() {
     $.ajax({
@@ -35,7 +30,7 @@ function updateCartQuantity() {
 }
 
 // Tìm kiếm menu
-function searchMenu() {
+function searchMenu(page = 1) {
     const keyword = $("#searchInput").val().trim();
 
     if (keyword === "") {
@@ -46,7 +41,7 @@ function searchMenu() {
     $.ajax({
         url: '/Customer/SearchMenuItems',
         type: 'GET',
-        data: { keyword: keyword },
+        data: { keyword: keyword, page: page, pageSize: 6 },
         success: function (result) {
             $("#menu-items").html(result);
         },
@@ -58,7 +53,6 @@ function searchMenu() {
     });
 }
 
-// Lắng nghe enter trong input
 function registerSearchInputListener() {
     $(document).on('keypress', '#searchInput', function (e) {
         if (e.which === 13) {
@@ -74,10 +68,12 @@ function registerCartUpdatedEvent() {
 }
 
 $(document).ready(function () {
-    registerOutsideClickHandler();
     registerSearchInputListener();
     registerCartUpdatedEvent();
     updateCartQuantity(); 
 
-    $(".user-btn").on("click", handleUserMenuToggle);
+    $(".user-btn").on("click", function (e) {
+        e.preventDefault();
+        handleUserMenuToggle(e);
+    });
 });

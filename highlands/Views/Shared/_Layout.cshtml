@@ -8,7 +8,7 @@
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <link rel="stylesheet" href="~/css/customer/logged.css?v=@DateTime.Now.Ticks">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="/js/CustomerJS/layout.js"></script>
+    <script src="/js/CustomerJS/layout.js" defer></script>
 </head>
 <body>
     @if (ViewData["ShowNavbar"] == null || (bool)ViewData["ShowNavbar"])
@@ -40,7 +40,7 @@
                     </a>
                 </div>
                 <div class="navbar-user-menu">
-                    <a href="#" class="user-btn" onclick="toggleMenu()">
+                    <a href="#" class="user-btn">
                         <i class="fa-regular fa-user"></i>
                     </a>
                     <ul class="dropdown-menu">

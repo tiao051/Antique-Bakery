@@ -29,6 +29,6 @@ namespace highlands.Interfaces
         Task<CustomerCheckoutInfoDTO> GetCustomerPhoneAddrPoints(string customerId);
         Task<List<string>> GetSuggestedProductsDapper(List<string> productNames);
         Task<List<(string Name, string Img, string Subcategory)>> GetSuggestedProductWithImg(List<string> productNames);
-        List<MenuItem> Search(string keyword);
+        (List<MenuItem> items, int totalPages) Search(string keyword, int page = 1, int pageSize = 6);
     }
 }
