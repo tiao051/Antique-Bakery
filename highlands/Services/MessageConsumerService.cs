@@ -16,8 +16,8 @@ namespace highlands.Services
             _factory = new ConnectionFactory()
             {
                 HostName = "localhost",
-                UserName = "guest",
-                Password = "guest",
+                UserName = "admin",
+                Password = "admin",
                 Port = 5672
             };
             _queueName = "payment_queue";

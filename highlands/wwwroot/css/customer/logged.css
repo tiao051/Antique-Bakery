@@ -518,6 +518,13 @@ h1, h2, h3 {
     animation: cartBump 0.5s ease-out;
 }
 
+.menu-item-search {
+    display: flex;
+    align-items: center;
+    flex: 1 1 48%;
+    flex-grow: 1;
+}
+
 @keyframes cartBump {
     0% {
         transform: scale(1);

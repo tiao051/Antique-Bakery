@@ -10,7 +10,7 @@ else
     <div class="search-result-group">
         @foreach (var item in Model)
         {
-            <div class="menu-item" onclick="window.location='@Url.Action("ItemSelected", "Customer", new { Subcategory = item.SubCategory, ItemName = item.ItemName, size = "M" })'">
+            <div class="menu-item-search" onclick="window.location='@Url.Action("ItemSelected", "Customer", new { Subcategory = item.SubCategory, ItemName = item.ItemName, size = "M" })'">
                 <div class="img-item">
                     <img src="@item.ItemImg" alt="@item.ItemName" />
                 </div>

@@ -21,7 +21,7 @@ Console.WriteLine($"[JWT VALIDATION] SecretKey: {secretKey}");
 Console.WriteLine($"[JWT VALIDATION] Key Length: {secretKey.Length}");
 
 // đăng ký rabbitmq
-//services.AddHostedService<MessageConsumerService>();
+services.AddHostedService<MessageConsumerService>();
 
 //đăng ký repo cho order
 services.AddScoped<OrderRepository>();
