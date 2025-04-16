@@ -30,5 +30,7 @@ namespace highlands.Interfaces
         Task<List<string>> GetSuggestedProductsDapper(List<string> productNames);
         Task<List<(string Name, string Img, string Subcategory)>> GetSuggestedProductWithImg(List<string> productNames);
         (List<MenuItem> items, int totalPages) Search(string keyword, int page = 1, int pageSize = 6);
+        Task<string> GetCustomerIdFromUserId(string userId);
+        Task<List<(string Name, string Img)>> GetSugestedProductByUser(string customerId);
     }
 }

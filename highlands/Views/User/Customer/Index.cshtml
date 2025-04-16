@@ -106,25 +106,5 @@
 </html>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <link rel="stylesheet" href="~/css/customer/logged.css">
-<script>
-     $(document).on("click", "a[data-subcategory]", function (e) {
-        e.preventDefault(); 
-
-        var subcategory = $(this).data("subcategory"); // Lấy giá trị subcategory từ attribute
-
-           $.ajax({
-            url: '@Url.Action("MenuItems", "Customer", new { area = "User" })',
-            type: 'GET',
-            data: { subcategory: subcategory }, // Gửi subcategory lên server
-            success: function (result) {
-                $("#menu-items").html(result);
-            },
-            error: function (xhr, status, error) {
-                console.error("AJAX Error: ", status, error);
-                console.log(xhr.responseText);
-                alert("Không thể tải dữ liệu, vui lòng thử lại.");
-            }
-        });
-    });
-</script>
+<script src="/js/CustomerJS/index.js" defer></script>
 

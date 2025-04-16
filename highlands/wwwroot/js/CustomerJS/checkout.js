@@ -9,7 +9,7 @@ document.addEventListener("DOMContentLoaded", function () {
  *  ===========================
  */
 async function payNow(event) {
-    try {      
+    try {
         event.preventDefault();
 
         const totalPaymentElement = document.querySelector('.total-row span:last-child');
@@ -30,12 +30,19 @@ async function payNow(event) {
         });
 
         const result = await response.text();
-        alert(response.ok ? "✅ " + result : "❌ " + result);
+        sessionStorage.clear();
+        console.log("Xoá dữ liệu trong session");
+
+        const orderId = 123;
+        const orderDate = "2025-04-16";
+
+        window.location.href = `/home/empty?orderId=${orderId}&totalAmount=${totalAmount.toFixed(2)}&orderDate=${orderDate}`;
     } catch (error) {
         console.error("Lỗi khi gửi yêu cầu:", error);
         alert("❌ Có lỗi xảy ra! Vui lòng thử lại.");
     }
 }
+
 
 /** ===========================
  *  XỬ LÝ PHÍ GIAO HÀNG & TỔNG TIỀN

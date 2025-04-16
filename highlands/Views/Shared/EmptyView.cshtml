@@ -1,6 +1,8 @@
 ﻿@{
     Layout = null;
+    bool isPaidOrder = Model.OrderId != null && Model.OrderId != 0;
 }
+@model highlands.Models.DTO.OrderLoadingDTO
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -23,34 +25,95 @@
 
     <div class="container">
         <div class="content-box">
+            <!-- Background Stains -->
             <div class="coffee-stain stain-1"></div>
             <div class="coffee-stain stain-2"></div>
 
-            <div class="logo">
-                <svg class="coffee-cup" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                    <path fill="#5e3a1e" d="M75,35H25c-2.8,0-5,2.2-5,5v30c0,8.3,6.7,15,15,15h30c8.3,0,15-6.7,15-15V40C80,37.2,77.8,35,75,35z" />
-                    <path fill="#8c6e56" d="M30,30v-5c0-1.7,1.3-3,3-3h34c1.7,0,3,1.3,3,3v5H30z" />
-                    <path fill="#fffaf3" d="M65,45c0,0,10,2.1,10,10s-10,10-10,10" />
-                    <path fill="none" stroke="#fffaf3" stroke-width="2" d="M40,50c5,0,5,5,10,5s5-5,10-5" />
-                </svg>
+            <!-- Logo -->
+            <div class="icon-container">
+                @if (Model.OrderId != null && Model.OrderId != 0)
+                {
+                    <!-- Thành công: hiển thị icon check -->
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M20 6L9 17L4 12" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                }
+                else
+                {
+                    <!-- Empty: hiển thị logo coffee cup -->
+                    <div class="logo">
+                        <svg class="coffee-cup" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                            <path fill="#5e3a1e" d="M75,35H25c-2.8,0-5,2.2-5,5v30c0,8.3,6.7,15,15,15h30c8.3,0,15-6.7,15-15V40C80,37.2,77.8,35,75,35z"></path>
+                            <path fill="#8c6e56" d="M30,30v-5c0-1.7,1.3-3,3-3h34c1.7,0,3,1.3,3,3v5H30z"></path>
+                            <path fill="#fffaf3" d="M65,45c0,0,10,2.1,10,10s-10,10-10,10"></path>
+                            <path fill="none" stroke="#fffaf3" stroke-width="2" d="M40,50c5,0,5,5,10,5s5-5,10-5"></path>
+                        </svg>
+                    </div>
+                }
             </div>
 
-            <h1>Brewing Something Special</h1>
+            <!-- Title -->
+            <h1>
+                @(isPaidOrder ? "Order Complete" : "Brewing Something Special")
+            </h1>
             <p class="subtitle">Est. 2025</p>
 
+            <!-- Message -->
             <div class="vintage-border">
                 <p class="message">
-                    This feature is currently under development. Our team of skilled artisans is crafting a perfect experience for you, just like a carefully brewed cup of coffee. Please check back soon to enjoy what we're creating.
+                    @if (isPaidOrder)
+                    {
+                        <text>
+                            Your order has been successfully processed.<br />
+                            Thank you for choosing Antique Coffee!
+                        </text>
+                    }
+                    else
+                    {
+                        <text>
+                            This feature is currently under development. Our team is working hard to bring it to life.
+                            Please check back soon!
+                        </text>
+                    }
                 </p>
             </div>
 
+            <!-- Order Details -->
+            @if (isPaidOrder)
+            {
+                <div class="order-details">
+                    <div class="order-item">
+                        <span>Order Number</span>
+                        <span>#@Model.OrderId</span>
+                    </div>
+                    <div class="order-item">
+                        <span>Date</span>
+                        <span>@Model.OrderDate.ToString("MMMM dd, yyyy")</span>
+                    </div>
+                    <div class="order-item">
+                        <span>Total Amount</span>
+                        <span>@Model.TotalAmount.ToString("C")</span>
+                    </div>
+                </div>
+            }
+
+            <!-- Divider -->
             <div class="divider">
                 <div class="divider-line"></div>
                 <div class="divider-icon">☕</div>
                 <div class="divider-line"></div>
             </div>
 
-            <p class="footer">Thank you for your patience as we perfect this blend.</p>
+            <!-- Footer -->
+            <p class="footer">
+                @if (isPaidOrder)
+                {
+                    <button class="button" onclick="window.location.href='@Url.Action("Empty", "Home")'">Track My Order</button>
+                }
+                @(isPaidOrder
+                    ? "Enjoy your drink and have a wonderful day!"
+                    : "We appreciate your patience while we craft something amazing for you.")
+            </p>
         </div>
     </div>
 </body>

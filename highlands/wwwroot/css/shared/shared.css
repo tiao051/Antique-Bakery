@@ -84,18 +84,10 @@ h1 {
     z-index: 1;
 }
 
-.message {
-    font-size: 1.1rem;
-    margin-bottom: 30px;
-    position: relative;
-    z-index: 1;
-    line-height: 1.8;
-}
-
 .divider {
     display: flex;
     align-items: center;
-    margin: 30px 0;
+    margin: 25px 0;
     position: relative;
     z-index: 1;
 }
@@ -225,3 +217,67 @@ h1 {
         font-size: 1rem;
     }
 }
+
+.icon-container {
+    margin: 0 auto 20px;
+    width: 80px;
+    height: 80px;
+    background-color: #8d6e63;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    z-index: 1;
+}
+
+.order-details {
+    border: 1px solid #e0d2bc;
+    border-radius: 6px;
+    padding: 20px;
+    margin: 30px 0;
+    background-color: #faf7f2;
+    position: relative;
+    z-index: 1;
+}
+
+.order-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px dashed #e0d2bc;
+}
+
+    .order-item:last-child {
+        border-bottom: none;
+    }
+
+.message {
+    font-style: italic;
+    margin-bottom: 30px;
+    color: #8d6e63;
+    position: relative;
+    z-index: 1;
+}
+
+.button {
+    font-family: 'Playfair Display', serif;
+    align-self: center;
+    width: 35%;
+    background-color: #6d4c41;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 4px;
+    font-size: 16px;
+    cursor: pointer;
+    margin-bottom: 15px;
+    transition: background-color 0.3s;
+    position: relative;
+    z-index: 1;
+}
+
+    .button:hover {
+        background-color: #5d4037;
+        opacity: 0.5;
+    }

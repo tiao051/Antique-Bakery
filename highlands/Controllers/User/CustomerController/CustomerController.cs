@@ -13,6 +13,7 @@ using highlands.Interfaces;
 using Microsoft.AspNetCore.SignalR;
 using highlands.Repository.OrderRepository;
 using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
 
 namespace highlands.Controllers.User.CustomerController
 {
@@ -564,8 +565,9 @@ namespace highlands.Controllers.User.CustomerController
                 if (!subscribeEmails)
                 {
                     await _distributedCache.RemoveAsync(cartKey);
-                    Console.WriteLine($"[DEBUG] Cart cleared from Redis for userId={userId}");
-                    return Ok("Thanh toán thành công.");
+                    HttpContext.Response.Cookies.Delete(".AspNetCore.Session");
+                    Console.WriteLine($"[DEBUG] Cart and session cleared from Redis for userId={userId}");
+                    return Ok();
                 }
 
                 // 4️⃣ Kiểm tra Redis tránh gửi email trùng
@@ -624,13 +626,10 @@ namespace highlands.Controllers.User.CustomerController
                 //});
 
                 await _distributedCache.RemoveAsync(cartKey);
-                Console.WriteLine($"[DEBUG] Cart cleared from Redis for userId={userId}");
+                HttpContext.Response.Cookies.Delete(".AspNetCore.Session");
+                Console.WriteLine($"[DEBUG] Cart and Session cleared for userId={userId}");
 
-                return Ok(new
-                {   
-                    Message = "Thanh toán thành công và email xác nhận đã được gửi.",
-                    OrderId = orderId
-                });
+                return Ok();
             }
             catch (Exception ex)
             {
@@ -713,6 +712,42 @@ namespace highlands.Controllers.User.CustomerController
             ViewBag.CurrentPage = page;
 
             return PartialView("~/Views/User/Customer/_SearchResultsPartial.cshtml", results);
+        }
+        [HttpGet]
+        public async Task<IActionResult> RecommentByUser() 
+        {
+            try
+            {
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return Unauthorized("UserId not found in token");
+                }
+
+                var customerId = _dapperRepository.GetCustomerIdFromUserId(userId);
+                var sugestedProduct = await _dapperRepository.GetSugestedProductByUser(await customerId);
+
+                if (sugestedProduct == null || !sugestedProduct.Any())
+                {
+                    Console.WriteLine("Khong co san pham tra ve");
+                    return NotFound("No recommendations found.");
+                }
+                var result = sugestedProduct.Select(p => new {
+                    p.Name,
+                    p.Img
+                }).ToList();
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
+        public IActionResult PaymentSuccess()
+        {
+            return View("~/Views/User/Customer/PaymentSuccess.cshtml");
         }
     }
 }

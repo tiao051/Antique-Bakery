@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using highlands.Models;
+using highlands.Models.DTO;
 using Microsoft.AspNetCore.Mvc;
 
 namespace highlands.Controllers.Home
@@ -17,10 +18,17 @@ namespace highlands.Controllers.Home
         {
             return View();
         }
-        
-        public IActionResult Empty()
+
+        public IActionResult Empty(int orderId, decimal totalAmount, DateTime orderDate)
         {
-            return View("~/Views/Shared/EmptyView.cshtml");
+            var model = new OrderLoadingDTO
+            {
+                OrderId = orderId,
+                TotalAmount = totalAmount,
+                OrderDate = orderDate
+            };
+
+            return View("~/Views/Shared/EmptyView.cshtml", model);
         }
 
         public IActionResult Privacy()

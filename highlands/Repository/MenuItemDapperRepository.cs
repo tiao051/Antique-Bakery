@@ -8,9 +8,7 @@ using System.Diagnostics;
 using System.Data;
 using highlands.Interfaces;
 using Microsoft.AspNetCore.Mvc;
-using System.Net.Http;
 using System.Text.Json;
-using Microsoft.Data.SqlClient;
 
 namespace highlands.Repository
 {
@@ -34,19 +32,16 @@ namespace highlands.Repository
             }
             _transaction = _connection.BeginTransaction();
         }
-
         public void CommitTransaction()
         {
             _transaction?.Commit();
             _transaction = null;
         }
-
         public void RollbackTransaction()
         {
             _transaction?.Rollback();
             _transaction = null;
         }
-
         private string GetCacheKey(int userId) => $"cart:{userId}";
         public Task<List<MenuItem>> GetAllMenuItemsAsync()
         {
@@ -81,7 +76,6 @@ namespace highlands.Repository
             Console.WriteLine($"Cache miss! Query time from SQL Server: {stopwatch.ElapsedMilliseconds} ms");
             return result.ToList();
         }
-
         public async Task<(MenuItem?, List<MenuItemPrice>, List<RecipeWithIngredientDetail>)> GetItemDetailsAsync(string subcategory, string itemName, string size)
         {
             string cacheKey = $"itemDetails: {subcategory}:{itemName}:{size}";
@@ -189,7 +183,6 @@ namespace highlands.Repository
                 return new List<RecipeWithIngredientDetail>(); // Trả về danh sách rỗng nếu có lỗi
             }
         }
-
         public async Task<List<SubcategoryDTO>> GetSubcategoriesAsync()
         {
             string cacheKey = $"subcategory";
@@ -253,7 +246,6 @@ namespace highlands.Repository
 
             return rowsAffected > 0;
         }
-
         public async Task<decimal?> GetPriceAsync(string itemName, string size)
         {
             if (string.IsNullOrEmpty(itemName) || string.IsNullOrEmpty(size))
@@ -321,7 +313,6 @@ namespace highlands.Repository
             return cartItems.GroupBy(i => i.Size)
                             .ToDictionary(g => g.Key, g => g.Sum(i => i.Quantity));
         }
-
         public async Task<bool> AddToCartAsync(int userId, string itemName, string size, decimal price, int quantity, string itemImg)
         {
             try
@@ -432,7 +423,7 @@ namespace highlands.Repository
 
             // Truy vấn database
             string query = @"
-                SELECT u.UserId, u.UserName, u.Email, c.CustomerId
+                SELECT u.UserId, u.UserName, u.Email, c.CustomerId                                                            
                 FROM Users u
                 LEFT JOIN Customer c ON u.UserId = c.UserId
                 WHERE u.UserId = @userId";
@@ -489,6 +480,12 @@ namespace highlands.Repository
             }
 
             return customerInfo;
+        }
+        public async Task<string> GetCustomerIdFromUserId(string userId)
+        {
+            var query = "SELECT CustomerId FROM Customer WHERE UserId = @UserId";
+            var result = await _connection.QuerySingleOrDefaultAsync<string>(query, new { UserId = userId });
+            return result;
         }
         public async Task<List<string>> GetSuggestedProductsDapper(List<string> productNames)
         {
@@ -589,6 +586,50 @@ namespace highlands.Repository
             var totalPages = (int)Math.Ceiling((double)totalItems / pageSize);
 
             return (items, totalPages);
+        }
+        public async Task<List<(string Name, string Img)>> GetSugestedProductByUser(string customerId)
+        {
+            string cacheKey = $"suggested:{customerId}";
+            Stopwatch stopwatch = new Stopwatch();
+            stopwatch.Start();
+
+            string cachedData = await _distributedCache.GetStringAsync(cacheKey);
+            if (!string.IsNullOrEmpty(cachedData))
+            {
+                stopwatch.Stop();
+                Console.WriteLine($"[Redis] Cache hit! Time: {stopwatch.ElapsedMilliseconds} ms");
+                return JsonConvert.DeserializeObject<List<(string Name, string Img)>>(cachedData);
+            }
+
+            var query = @"
+            SELECT TOP 3
+                mi.ItemName,
+                mi.ItemImg,
+                COUNT(*) AS TimesPurchased
+            FROM [Order] o
+            JOIN OrderDetail od ON o.OrderId = od.OrderId
+            JOIN MenuItem mi ON od.ItemName = mi.ItemName
+            WHERE o.CustomerId = @CustomerId
+            GROUP BY mi.ItemName, mi.ItemImg
+            ORDER BY TimesPurchased DESC";
+
+            var result = await _connection.QueryAsync<(string Name, string Img)>(
+                query,
+                new { CustomerId = customerId }
+            );
+
+            // Lưu vào cache
+            var cacheOptions = new DistributedCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(30)
+            };
+
+            await _distributedCache.SetStringAsync(cacheKey, JsonConvert.SerializeObject(result), cacheOptions);
+
+            stopwatch.Stop();
+            Console.WriteLine($"[Redis] Cache miss! Query time from SQL Server: {stopwatch.ElapsedMilliseconds} ms");
+
+            return result.ToList();
         }
     }
 }
