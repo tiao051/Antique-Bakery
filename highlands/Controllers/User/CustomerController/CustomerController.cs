@@ -745,9 +745,12 @@ namespace highlands.Controllers.User.CustomerController
                 return StatusCode(500, ex.Message);
             }
         }
-        public IActionResult PaymentSuccess()
+        [HttpGet]
+        public async Task<IActionResult> RecommentByTime()
         {
-            return View("~/Views/User/Customer/PaymentSuccess.cshtml");
+            var sugestedProduct = await _dapperRepository.GetSuggestedProductByTime();
+            Console.WriteLine("Thanh cong");
+            return Ok(sugestedProduct);
         }
     }
 }

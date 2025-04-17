@@ -105,6 +105,8 @@ h1 {
 }
 
 .footer {
+    flex-direction: column;
+    display: flex;
     font-size: 0.9rem;
     color: #8c6e56;
     margin-top: 20px;
@@ -254,17 +256,16 @@ h1 {
 
 .message {
     font-style: italic;
-    margin-bottom: 30px;
+    margin-bottom: 15px;
     color: #8d6e63;
     position: relative;
     z-index: 1;
 }
 
 .button {
-    font-family: 'Playfair Display', serif;
     align-self: center;
-    width: 35%;
-    background-color: #6d4c41;
+    font-family: 'Playfair Display', serif;
+    background-color: #6D4C42;
     color: white;
     border: none;
     padding: 12px 24px;

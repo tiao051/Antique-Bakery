@@ -1,10 +1,10 @@
 ﻿@model highlands.Models.DTO.ItemSelectedViewModel
 @{
     Layout = "~/Views/Shared/_Layout.cshtml";
-    var filteredMenuItems = ViewBag.MenuItem as MenuItem;
+    var filteredMenuItems = Model.MenuItem;
     var availableSizes = Model.AvailableSizes ?? new List<MenuItemPrice>();
-    var hasClassicSizes = availableSizes != null && availableSizes.Any(s => s.Size == "S" || s.Size == "M" || s.Size == "L");
-    var hasEspressoSizes = availableSizes != null && availableSizes.Any(s => s.Size == "Single Shot" || s.Size == "Double Shot");
+    var hasClassicSizes = availableSizes.Any(s => s?.Size == "S" || s?.Size == "M" || s?.Size == "L");
+    var hasEspressoSizes = availableSizes.Any(s => s?.Size == "Single Shot" || s?.Size == "Double Shot");
 }
 <body>
     <div class="item">

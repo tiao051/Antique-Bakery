@@ -32,5 +32,7 @@ namespace highlands.Interfaces
         (List<MenuItem> items, int totalPages) Search(string keyword, int page = 1, int pageSize = 6);
         Task<string> GetCustomerIdFromUserId(string userId);
         Task<List<(string Name, string Img)>> GetSugestedProductByUser(string customerId);
+        string GetTimeSlotByHour(int hour);
+        Task<List<(string Name, string Img)>> GetSuggestedProductByTime();
     }
 }

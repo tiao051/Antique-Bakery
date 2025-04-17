@@ -537,6 +537,7 @@ h1, h2, h3 {
 .recommended-products {
     margin: 0px 40px 40px 40px;
     font-family: inherit;
+    transition: opacity 0.3s ease;
 }
 
 /* Banner Style */
@@ -566,16 +567,6 @@ h1, h2, h3 {
     font-size: 1.5rem;
     animation: flicker 1.5s infinite alternate;
     margin: 0 10px;
-}
-
-@keyframes flicker {
-    0%, 18%, 22%, 25%, 53%, 57%, 100% {
-        opacity: 1;
-    }
-
-    20%, 24%, 55% {
-        opacity: 0.5;
-    }
 }
 
 .recommended-products h2 {
@@ -723,3 +714,91 @@ h1, h2, h3 {
         transform: scale(1);
     }
 }
+#user-recommendations,
+#time-recommendations {
+    visibility: hidden; 
+    max-height: 0; 
+    opacity: 0;
+    transform: scale(0.98); 
+    transition: opacity 0.4s ease, max-height 0.5s ease, transform 0.4s ease;
+    box-shadow: none; 
+}
+    #user-recommendations.active,
+    #time-recommendations.active {
+        visibility: visible; 
+        max-height: 1000px; 
+        opacity: 1;
+        transform: scale(1); 
+        transition: opacity 0.4s ease, max-height 0.5s ease, transform 0.4s ease;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); 
+    }
+    #user-recommendations:hover,
+    #time-recommendations:hover {
+        opacity: 1; 
+        visibility: visible;
+        max-height: 1000px; 
+        transform: scale(1);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
+.time-banner {
+    background: linear-gradient(135deg, #8B5A2B, #6F4E37);
+    color: var(--light-text);
+    padding: 15px;
+    text-align: center;
+    position: relative;
+}
+
+.time-banner-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.time-banner h2 {
+    margin: 0;
+    font-size: 1.5rem;
+}
+
+.time-icon {
+    font-size: 1.4rem;
+}
+
+.time-items-container {
+    background-color: #f9f5eb;
+    padding: 10px;
+}
+
+.time-item {
+    background-color: #fff;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px;
+}
+
+    .time-item img {
+        width: 120px;
+        height: 120px;
+        object-fit: cover;
+        border-radius: 5px;
+    }
+
+.time-item-details {
+    text-align: center;
+    padding: 10px;
+    width: 100%;
+}
+
+.time-item h3 {
+    margin: 5px 0;
+    color: var(--text-color);
+    font-size: 1.1rem;
+}
+    .toggle-recommendations.active {
+        display: block;
+    }

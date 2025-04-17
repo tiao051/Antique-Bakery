@@ -631,5 +631,71 @@ namespace highlands.Repository
 
             return result.ToList();
         }
+        public string GetTimeSlotByHour(int hour)
+        {
+            return hour switch
+            {
+                >= 5 and <= 10 => "Morning",
+                >= 11 and <= 17 => "Afternoon",
+                >= 18 and <= 21 => "Evening",
+                _ => "Night"
+            };
+        }
+        public async Task<List<(string Name, string Img)>> GetSuggestedProductByTime()
+        {
+            string timeSlot = GetTimeSlotByHour(DateTime.Now.Hour);
+            string cacheKey = $"suggested:timeslot:{timeSlot}";
+
+            Stopwatch stopwatch = new Stopwatch();
+            stopwatch.Start();
+
+            string cachedData = await _distributedCache.GetStringAsync(cacheKey);
+            if (!string.IsNullOrEmpty(cachedData))
+            {
+                stopwatch.Stop();
+                Console.WriteLine($"[Redis] Cache hit! Time: {stopwatch.ElapsedMilliseconds} ms");
+                return JsonConvert.DeserializeObject<List<(string Name, string Img)>>(cachedData);
+            }
+
+            var query = @"
+                SELECT TOP 3
+                    mi.ItemName,
+                    mi.ItemImg,
+                    COUNT(*) AS TimesOrdered
+                FROM [Order] o
+                JOIN OrderDetail od ON o.OrderId = od.OrderId
+                JOIN MenuItem mi ON od.ItemName = mi.ItemName
+                WHERE
+                    CASE
+                        WHEN DATEPART(HOUR, o.OrderDate) BETWEEN 5 AND 10 THEN 'Morning'
+                        WHEN DATEPART(HOUR, o.OrderDate) BETWEEN 11 AND 17 THEN 'Afternoon'
+                        WHEN DATEPART(HOUR, o.OrderDate) BETWEEN 18 AND 21 THEN 'Evening'
+                        ELSE 'Night'
+                    END = @TimeSlot
+                GROUP BY mi.ItemName, mi.ItemImg
+                ORDER BY TimesOrdered DESC;";
+
+            var result = await _connection.QueryAsync<(string Name, string Img)>(
+                query,
+                new { TimeSlot = timeSlot }
+            );
+
+            var cacheOptions = new DistributedCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(30)
+            };
+
+            await _distributedCache.SetStringAsync(cacheKey, JsonConvert.SerializeObject(result), cacheOptions);
+
+            stopwatch.Stop();
+            Console.WriteLine($"[Redis] Cache miss! Query time from SQL Server: {stopwatch.ElapsedMilliseconds} ms");
+
+            foreach (var item in result)
+                {
+                    Console.WriteLine($"Name: {item.Name,-30} | Img: {item.Img}");
+                }
+
+            return result.ToList();
+        }
     }
 }
