@@ -746,11 +746,30 @@ namespace highlands.Controllers.User.CustomerController
             }
         }
         [HttpGet]
-        public async Task<IActionResult> RecommentByTime()
+        public async Task<IActionResult> RecommentByTime(int hour)
         {
-            var sugestedProduct = await _dapperRepository.GetSuggestedProductByTime();
+            var timeSlot = GetTimeSlotByHour(hour);
+
+            var sugestedProduct = await _dapperRepository.GetSuggestedProductByTime(timeSlot);
             Console.WriteLine("Thanh cong");
-            return Ok(sugestedProduct);
+
+            var result = sugestedProduct.Select(p => new {
+                p.Name,
+                p.Img,
+                p.Subcategory
+            }).ToList();
+
+            return Ok(result);
+        }
+        public string GetTimeSlotByHour(int hour)
+        {
+            return hour switch
+            {
+                >= 5 and <= 10 => "Morning",
+                >= 11 and <= 17 => "Afternoon",
+                >= 18 and <= 21 => "Evening",
+                _ => "Night"
+            };
         }
     }
 }

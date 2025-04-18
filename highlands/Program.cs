@@ -130,7 +130,7 @@ app.UseEndpoints(endpoints =>
     endpoints.MapHub<RecommendationHub>("/recommendationHub");
     endpoints.MapControllerRoute(
         name: "default",
-        pattern: "{controller=Account}/{action=Index}/{id?}");
+        pattern: "{controller=Customer}/{action=Index}/{id?}");
 });
 
 app.Run();

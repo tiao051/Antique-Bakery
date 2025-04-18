@@ -2,7 +2,7 @@
 $(document).ready(function () {
     initRecommendations();      
     handleSubcategoryClick();   
-    fetchRecommendations();   
+    fetchRecommendationsByUser();   
     fetchReconmendationsByTime();
 });
 
@@ -26,7 +26,7 @@ function handleSubcategoryClick() {
     });
 }
 
-function fetchRecommendations() {
+function fetchRecommendationsByUser() {
     $.ajax({
         url: '/Customer/RecommentByUser',
         method: 'GET',
@@ -34,7 +34,7 @@ function fetchRecommendations() {
             'Authorization': 'Bearer ' + localStorage.getItem('token')
         },
         success: function (data) {
-            renderRecommendations(data);
+            renderRecommendationsByUser(data);
         },
         error: function (xhr) {
             console.error('Lỗi khi lấy gợi ý:', xhr.responseText);
@@ -42,20 +42,29 @@ function fetchRecommendations() {
     });
 }
 function fetchReconmendationsByTime() {
+    const currentHour = new Date().getHours();
+
     $.ajax({
         url: '/Customer/RecommentByTime',
         method: 'GET',
+        data: {
+            hour: currentHour
+        },
         success: function (data) {
+            console.log('JS nhan thanh cong');
+            data.forEach(function (product) {
+                console.log('Product:', product);
+            });
+
             renderRecommendationsByTime(data);
         },
         error: function (xhr) {
-            console.error('Lỗi khi lấy gợi ý:', xhr.responseText);
+            console.error('Loi:', xhr.responseText);
         }
-    })
+    });
 }
-function renderRecommendationsByTime(products) { }
-function renderRecommendations(products) {
-    const $container = $('.recommended-items');
+function renderRecommendationsByUser(products) {
+    const $container = $('#render-user-rec');
     $container.empty();
 
     if (!products || products.length === 0) {
@@ -82,6 +91,47 @@ function renderRecommendations(products) {
     });
 
     // Gắn sự kiện click cho nút Add to cart
+    $container.find('.add-to-cart').on('click', function () {
+        const itemName = $(this).data('name');
+        const subcategory = $(this).data('subcategory');
+        const size = "M";
+
+        if (!itemName || !subcategory) {
+            console.error('Thiếu thông tin sản phẩm!');
+            return;
+        }
+
+        const url = `/Customer/ItemSelected?Subcategory=${encodeURIComponent(subcategory)}&ItemName=${encodeURIComponent(itemName)}&size=${size}`;
+        window.location.href = url;
+    });
+}
+function renderRecommendationsByTime(products) {
+    const $container = $('#render-time-rec'); 
+    $container.empty();
+
+    if (!products || products.length === 0) {
+        $container.append('<p>Không có gợi ý nào.</p>');
+        return;
+    }
+
+    products.forEach(product => {
+        const itemHtml = `
+            <div class="recommended-item">
+                <img src="${product.img}" alt="${product.name}" />
+                <div class="item-details">
+                    <h3>${product.name}</h3>
+                    <button 
+                        class="add-to-cart"
+                        data-name="${product.name}"
+                        data-subcategory="${product.subcategory || 'Other'}">
+                        Add to cart
+                    </button>
+                </div>
+            </div>
+        `;
+        $container.append(itemHtml);
+    });
+
     $container.find('.add-to-cart').on('click', function () {
         const itemName = $(this).data('name');
         const subcategory = $(this).data('subcategory');

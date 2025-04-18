@@ -631,20 +631,12 @@ namespace highlands.Repository
 
             return result.ToList();
         }
-        public string GetTimeSlotByHour(int hour)
+        public async Task<List<(string Name, string Img, string Subcategory)>> GetSuggestedProductByTime(string timeSlot)
         {
-            return hour switch
-            {
-                >= 5 and <= 10 => "Morning",
-                >= 11 and <= 17 => "Afternoon",
-                >= 18 and <= 21 => "Evening",
-                _ => "Night"
-            };
-        }
-        public async Task<List<(string Name, string Img)>> GetSuggestedProductByTime()
-        {
-            string timeSlot = GetTimeSlotByHour(DateTime.Now.Hour);
-            string cacheKey = $"suggested:timeslot:{timeSlot}";
+            string currentHourKey = DateTime.Now.ToString("yyyyMMddHH");
+            string cacheKey = $"suggested:timeslot:{timeSlot}:{currentHourKey}";
+
+            Console.WriteLine($"[CACHE KEY] {cacheKey}");
 
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();
@@ -654,46 +646,58 @@ namespace highlands.Repository
             {
                 stopwatch.Stop();
                 Console.WriteLine($"[Redis] Cache hit! Time: {stopwatch.ElapsedMilliseconds} ms");
-                return JsonConvert.DeserializeObject<List<(string Name, string Img)>>(cachedData);
+
+                var cachedResult = JsonConvert.DeserializeObject<List<(string Name, string Img, string Subcategory)>>(cachedData);
+                foreach (var item in cachedResult)
+                {
+                    Console.WriteLine($"[CACHED] Name: {item.Name,-30} | Img: {item.Img} | Subcategory: {item.Subcategory}");
+                }
+
+                return cachedResult;
             }
 
             var query = @"
-                SELECT TOP 3
-                    mi.ItemName,
-                    mi.ItemImg,
-                    COUNT(*) AS TimesOrdered
-                FROM [Order] o
-                JOIN OrderDetail od ON o.OrderId = od.OrderId
-                JOIN MenuItem mi ON od.ItemName = mi.ItemName
-                WHERE
-                    CASE
-                        WHEN DATEPART(HOUR, o.OrderDate) BETWEEN 5 AND 10 THEN 'Morning'
-                        WHEN DATEPART(HOUR, o.OrderDate) BETWEEN 11 AND 17 THEN 'Afternoon'
-                        WHEN DATEPART(HOUR, o.OrderDate) BETWEEN 18 AND 21 THEN 'Evening'
-                        ELSE 'Night'
-                    END = @TimeSlot
-                GROUP BY mi.ItemName, mi.ItemImg
-                ORDER BY TimesOrdered DESC;";
+            SELECT TOP 3
+                mi.ItemName,
+                mi.ItemImg,
+                mi.Subcategory,
+                COUNT(*) AS TimesOrdered
+            FROM [Order] o
+            JOIN OrderDetail od ON o.OrderId = od.OrderId
+            JOIN MenuItem mi ON od.ItemName = mi.ItemName
+            WHERE
+                CASE
+                    WHEN DATEPART(HOUR, o.OrderDate) BETWEEN 5 AND 10 THEN 'Morning'
+                    WHEN DATEPART(HOUR, o.OrderDate) BETWEEN 11 AND 17 THEN 'Afternoon'
+                    WHEN DATEPART(HOUR, o.OrderDate) BETWEEN 18 AND 21 THEN 'Evening'
+                    ELSE 'Night'
+                END = @TimeSlot
+            GROUP BY mi.ItemName, mi.ItemImg, mi.Subcategory
+            ORDER BY TimesOrdered DESC;";
 
-            var result = await _connection.QueryAsync<(string Name, string Img)>(
+            var result = await _connection.QueryAsync<(string Name, string Img, string Subcategory)>(
                 query,
                 new { TimeSlot = timeSlot }
             );
+
+            stopwatch.Stop();
+            Console.WriteLine($"[SQL Server] Query time: {stopwatch.ElapsedMilliseconds} ms");
+
+            foreach (var item in result)
+            {
+                Console.WriteLine($"[SQL] Name: {item.Name,-30} | Img: {item.Img} | Subcategory: {item.Subcategory}");
+            }
 
             var cacheOptions = new DistributedCacheEntryOptions
             {
                 AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(30)
             };
 
-            await _distributedCache.SetStringAsync(cacheKey, JsonConvert.SerializeObject(result), cacheOptions);
-
-            stopwatch.Stop();
-            Console.WriteLine($"[Redis] Cache miss! Query time from SQL Server: {stopwatch.ElapsedMilliseconds} ms");
-
-            foreach (var item in result)
-                {
-                    Console.WriteLine($"Name: {item.Name,-30} | Img: {item.Img}");
-                }
+            await _distributedCache.SetStringAsync(
+                cacheKey,
+                JsonConvert.SerializeObject(result),
+                cacheOptions
+            );
 
             return result.ToList();
         }
