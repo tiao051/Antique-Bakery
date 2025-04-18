@@ -587,9 +587,10 @@ namespace highlands.Repository
 
             return (items, totalPages);
         }
-        public async Task<List<(string Name, string Img)>> GetSugestedProductByUser(string customerId)
+        public async Task<List<ProductSuggestionDTO>> GetSugestedProductByUser(string customerId)
         {
             string cacheKey = $"suggested:{customerId}";
+
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();
 
@@ -598,40 +599,44 @@ namespace highlands.Repository
             {
                 stopwatch.Stop();
                 Console.WriteLine($"[Redis] Cache hit! Time: {stopwatch.ElapsedMilliseconds} ms");
-                return JsonConvert.DeserializeObject<List<(string Name, string Img)>>(cachedData);
+                return JsonConvert.DeserializeObject<List<ProductSuggestionDTO>>(cachedData);
             }
 
             var query = @"
             SELECT TOP 3
-                mi.ItemName,
-                mi.ItemImg,
-                COUNT(*) AS TimesPurchased
+                mi.ItemName AS Name,
+                mi.ItemImg AS Img,
+                mi.Subcategory
             FROM [Order] o
             JOIN OrderDetail od ON o.OrderId = od.OrderId
             JOIN MenuItem mi ON od.ItemName = mi.ItemName
             WHERE o.CustomerId = @CustomerId
-            GROUP BY mi.ItemName, mi.ItemImg
-            ORDER BY TimesPurchased DESC";
+            GROUP BY mi.ItemName, mi.ItemImg, mi.Subcategory
+            ORDER BY COUNT(*) DESC;";
 
-            var result = await _connection.QueryAsync<(string Name, string Img)>(
+            var result = await _connection.QueryAsync<ProductSuggestionDTO>(
                 query,
                 new { CustomerId = customerId }
             );
 
-            // Lưu vào cache
             var cacheOptions = new DistributedCacheEntryOptions
             {
                 AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(30)
             };
 
-            await _distributedCache.SetStringAsync(cacheKey, JsonConvert.SerializeObject(result), cacheOptions);
+            await _distributedCache.SetStringAsync(
+                cacheKey,
+                JsonConvert.SerializeObject(result),
+                cacheOptions
+            );
 
             stopwatch.Stop();
             Console.WriteLine($"[Redis] Cache miss! Query time from SQL Server: {stopwatch.ElapsedMilliseconds} ms");
 
             return result.ToList();
         }
-        public async Task<List<(string Name, string Img, string Subcategory)>> GetSuggestedProductByTime(string timeSlot)
+
+        public async Task<List<ProductSuggestionDTO>> GetSuggestedProductByTime(string timeSlot)
         {
             string currentHourKey = DateTime.Now.ToString("yyyyMMddHH");
             string cacheKey = $"suggested:timeslot:{timeSlot}:{currentHourKey}";
@@ -647,7 +652,7 @@ namespace highlands.Repository
                 stopwatch.Stop();
                 Console.WriteLine($"[Redis] Cache hit! Time: {stopwatch.ElapsedMilliseconds} ms");
 
-                var cachedResult = JsonConvert.DeserializeObject<List<(string Name, string Img, string Subcategory)>>(cachedData);
+                var cachedResult = JsonConvert.DeserializeObject<List<ProductSuggestionDTO>>(cachedData);
                 foreach (var item in cachedResult)
                 {
                     Console.WriteLine($"[CACHED] Name: {item.Name,-30} | Img: {item.Img} | Subcategory: {item.Subcategory}");
@@ -658,8 +663,8 @@ namespace highlands.Repository
 
             var query = @"
             SELECT TOP 3
-                mi.ItemName,
-                mi.ItemImg,
+                mi.ItemName AS Name,
+                mi.ItemImg AS Img,
                 mi.Subcategory,
                 COUNT(*) AS TimesOrdered
             FROM [Order] o
@@ -675,7 +680,7 @@ namespace highlands.Repository
             GROUP BY mi.ItemName, mi.ItemImg, mi.Subcategory
             ORDER BY TimesOrdered DESC;";
 
-            var result = await _connection.QueryAsync<(string Name, string Img, string Subcategory)>(
+            var result = await _connection.QueryAsync<ProductSuggestionDTO>(
                 query,
                 new { TimeSlot = timeSlot }
             );

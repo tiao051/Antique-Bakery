@@ -1,5 +1,4 @@
-﻿
-namespace highlands.Models.DTO
+﻿namespace highlands.Models.DTO
 {
     public class ProductSuggestionsResponseDTO
     {

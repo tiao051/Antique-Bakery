@@ -84,7 +84,7 @@ namespace highlands.Services
             Console.WriteLine($"[DEBUG] Email được gửi tới: '{toEmail}'");
             if (string.IsNullOrWhiteSpace(toEmail))
             {
-                Console.WriteLine("[❌] Lỗi: Email không hợp lệ.");
+                Console.WriteLine("Lỗi: Email không hợp lệ.");
                 return;
             }
             toEmail = toEmail.Trim();
@@ -96,7 +96,7 @@ namespace highlands.Services
             email.Subject = "Antique Càfe";
             email.Body = new TextPart("plain")
             {
-                Text = $"Hello {userName},\n\nTAO DIT CA LO NHA M CON SUC VAT NGU!\n\nHihi,\nMinh Tho"
+                Text = $"Hello {userName},\n\nTesttttttttt!\n\nHihi,\nMinh Tho"
             };
 
             using var smtp = new SmtpClient();
@@ -107,11 +107,11 @@ namespace highlands.Services
                 await smtp.SendAsync(email);
                 await smtp.DisconnectAsync(true);
 
-                Console.WriteLine($"[✔] Email đã gửi thành công tới {toEmail}");
+                Console.WriteLine($"Email đã gửi thành công tới {toEmail}");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[❌] Lỗi gửi email: {ex.Message}");
+                Console.WriteLine($"Lỗi gửi email: {ex.Message}");
             }
         }
     }

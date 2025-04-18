@@ -735,7 +735,8 @@ namespace highlands.Controllers.User.CustomerController
                 }
                 var result = sugestedProduct.Select(p => new {
                     p.Name,
-                    p.Img
+                    p.Img,
+                    p.Subcategory
                 }).ToList();
 
                 return Ok(result);

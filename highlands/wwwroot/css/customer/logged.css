@@ -578,6 +578,15 @@ h1, h2, h3 {
     letter-spacing: 1px;
     text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
 }
+.recommended-products p {
+    text-align: center;
+    color: #6F4E37;
+    font-size: 1.4rem;
+    font-weight: 600;
+    margin: 0;
+    letter-spacing: 1px;
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
+}
 
 .recommended-items-container {
     background-color: #FFF8E7;
@@ -587,7 +596,7 @@ h1, h2, h3 {
     border: 1px solid #D2B48C;
     border-top: none;
     overflow: hidden;
-    max-height: 1000px; 
+    max-height: 1000px;
     transition: max-height 0.5s ease, padding 0.3s ease;
 }
 

@@ -1,6 +1,7 @@
 ﻿using highlands.Models;
 using highlands.Models.DTO;
 using System.Data;
+using System.Threading.Tasks;
 
 namespace highlands.Interfaces
 {
@@ -31,7 +32,7 @@ namespace highlands.Interfaces
         Task<List<(string Name, string Img, string Subcategory)>> GetSuggestedProductWithImg(List<string> productNames);
         (List<MenuItem> items, int totalPages) Search(string keyword, int page = 1, int pageSize = 6);
         Task<string> GetCustomerIdFromUserId(string userId);
-        Task<List<(string Name, string Img)>> GetSugestedProductByUser(string customerId);
-        Task<List<(string Name, string Img, string Subcategory)>> GetSuggestedProductByTime(string timeSlot);
+        Task<List<ProductSuggestionDTO>> GetSugestedProductByUser(string customerId);
+        Task<List<ProductSuggestionDTO>> GetSuggestedProductByTime(string timeSlot);
     }
 }

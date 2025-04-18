@@ -33,36 +33,25 @@ function fetchRecommendationsByUser() {
         headers: {
             'Authorization': 'Bearer ' + localStorage.getItem('token')
         },
-        success: function (data) {
+        success: function (data, textStatus, xhr) {
+            if (xhr.status === 404) {
+                $('#render-user-rec').empty(); 
+                $('#render-user-rec').append('<p>Chưa có món gì để gợi ý, thử mua thử một vài món nhé! 😎.</p>');
+                return;
+            }
             renderRecommendationsByUser(data);
         },
-        error: function (xhr) {
-            console.error('Lỗi khi lấy gợi ý:', xhr.responseText);
+        error: function (xhr, textStatus, errorThrown) {
+            if (xhr.status === 404) {
+                $('#render-user-rec').empty(); 
+                $('#render-user-rec').append('<p>Chưa có món gì để gợi ý, thử mua thử một vài món nhé! 😎.</p>');
+            } else {
+                console.error('Lỗi khi lấy gợi ý:', xhr.responseText);
+            }
         }
     });
 }
-function fetchReconmendationsByTime() {
-    const currentHour = new Date().getHours();
 
-    $.ajax({
-        url: '/Customer/RecommentByTime',
-        method: 'GET',
-        data: {
-            hour: currentHour
-        },
-        success: function (data) {
-            console.log('JS nhan thanh cong');
-            data.forEach(function (product) {
-                console.log('Product:', product);
-            });
-
-            renderRecommendationsByTime(data);
-        },
-        error: function (xhr) {
-            console.error('Loi:', xhr.responseText);
-        }
-    });
-}
 function renderRecommendationsByUser(products) {
     const $container = $('#render-user-rec');
     $container.empty();
@@ -103,6 +92,28 @@ function renderRecommendationsByUser(products) {
 
         const url = `/Customer/ItemSelected?Subcategory=${encodeURIComponent(subcategory)}&ItemName=${encodeURIComponent(itemName)}&size=${size}`;
         window.location.href = url;
+    });
+}
+function fetchReconmendationsByTime() {
+    const currentHour = new Date().getHours();
+
+    $.ajax({
+        url: '/Customer/RecommentByTime',
+        method: 'GET',
+        data: {
+            hour: currentHour
+        },
+        success: function (data) {
+            console.log('JS nhan thanh cong');
+            data.forEach(function (product) {
+                console.log('Product:', product);
+            });
+
+            renderRecommendationsByTime(data);
+        },
+        error: function (xhr) {
+            console.error('Loi:', xhr.responseText);
+        }
     });
 }
 function renderRecommendationsByTime(products) {
