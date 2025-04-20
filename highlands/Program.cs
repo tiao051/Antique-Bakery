@@ -17,7 +17,7 @@ var configuration = builder.Configuration;
 
 // lay secretkey tu enviroment
 var secretKey = Environment.GetEnvironmentVariable("JWT_SECRET")
-                ?? builder.Configuration["JwtSettings:SecretKey"];
+                ?? configuration["JwtSettings:SecretKey"];
 Console.WriteLine($"[JWT VALIDATION] SecretKey: {secretKey}");
 Console.WriteLine($"[JWT VALIDATION] Key Length: {secretKey.Length}");
 
@@ -78,8 +78,8 @@ services.AddAuthentication(options =>
         ValidateAudience = true,
         ValidateLifetime = true,
         ValidateIssuerSigningKey = true,
-        ValidIssuer = builder.Configuration["JwtSettings:Issuer"],
-        ValidAudience = builder.Configuration["JwtSettings:Audience"],
+        ValidIssuer = configuration["JwtSettings:Issuer"],
+        ValidAudience = configuration["JwtSettings:Audience"],
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey)),
     };
 })
@@ -121,6 +121,7 @@ services.AddHttpClient();
 // Đăng ký MVC
 services.AddControllersWithViews();
 
+configuration.AddJsonFile("appsettings.json");
 var app = builder.Build();
 
 app.UseHttpsRedirection();

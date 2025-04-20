@@ -18,7 +18,7 @@ namespace highlands.Services.RabbitMQServices.ExcelServices
         public ExcelQueuePublisherService(IConfiguration configuration, ILogger<ExcelQueuePublisherService> logger)
         {
             _configuration = configuration;
-            _excelQueueName = _configuration["RabbitMQ:ExcelQueueName"];
+            _excelQueueName = _configuration["RabbitMQ:ExcelQueue"];
             _logger = logger;
         }
 
@@ -26,6 +26,12 @@ namespace highlands.Services.RabbitMQServices.ExcelServices
         {
             try
             {
+                if (string.IsNullOrWhiteSpace(filePath))
+                {
+                    _logger.LogError("File path is null or empty.");
+                    return;
+                }
+
                 var factory = new ConnectionFactory
                 {
                     HostName = _configuration["RabbitMQ:HostName"],

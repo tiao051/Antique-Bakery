@@ -19,7 +19,7 @@ namespace highlands.Services.RabbitMQServices.ExcelServices
         public ExcelProcessingConsumerService(IConfiguration configuration, ILogger<ExcelProcessingConsumerService> logger)
         {
             _configuration = configuration;
-            _queueName = _configuration["RabbitMQ:EmailQueue"];
+            _queueName = _configuration["RabbitMQ:ExcelQueue"];
             _logger = logger;
         }
 

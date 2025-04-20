@@ -15,8 +15,13 @@ namespace highlands.Services.RabbitMQServices.ExcelServices
 
         public ExcelExportService(IConfiguration configuration, ILogger<ExcelExportService> logger)
         {
-            _saveDirectory = configuration.GetValue<string>("ExcelFileSaveDirectory");
+            _saveDirectory = configuration.GetValue<string>("ExcelFileSettings:ExcelFileSaveDirectory");
+            if (string.IsNullOrWhiteSpace(_saveDirectory))
+            {
+                throw new ArgumentNullException("ExcelFileSaveDirectory", "Directory path is not configured properly.");
+            }
             _logger = logger;
+            _logger.LogInformation($"ExcelFileSaveDirectory: {_saveDirectory}");
         }
 
         public async Task<string> CreateExcelFile(List<OrderDetailDTO> productPairs)
@@ -59,7 +64,7 @@ namespace highlands.Services.RabbitMQServices.ExcelServices
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error creating Excel file: {ex.Message}");
+                _logger.LogError($"Error creating Excel file: {ex.Message} at {ex.StackTrace}");
                 return null;
             }
         }
