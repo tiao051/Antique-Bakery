@@ -815,7 +815,7 @@ namespace highlands.Controllers.User.CustomerController
                 {
                     var worksheet = workbook.Worksheets.Add("ProductPairs");
 
-                    worksheet.Cell(1, 1).Value = "trans_id";
+                    worksheet.Cell(1, 1).Value = "transaction_id";
                     worksheet.Cell(1, 2).Value = "product_detail";
 
                     int row = 2;
