@@ -1,27 +1,45 @@
 ﻿using MailKit.Net.Smtp;
+using MailKit.Security;
 using MimeKit;
 using Newtonsoft.Json;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System.Text;
 
-namespace highlands.Services
+namespace highlands.Services.RabbitMQServices.EmailServices
 {
     public class MessageConsumerService : BackgroundService
     {
         private readonly ConnectionFactory _factory;
         private readonly string _queueName;
-        public MessageConsumerService()
+        private readonly IConfiguration _configuration;
+
+        public MessageConsumerService(IConfiguration configuration)
         {
+            _configuration = configuration;
+
+            var hostName = _configuration["RabbitMQ:HostName"];
+            var userName = _configuration["RabbitMQ:UserName"];
+            var password = _configuration["RabbitMQ:Password"];
+            var port = _configuration["RabbitMQ:Port"];
+            _queueName = _configuration["RabbitMQ:EmailQueue"];
+
+            // Kiểm tra xem các tham số có hợp lệ không
+            if (string.IsNullOrWhiteSpace(hostName) || string.IsNullOrWhiteSpace(userName) ||
+                string.IsNullOrWhiteSpace(password) || string.IsNullOrWhiteSpace(port) || string.IsNullOrWhiteSpace(_queueName))
+            {
+                throw new ArgumentNullException("RabbitMQ connection parameters or Queue name are not configured properly.");
+            }
+
             _factory = new ConnectionFactory()
             {
-                HostName = "localhost",
-                UserName = "admin",
-                Password = "admin",
-                Port = 5672
+                HostName = hostName,
+                UserName = userName,
+                Password = password,
+                Port = int.Parse(port)
             };
-            _queueName = "payment_queue";
         }
+
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             await using var connection = await _factory.CreateConnectionAsync();
@@ -48,14 +66,15 @@ namespace highlands.Services
                     string email = paymentInfo?.CustomerEmail;
                     string userName = paymentInfo?.UserName;
 
-                    if (!string.IsNullOrWhiteSpace(email))
+                    // Kiểm tra email và userName trước khi gửi email
+                    if (!string.IsNullOrWhiteSpace(email) && !string.IsNullOrWhiteSpace(userName))
                     {
                         Console.WriteLine($"Received email: {email}");
                         await SendEmailAsync(email, userName);
                     }
                     else
                     {
-                        Console.WriteLine("Lỗi: Email không hợp lệ.");
+                        Console.WriteLine("Lỗi: Email hoặc tên người dùng không hợp lệ.");
                     }
                 }
                 catch (Exception ex)
@@ -81,18 +100,34 @@ namespace highlands.Services
         private async Task SendEmailAsync(string toEmail, string userName)
         {
             Console.WriteLine($"[DEBUG] Email được gửi tới: '{toEmail}'");
+
+            // Kiểm tra tính hợp lệ của email người nhận
             if (string.IsNullOrWhiteSpace(toEmail))
             {
                 Console.WriteLine("Lỗi: Email không hợp lệ.");
                 return;
             }
+
             toEmail = toEmail.Trim();
 
-            var email = new MimeMessage();
-            email.From.Add(new MailboxAddress("Antique", "thubeztdaxuo@gmail.com"));
-            email.To.Add(new MailboxAddress(userName, toEmail));  
+            // Lấy cấu hình từ appsettings.json
+            var smtpServer = _configuration["EmailSettings:SmtpServer"];
+            var smtpPort = _configuration["EmailSettings:Port"];
+            var senderEmail = _configuration["EmailSettings:SenderEmail"];
+            var senderPassword = _configuration["EmailSettings:SenderPassword"];
 
-            email.Subject = "Antique Càfe";
+            // Kiểm tra tính hợp lệ của các giá trị cấu hình
+            if (string.IsNullOrWhiteSpace(smtpServer) || string.IsNullOrWhiteSpace(senderEmail) || string.IsNullOrWhiteSpace(senderPassword))
+            {
+                Console.WriteLine("Lỗi: Thông tin cấu hình email không đầy đủ.");
+                return;
+            }
+
+            var email = new MimeMessage();
+            email.From.Add(new MailboxAddress("Antique", senderEmail));
+            email.To.Add(new MailboxAddress(userName, toEmail));
+
+            email.Subject = "Antique CàFe";
             email.Body = new TextPart("plain")
             {
                 Text = $"Hello {userName},\n\nTesttttttttt!\n\nHihi,\nMinh Tho"
@@ -101,10 +136,11 @@ namespace highlands.Services
             using var smtp = new SmtpClient();
             try
             {
-                await smtp.ConnectAsync("smtp.gmail.com", 587, false);
-                await smtp.AuthenticateAsync("thubeztdaxuo@gmail.com", "dxynznmammruchcn");
-                await smtp.SendAsync(email);
-                await smtp.DisconnectAsync(true);
+                // Kết nối tới server SMTP và gửi email
+                await smtp.ConnectAsync(smtpServer, int.Parse(smtpPort), SecureSocketOptions.StartTls);  // Sử dụng StartTLS
+                await smtp.AuthenticateAsync(senderEmail, senderPassword);  // Xác thực với mật khẩu ứng dụng
+                await smtp.SendAsync(email);  // Gửi email
+                await smtp.DisconnectAsync(true);  // Ngắt kết nối
 
                 Console.WriteLine($"Email đã gửi thành công tới {toEmail}");
             }

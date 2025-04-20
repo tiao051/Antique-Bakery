@@ -3,7 +3,6 @@ using highlands.Models;
 using highlands.Models.DTO;
 using Microsoft.Extensions.Caching.Distributed;
 using Newtonsoft.Json;
-using RabbitMQ.Client;
 using System.Text;
 using highlands.Repository;
 using Microsoft.AspNetCore.Authorization;
@@ -12,7 +11,8 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using highlands.Interfaces;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
-using ClosedXML.Excel;
+using highlands.Services.RabbitMQServices.ExcelServices;
+using highlands.Services.RabbitMQServices.EmailServices;
 
 namespace highlands.Controllers.User.CustomerController
 {
@@ -31,13 +31,17 @@ namespace highlands.Controllers.User.CustomerController
         private readonly IHubContext<OrderHub> _hubContext;
         private readonly IHubContext<RecommendationHub> _recommendationHub;
         private readonly IHttpClientFactory _clientFactory;
+        private readonly IEmailService _emailService;
+        private readonly ExcelServiceManager _excelServiceManager;
 
         public CustomerController(
           IConfiguration configuration,
           IEnumerable<IMenuItemRepository> repositories,
           IDistributedCache distributedCache,
           IHubContext<OrderHub> hubContext,
-          IHubContext<RecommendationHub> recommendationHub)
+          IHubContext<RecommendationHub> recommendationHub,
+          ExcelServiceManager excelServiceManager,
+          IEmailService emailService)
         {
             _hostname = configuration["RabbitMQ:HostName"];
             _username = configuration["RabbitMQ:UserName"];
@@ -50,6 +54,8 @@ namespace highlands.Controllers.User.CustomerController
             _distributedCache = distributedCache;
             _hubContext = hubContext;
             _recommendationHub = recommendationHub;
+            _excelServiceManager = excelServiceManager;
+            _emailService = emailService;
         }
 
         [HttpGet]
@@ -571,7 +577,7 @@ namespace highlands.Controllers.User.CustomerController
                 }
 
                 // Gửi email qua RabbitMQ
-                await SendPaymentConfirmationEmail(userDetails.Email, userDetails.UserName);
+                await _emailService.SendPaymentConfirmationEmailAsync(userDetails.Email, userDetails.UserName);
 
                 // Lưu vào Redis để tránh gửi lại
                 //await _distributedCache.SetStringAsync(cacheKey, "sent", new DistributedCacheEntryOptions
@@ -593,47 +599,6 @@ namespace highlands.Controllers.User.CustomerController
                 Console.WriteLine($"Error: {ex.Message}");
                 return StatusCode(500, "Lỗi khi xử lý thanh toán.");
             }
-        }
-        private async Task SendPaymentConfirmationEmail(string customerEmail, string userName)
-        {
-            var factory = new ConnectionFactory()
-            {
-                HostName = _hostname,
-                UserName = _username,
-                Password = _password,
-                Port = int.Parse(_port)
-            };
-
-            await using var connection = await factory.CreateConnectionAsync();
-            await using var channel = await connection.CreateChannelAsync();
-
-            await channel.QueueDeclareAsync(
-                queue: _emailQueueName,
-                durable: true,
-                exclusive: false,
-                autoDelete: false,
-                arguments: null);
-
-            var paymentInfo = new
-            {
-                CustomerEmail = customerEmail,
-                UserName = userName,
-                Time = DateTime.UtcNow
-            };
-
-            var message = JsonConvert.SerializeObject(paymentInfo);
-            var body = Encoding.UTF8.GetBytes(message);
-
-            var properties = new BasicProperties { Persistent = true };
-
-            await channel.BasicPublishAsync(
-                exchange: "",
-                routingKey: _emailQueueName,
-                mandatory: false,
-                basicProperties: properties,
-                body: body);
-
-            Console.WriteLine($"Sent payment message: {message}");
         }
         private async Task ClearUserSessionAndCart(string cartKey)
         {
@@ -788,110 +753,15 @@ namespace highlands.Controllers.User.CustomerController
                 return Ok(new { message = "No product pairs found, but request processed successfully." });
             }
 
-            var filePath = await CreateExcelFile(productPairs);
+            var filePath = await _excelServiceManager.CreateExcelFileAsync(productPairs);
 
             if (!string.IsNullOrEmpty(filePath))
             {
-                await SendExcelFileInfoToQueue(filePath);
+                await _excelServiceManager.PublishFilePathAsync(filePath);
             }
 
             Console.WriteLine("Gui File thanh cong");
             return Ok(new { message = "File has been saved and sent to Python API." });
-        }
-        // tạo được excel 
-        public async Task<string> CreateExcelFile(List<OrderDetailDTO> productPairs)
-        {
-            var filePath = Path.Combine(@"D:\coffe_shop\python\dataSet", "ProductPairsCSharp.xlsx");
-
-            try
-            {
-                var directory = Path.GetDirectoryName(filePath);
-                if (!Directory.Exists(directory))
-                {
-                    Directory.CreateDirectory(directory);
-                }
-
-                using (var workbook = new XLWorkbook())
-                {
-                    var worksheet = workbook.Worksheets.Add("ProductPairs");
-
-                    worksheet.Cell(1, 1).Value = "transaction_id";
-                    worksheet.Cell(1, 2).Value = "product_detail";
-
-                    int row = 2;
-                    foreach (var productPair in productPairs)
-                    {
-                        var itemNames = productPair.ItemNames.Split(',');
-
-                        foreach (var itemName in itemNames)
-                        {
-                            worksheet.Cell(row, 1).Value = productPair.OrderId;
-                            worksheet.Cell(row, 2).Value = itemName.Trim();
-
-                            row++;
-                        }
-                    }
-
-                    workbook.SaveAs(filePath);
-                }
-
-                return filePath;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error creating Excel file: {ex.Message}");
-                return null;
-            }
-        }
-        private async Task SendExcelFileInfoToQueue(string filePath)
-        {
-            try
-            {
-                var factory = new ConnectionFactory()
-                {
-                    HostName = _hostname,
-                    UserName = _username,
-                    Password = _password,
-                    Port = int.Parse(_port)
-                };
-
-                await using var connection = await factory.CreateConnectionAsync();
-                await using var channel = await connection.CreateChannelAsync();
-
-                await channel.QueueDeclareAsync(
-                    queue: _excelQueueName,
-                    durable: true,
-                    exclusive: false,
-                    autoDelete: false,
-                    arguments: null);
-
-                var fileInfo = new
-                {
-                    FilePath = filePath,
-                    Timestamp = DateTime.UtcNow
-                };
-
-                var message = JsonConvert.SerializeObject(fileInfo);
-                var body = Encoding.UTF8.GetBytes(message);
-
-                var properties = new BasicProperties { Persistent = true };
-
-                await channel.BasicPublishAsync(
-                    exchange: "",
-                    routingKey: _excelQueueName,
-                    mandatory: false,
-                    basicProperties: properties,
-                    body: body);
-
-                Console.WriteLine("Sent file info to RabbitMQ:");
-                Console.WriteLine($"File Path: {fileInfo.FilePath}");
-                Console.WriteLine($"Timestamp: {fileInfo.Timestamp}");
-                Console.WriteLine($"Message: {message}");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error while sending file info to queue: {ex.Message}");
-            }
         }
     }
 }

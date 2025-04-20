@@ -2,7 +2,8 @@
 using highlands.Interfaces;
 using highlands.Repository;
 using highlands.Repository.OrderRepository;
-using highlands.Services;
+using highlands.Services.RabbitMQServices.EmailServices;
+using highlands.Services.RabbitMQServices.ExcelServices;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
@@ -22,7 +23,11 @@ Console.WriteLine($"[JWT VALIDATION] Key Length: {secretKey.Length}");
 
 // đăng ký rabbitmq
 services.AddHostedService<MessageConsumerService>();
+services.AddScoped<IEmailService, SendMessageToQueue>();
+services.AddScoped<IExcelExportService, ExcelExportService>();
+services.AddScoped<IExcelQueuePublisherService, ExcelQueuePublisherService>();
 services.AddHostedService<ExcelProcessingConsumerService>();
+services.AddTransient<ExcelServiceManager>();
 
 //đăng ký repo cho order
 services.AddScoped<OrderRepository>();
