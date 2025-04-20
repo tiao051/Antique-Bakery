@@ -706,5 +706,36 @@ namespace highlands.Repository
 
             return result.ToList();
         }
+        public async Task<List<OrderDetailDTO>> GetCommonProductPairsAsync(int orderId)
+        {
+            Console.WriteLine("GetCommonProductPairsAsync");
+            var query = @"
+            SELECT od.OrderId, 
+                   REPLACE(STUFF((
+                       SELECT DISTINCT ', ' + od2.ItemName
+                       FROM OrderDetail od2
+                       WHERE od2.OrderId = od.OrderId
+                       FOR XML PATH('')), 1, 2, ''), '&amp;', '&') AS ItemNames
+            FROM OrderDetail od
+            WHERE od.OrderId = @OrderId
+            GROUP BY od.OrderId
+            HAVING COUNT(DISTINCT od.ItemName) > 1";
+
+            var result = await _connection.QueryAsync<OrderDetailDTO>(query, new { OrderId = orderId });
+
+            if (result == null || !result.Any())
+            {
+                Console.WriteLine("No product pairs found for the given OrderId. Skipping further processing.");
+                return null; 
+            }
+
+            foreach (var item in result)
+            {
+                Console.WriteLine($"OrderId: {item.OrderId}");
+                Console.WriteLine($"ItemNames: {item.ItemNames}");
+            }
+
+            return result.ToList();
+        }
     }
 }

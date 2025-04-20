@@ -1,7 +1,5 @@
 ﻿using highlands.Models;
 using highlands.Models.DTO;
-using System.Data;
-using System.Threading.Tasks;
 
 namespace highlands.Interfaces
 {
@@ -34,5 +32,6 @@ namespace highlands.Interfaces
         Task<string> GetCustomerIdFromUserId(string userId);
         Task<List<ProductSuggestionDTO>> GetSugestedProductByUser(string customerId);
         Task<List<ProductSuggestionDTO>> GetSuggestedProductByTime(string timeSlot);
+        Task<List<OrderDetailDTO>> GetCommonProductPairsAsync(int orderId);
     }
 }

@@ -11,9 +11,8 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using highlands.Interfaces;
 using Microsoft.AspNetCore.SignalR;
-using highlands.Repository.OrderRepository;
 using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
+using ClosedXML.Excel;
 
 namespace highlands.Controllers.User.CustomerController
 {
@@ -23,7 +22,8 @@ namespace highlands.Controllers.User.CustomerController
         private readonly string _hostname;
         private readonly string _username;
         private readonly string _password;
-        private readonly string _queueName;
+        private readonly string _emailQueueName;
+        private readonly string _excelQueueName;
         private readonly string _port;
         private readonly IMenuItemRepository _dapperRepository;
         private readonly IDistributedCache _distributedCache;
@@ -33,17 +33,18 @@ namespace highlands.Controllers.User.CustomerController
         private readonly IHttpClientFactory _clientFactory;
 
         public CustomerController(
-            IConfiguration configuration,
-            IEnumerable<IMenuItemRepository> repositories,
-            IDistributedCache distributedCache,
-            IHubContext<OrderHub> hubContext,
-            IHubContext<RecommendationHub> recommendationHub)
+          IConfiguration configuration,
+          IEnumerable<IMenuItemRepository> repositories,
+          IDistributedCache distributedCache,
+          IHubContext<OrderHub> hubContext,
+          IHubContext<RecommendationHub> recommendationHub)
         {
             _hostname = configuration["RabbitMQ:HostName"];
             _username = configuration["RabbitMQ:UserName"];
             _password = configuration["RabbitMQ:Password"];
-            _queueName = configuration["RabbitMQ:QueueName"];
             _port = configuration["RabbitMQ:Port"];
+            _emailQueueName = configuration["RabbitMQ:EmailQueue"];
+            _excelQueueName = configuration["RabbitMQ:ExcelQueue"]; 
             _connectionString = configuration.GetConnectionString("DefaultConnection");
             _dapperRepository = repositories.OfType<MenuItemDapperRepository>().FirstOrDefault();
             _distributedCache = distributedCache;
@@ -519,105 +520,58 @@ namespace highlands.Controllers.User.CustomerController
         }
         [HttpPost]
         public async Task<IActionResult> Pay([FromBody] PaymentRequestDTO request)
-        {   
-            bool subscribeEmails = HttpContext.Session.GetString("SubscribeEmails") == "True";
-
-            int userId = request.UserID;
-            string cartKey = $"cart:{userId}";
-            decimal totalAmount = request.TotalAmount;
-            List<CartItemTemporary> cartItems = await _dapperRepository.GetCartItemsAsync(userId);
-            Console.WriteLine($"[DEBUG] Cart Items trong review order: {JsonConvert.SerializeObject(cartItems)}");
-            Console.WriteLine($"[DEBUG] Received payment request: userId={userId}, totalAmount={totalAmount}");
-
-            List<OrderDetail> orderDetails = cartItems.Select(cartItem => new OrderDetail
-            {
-                ItemName = cartItem.ItemName, 
-                Size = cartItem.Size, 
-                Price = cartItem.Price,
-                Quantity = cartItem.Quantity
-            }).ToList();
-
+        {
             try
             {
-                // Kiểm tra user có tồn tại không
+                // Xác định xem user có đăng ký nhận email không
+                bool subscribeEmails = HttpContext.Session.GetString("SubscribeEmails") == "True";
+
+                // Lấy thông tin đơn hàng và các sản phẩm trong giỏ hàng
+                int userId = request.UserID;
+                string cartKey = $"cart:{userId}";
+                decimal totalAmount = request.TotalAmount;
+                List<CartItemTemporary> cartItems = await _dapperRepository.GetCartItemsAsync(userId);
+                Console.WriteLine($"[DEBUG] Cart Items trong review order: {JsonConvert.SerializeObject(cartItems)}");
+                Console.WriteLine($"[DEBUG] Received payment request: userId={userId}, totalAmount={totalAmount}");
+
+                // Tạo đơn hàng từ giỏ hàng
+                List<OrderDetail> orderDetails = cartItems.Select(cartItem => new OrderDetail
+                {
+                    ItemName = cartItem.ItemName,
+                    Size = cartItem.Size,
+                    Price = cartItem.Price,
+                    Quantity = cartItem.Quantity
+                }).ToList();
+
+                // Kiểm tra user và tạo đơn hàng
                 var userDetails = await _dapperRepository.GetCustomerDetailsAsync(userId);
                 if (userDetails == null)
                 {
                     return BadRequest("User not found.");
                 }
+
                 int? customerId = userDetails.CustomerId;
-                // Gọi hàm riêng để tạo đơn hàng
                 int orderId = await CreateOrder((int)customerId, totalAmount, orderDetails);
                 if (orderId == -1)
                 {
                     return StatusCode(500, "Failed to create order");
                 }
 
-                //await _distributedCache.SetStringAsync("latest_order", orderId.ToString(),
-                //    new DistributedCacheEntryOptions
-                //    {
-                //        AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(30)
-                //    }
-                //);
                 Console.WriteLine($"[DEBUG] Order created successfully: orderId={orderId}");
 
                 // Nếu user không đăng ký nhận email => Trả về luôn
                 if (!subscribeEmails)
                 {
-                    await _distributedCache.RemoveAsync(cartKey);
-                    HttpContext.Response.Cookies.Delete(".AspNetCore.Session");
-                    Console.WriteLine($"[DEBUG] Cart and session cleared from Redis for userId={userId}");
-                    return Ok();
+                    await ClearUserSessionAndCart(cartKey);
+                    return Ok(new
+                    {
+                        OrderId = orderId,
+                        OrderDate = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")
+                    });
                 }
 
-                // 4️⃣ Kiểm tra Redis tránh gửi email trùng
-                //string cacheKey = $"email_sent:{userId}";
-                //var cacheValue = await _distributedCache.GetStringAsync(cacheKey);
-                //if (!string.IsNullOrEmpty(cacheValue))
-                //{
-                //    Console.WriteLine($"Email đã gửi trước đó, bỏ qua...");
-                //    return Ok("Bạn đã thực hiện thanh toán rồi.");
-                //}
-
                 // Gửi email qua RabbitMQ
-                var factory = new ConnectionFactory()
-                {
-                    HostName = _hostname,
-                    UserName = _username,
-                    Password = _password,
-                    Port = int.Parse(_port)
-                };
-
-                await using var connection = await factory.CreateConnectionAsync();
-                await using var channel = await connection.CreateChannelAsync();
-
-                await channel.QueueDeclareAsync(
-                    queue: _queueName,
-                    durable: true,
-                    exclusive: false,
-                    autoDelete: false,
-                    arguments: null);
-
-                var paymentInfo = new
-                {
-                    CustomerEmail = userDetails.Email,
-                    userDetails.UserName,
-                    Time = DateTime.UtcNow
-                };
-
-                var message = JsonConvert.SerializeObject(paymentInfo);
-                var body = Encoding.UTF8.GetBytes(message);
-
-                var properties = new BasicProperties { Persistent = true };
-
-                await channel.BasicPublishAsync(
-                    exchange: "",
-                    routingKey: _queueName,
-                    mandatory: false,
-                    basicProperties: properties,
-                    body: body);
-
-                Console.WriteLine($"Sent payment message: {message}");
+                await SendPaymentConfirmationEmail(userDetails.Email, userDetails.UserName);
 
                 // Lưu vào Redis để tránh gửi lại
                 //await _distributedCache.SetStringAsync(cacheKey, "sent", new DistributedCacheEntryOptions
@@ -625,17 +579,68 @@ namespace highlands.Controllers.User.CustomerController
                 //    AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10)
                 //});
 
-                await _distributedCache.RemoveAsync(cartKey);
-                HttpContext.Response.Cookies.Delete(".AspNetCore.Session");
-                Console.WriteLine($"[DEBUG] Cart and Session cleared for userId={userId}");
+                // Xóa giỏ hàng và session sau khi thanh toán thành công
+                await ClearUserSessionAndCart(cartKey);
 
-                return Ok();
+                return Ok(new
+                {
+                    OrderId = orderId,
+                    OrderDate = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")
+                });
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error: {ex.Message}");
                 return StatusCode(500, "Lỗi khi xử lý thanh toán.");
             }
+        }
+        private async Task SendPaymentConfirmationEmail(string customerEmail, string userName)
+        {
+            var factory = new ConnectionFactory()
+            {
+                HostName = _hostname,
+                UserName = _username,
+                Password = _password,
+                Port = int.Parse(_port)
+            };
+
+            await using var connection = await factory.CreateConnectionAsync();
+            await using var channel = await connection.CreateChannelAsync();
+
+            await channel.QueueDeclareAsync(
+                queue: _emailQueueName,
+                durable: true,
+                exclusive: false,
+                autoDelete: false,
+                arguments: null);
+
+            var paymentInfo = new
+            {
+                CustomerEmail = customerEmail,
+                UserName = userName,
+                Time = DateTime.UtcNow
+            };
+
+            var message = JsonConvert.SerializeObject(paymentInfo);
+            var body = Encoding.UTF8.GetBytes(message);
+
+            var properties = new BasicProperties { Persistent = true };
+
+            await channel.BasicPublishAsync(
+                exchange: "",
+                routingKey: _emailQueueName,
+                mandatory: false,
+                basicProperties: properties,
+                body: body);
+
+            Console.WriteLine($"Sent payment message: {message}");
+        }
+        private async Task ClearUserSessionAndCart(string cartKey)
+        {
+            // Xóa giỏ hàng và session của user
+            await _distributedCache.RemoveAsync(cartKey);
+            HttpContext.Response.Cookies.Delete(".AspNetCore.Session");
+            Console.WriteLine($"[DEBUG] Cart and Session cleared for userId={cartKey}");
         }
         [HttpPost]
         public async Task<int> CreateOrder(int customerId, decimal totalAmount, List<OrderDetail> orderDetails)
@@ -771,6 +776,122 @@ namespace highlands.Controllers.User.CustomerController
                 >= 18 and <= 21 => "Evening",
                 _ => "Night"
             };
+        }
+        [HttpGet]
+        public async Task<IActionResult> ExportProductPairsToExcel(int orderId)
+        {
+            var productPairs = await _dapperRepository.GetCommonProductPairsAsync(orderId);
+
+            if (productPairs == null || !productPairs.Any())
+            {
+                Console.WriteLine("deo co cap nao het");
+                return Ok(new { message = "No product pairs found, but request processed successfully." });
+            }
+
+            var filePath = await CreateExcelFile(productPairs);
+
+            if (!string.IsNullOrEmpty(filePath))
+            {
+                await SendExcelFileInfoToQueue(filePath);
+            }
+
+            Console.WriteLine("Gui File thanh cong");
+            return Ok(new { message = "File has been saved and sent to Python API." });
+        }
+        // tạo được excel 
+        public async Task<string> CreateExcelFile(List<OrderDetailDTO> productPairs)
+        {
+            var filePath = Path.Combine(@"D:\coffe_shop\python\dataSet", "ProductPairsCSharp.xlsx");
+
+            try
+            {
+                var directory = Path.GetDirectoryName(filePath);
+                if (!Directory.Exists(directory))
+                {
+                    Directory.CreateDirectory(directory);
+                }
+
+                using (var workbook = new XLWorkbook())
+                {
+                    var worksheet = workbook.Worksheets.Add("ProductPairs");
+
+                    worksheet.Cell(1, 1).Value = "trans_id";
+                    worksheet.Cell(1, 2).Value = "product_detail";
+
+                    int row = 2;
+                    foreach (var productPair in productPairs)
+                    {
+                        var itemNames = productPair.ItemNames.Split(',');
+
+                        foreach (var itemName in itemNames)
+                        {
+                            worksheet.Cell(row, 1).Value = productPair.OrderId;
+                            worksheet.Cell(row, 2).Value = itemName.Trim();
+
+                            row++;
+                        }
+                    }
+
+                    workbook.SaveAs(filePath);
+                }
+
+                return filePath;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error creating Excel file: {ex.Message}");
+                return null;
+            }
+        }
+        private async Task SendExcelFileInfoToQueue(string filePath)
+        {
+            try
+            {
+                var factory = new ConnectionFactory()
+                {
+                    HostName = _hostname,
+                    UserName = _username,
+                    Password = _password,
+                    Port = int.Parse(_port)
+                };
+
+                await using var connection = await factory.CreateConnectionAsync();
+                await using var channel = await connection.CreateChannelAsync();
+
+                await channel.QueueDeclareAsync(
+                    queue: _excelQueueName,
+                    durable: true,
+                    exclusive: false,
+                    autoDelete: false,
+                    arguments: null);
+
+                var fileInfo = new
+                {
+                    FilePath = filePath,
+                    Timestamp = DateTime.UtcNow
+                };
+
+                var message = JsonConvert.SerializeObject(fileInfo);
+                var body = Encoding.UTF8.GetBytes(message);
+
+                var properties = new BasicProperties { Persistent = true };
+
+                await channel.BasicPublishAsync(
+                    exchange: "",
+                    routingKey: _excelQueueName,
+                    mandatory: false,
+                    basicProperties: properties,
+                    body: body);
+
+                Console.WriteLine("Sent file info to RabbitMQ:");
+                Console.WriteLine($"File Path: {fileInfo.FilePath}");
+                Console.WriteLine($"Timestamp: {fileInfo.Timestamp}");
+                Console.WriteLine($"Message: {message}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error while sending file info to queue: {ex.Message}");
+            }
         }
     }
 }

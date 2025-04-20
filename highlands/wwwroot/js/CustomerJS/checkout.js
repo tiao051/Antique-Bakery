@@ -29,12 +29,32 @@ async function payNow(event) {
             body: JSON.stringify(requestData)
         });
 
-        const result = await response.text();
+        if (!response.ok) {
+            throw new Error("Thanh toán thất bại!");
+        }
+
+        const result = await response.json();
+        const { orderId, orderDate } = result;
+
+
+        console.log("Order ID:", orderId);
+        console.log("Order Date:", orderDate);
+
+        console.log("Đơn hàng đã tạo:", result);
+
         sessionStorage.clear();
         console.log("Xoá dữ liệu trong session");
 
-        const orderId = 123;
-        const orderDate = "2025-04-16";
+        const excelResponse = await fetch(`/customer/ExportProductPairsToExcel?orderId=${orderId}`, {
+            method: "GET",
+        });
+
+        if (!excelResponse.ok) {
+            throw new Error("Tạo file Excel thất bại!");
+        }
+
+        const excelResult = await excelResponse.json();
+        console.log("Excel file đã được gửi thành công.");
 
         window.location.href = `/home/empty?orderId=${orderId}&totalAmount=${totalAmount.toFixed(2)}&orderDate=${orderDate}`;
     } catch (error) {
@@ -42,7 +62,6 @@ async function payNow(event) {
         alert("❌ Có lỗi xảy ra! Vui lòng thử lại.");
     }
 }
-
 
 /** ===========================
  *  XỬ LÝ PHÍ GIAO HÀNG & TỔNG TIỀN

@@ -9,7 +9,10 @@
 
   <ItemGroup>
     <PackageReference Include="BCrypt.Net" Version="0.1.0" />
+    <PackageReference Include="ClosedXML" Version="0.104.2" />
+    <PackageReference Include="CsvHelper" Version="33.0.1" />
     <PackageReference Include="Dapper" Version="2.1.35" />
+    <PackageReference Include="EPPlus" Version="8.0.2" />
     <PackageReference Include="Google.Apis.Auth" Version="1.69.0" />
     <PackageReference Include="MailKit" Version="4.10.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.Facebook" Version="8.0.8" />

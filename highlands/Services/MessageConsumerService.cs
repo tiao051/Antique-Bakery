@@ -70,7 +70,7 @@ namespace highlands.Services
                 }
             };
 
-            Console.WriteLine("[DEBUG] Starting consumer..."); // Chuyển log này ra ngoài event handler
+            Console.WriteLine("[DEBUG] Starting consumer...");
             await channel.BasicConsumeAsync(queue: _queueName, autoAck: false, consumer: consumer);
 
             while (!stoppingToken.IsCancellationRequested)
@@ -78,7 +78,6 @@ namespace highlands.Services
                 await Task.Delay(1000, stoppingToken);
             }
         }
-
         private async Task SendEmailAsync(string toEmail, string userName)
         {
             Console.WriteLine($"[DEBUG] Email được gửi tới: '{toEmail}'");
