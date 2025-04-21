@@ -37,5 +37,7 @@ function hideElement(element) {
 }
 
 function exportReport(type) {
-    window.location.href = `/Report/Index`;
+    window.location.href = `/Report/DownloadReport?type=${type}`;
 }
+
+

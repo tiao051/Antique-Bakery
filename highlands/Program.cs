@@ -4,16 +4,21 @@ using highlands.Repository;
 using highlands.Repository.OrderRepository;
 using highlands.Services.RabbitMQServices.EmailServices;
 using highlands.Services.RabbitMQServices.ExcelServices;
+using highlands.Services.ReportServices;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using QuestPDF.Infrastructure;
 using System.Data;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 var services = builder.Services;
 var configuration = builder.Configuration;
+
+// Cấu hình giấy phép QuestPDF
+QuestPDF.Settings.License = LicenseType.Community;
 
 // lay secretkey tu enviroment
 var secretKey = Environment.GetEnvironmentVariable("JWT_SECRET")
@@ -29,6 +34,9 @@ services.AddScoped<IExcelQueuePublisherService, ExcelQueuePublisherService>();
 services.AddHostedService<ExcelProcessingConsumerService>();
 services.AddTransient<ExcelServiceManager>();
 
+//đăng ký report
+services.AddScoped<ReportService>();
+services.AddScoped<PdfService>();
 //đăng ký repo cho order
 services.AddScoped<OrderRepository>();
 
