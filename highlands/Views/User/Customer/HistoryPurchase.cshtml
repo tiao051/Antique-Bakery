@@ -1,0 +1,32 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Purchase History - Antique Coffee</title>
+    <link rel="stylesheet" href="~/css/customer/historyPurchase.css?v=@DateTime.Now.Ticks">
+    <script src="/js/CustomerJS/orderHistory.js" defer></script>
+</head>
+<body>
+    <div class="container">
+        <main>
+            <h1 class="page-title">Purchase History</h1>
+
+            <div class="order-history-container" id="orderHistoryContainer">
+                <!-- Content will be dynamically inserted here based on order history -->
+            </div>
+        </main>
+        <div class="modal-overlay" id="orderModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 class="modal-title">Order Details</h2>
+                    <button class="close-modal" id="closeModal">&times;</button>
+                </div>
+                <div id="modalContent">
+                    <!-- Order details will be inserted here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

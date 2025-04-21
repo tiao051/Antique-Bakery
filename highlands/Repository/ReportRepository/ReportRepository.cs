@@ -90,7 +90,8 @@ namespace highlands.Repository.ReportRepository
             FROM OrderDetail od
             JOIN [Order] o ON od.OrderId = o.OrderId
             WHERE o.OrderDate BETWEEN @StartDate AND @EndDate
-            GROUP BY od.ItemName";
+            GROUP BY od.ItemName
+            ORDER BY Revenue DESC";
             return (await _db.QueryAsync<ProductRevenue>(sql, new { StartDate = startDate, EndDate = endDate })).ToList();
         }
 

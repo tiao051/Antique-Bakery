@@ -1,5 +1,6 @@
 ﻿using Dapper;
 using highlands.Models.DTO;
+using highlands.Models.DTO.OrderDTO;
 using highlands.Models.DTO.RevenueDTO;
 using Microsoft.Extensions.Caching.Distributed;
 using Newtonsoft.Json;
@@ -219,6 +220,45 @@ namespace highlands.Repository.OrderRepository
                 Console.WriteLine($"Lỗi khi lấy revenue: {ex.Message}");
                 return new RevenueByMonth();
             }
+        }
+        public async Task<List<OrderHistoryDTO>> GetOrderHistoryByUser(string customerId)
+        {
+            string sql = @"
+                SELECT 
+                    o.OrderId,
+                    o.OrderDate,
+                    o.TotalAmount,
+                    od.ItemName,
+                    mi.ItemImg,
+                    od.Quantity,
+                    od.Price
+                FROM [Order] o
+                JOIN OrderDetail od ON o.OrderId = od.OrderId
+                JOIN MenuItem mi ON od.ItemName = mi.ItemName
+                WHERE o.CustomerId = @CustomerId
+                ORDER BY o.OrderDate DESC";
+
+            var orderDict = new Dictionary<int, OrderHistoryDTO>();
+
+            var result = await _connection.QueryAsync<OrderHistoryDTO, OrderItemDTO, OrderHistoryDTO>(
+                sql,
+                (order, item) =>
+                {
+                    if (!orderDict.TryGetValue(order.OrderId, out var orderEntry))
+                    {
+                        orderEntry = order;
+                        orderEntry.Items = new List<OrderItemDTO>();
+                        orderDict.Add(order.OrderId, orderEntry);
+                    }
+
+                    orderEntry.Items.Add(item);
+                    return orderEntry;
+                },
+                new { CustomerId = customerId },
+                splitOn: "ItemName"
+            );
+
+            return orderDict.Values.ToList();
         }
     }
 }

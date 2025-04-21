@@ -16,6 +16,8 @@ using highlands.Models.DTO.CustomerDataDTO;
 using highlands.Models.DTO.PaymentDTO;
 using highlands.Models.DTO.ProductsDTO;
 using highlands.Repository.MenuItemRepository;
+using highlands.Repository.OrderRepository;
+using Microsoft.IdentityModel.Tokens;
 
 namespace highlands.Controllers.User.CustomerController
 {
@@ -30,6 +32,7 @@ namespace highlands.Controllers.User.CustomerController
         private readonly IHttpClientFactory _clientFactory;
         private readonly IEmailService _emailService;
         private readonly ExcelServiceManager _excelServiceManager;
+        private readonly OrderRepository _orderRepository;
 
         public CustomerController(
           IConfiguration configuration,
@@ -38,7 +41,8 @@ namespace highlands.Controllers.User.CustomerController
           IHubContext<OrderHub> hubContext,
           IHubContext<RecommendationHub> recommendationHub,
           ExcelServiceManager excelServiceManager,
-          IEmailService emailService)
+          IEmailService emailService,
+          OrderRepository orderRepository)
         {
             _connectionString = configuration.GetConnectionString("DefaultConnection");
             _dapperRepository = repositories.OfType<MenuItemDapperRepository>().FirstOrDefault();
@@ -47,6 +51,7 @@ namespace highlands.Controllers.User.CustomerController
             _recommendationHub = recommendationHub;
             _excelServiceManager = excelServiceManager;
             _emailService = emailService;
+            _orderRepository = orderRepository;
         }
 
         [HttpGet]
@@ -761,6 +766,39 @@ namespace highlands.Controllers.User.CustomerController
             {
                 Console.WriteLine($"Lỗi khi xuất file Excel: {ex.Message}");
             }
+        }
+        public async Task<IActionResult> HistoryPurchase()
+        {
+            ViewData["ShowFooter"] = false;
+            ViewData["ShowNavbarMenu"] = false;
+
+            return View("~/Views/User/Customer/HistoryPurchase.cshtml");
+        }
+        [HttpGet]
+        public async Task<IActionResult> HistoryPurchaseData()
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized("UserId not found in token");
+            }
+
+            var customerId = await _dapperRepository.GetCustomerIdFromUserId(userId);
+
+            if (string.IsNullOrEmpty(customerId))
+            {
+                return NotFound("Customer ID not found.");
+            }
+
+            var orderHistory = await _orderRepository.GetOrderHistoryByUser(customerId);
+
+            if (orderHistory == null || !orderHistory.Any())
+            {
+                return NotFound("No order history found.");
+            }
+
+            return Ok(orderHistory);
         }
     }
 }
