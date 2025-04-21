@@ -224,19 +224,20 @@ namespace highlands.Repository.OrderRepository
         public async Task<List<OrderHistoryDTO>> GetOrderHistoryByUser(string customerId)
         {
             string sql = @"
-                SELECT 
-                    o.OrderId,
-                    o.OrderDate,
-                    o.TotalAmount,
-                    od.ItemName,
-                    mi.ItemImg,
-                    od.Quantity,
-                    od.Price
-                FROM [Order] o
-                JOIN OrderDetail od ON o.OrderId = od.OrderId
-                JOIN MenuItem mi ON od.ItemName = mi.ItemName
-                WHERE o.CustomerId = @CustomerId
-                ORDER BY o.OrderDate DESC";
+            SELECT 
+                o.OrderId,
+                o.OrderDate,
+                o.TotalAmount,
+                od.ItemName,
+                mi.ItemImg,
+                od.Quantity,
+                od.Price,
+                od.Size 
+            FROM [Order] o
+            JOIN OrderDetail od ON o.OrderId = od.OrderId
+            JOIN MenuItem mi ON od.ItemName = mi.ItemName
+            WHERE o.CustomerId = @CustomerId
+            ORDER BY o.OrderDate DESC";
 
             var orderDict = new Dictionary<int, OrderHistoryDTO>();
 
@@ -250,6 +251,8 @@ namespace highlands.Repository.OrderRepository
                         orderEntry.Items = new List<OrderItemDTO>();
                         orderDict.Add(order.OrderId, orderEntry);
                     }
+
+                    item.Size = item.Size ?? ""; 
 
                     orderEntry.Items.Add(item);
                     return orderEntry;

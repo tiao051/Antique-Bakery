@@ -231,6 +231,7 @@ body {
 }
 
 .modal-title {
+    margin: 0px !important;
     font-size: 22px;
     color: #5a3d2b;
 }
@@ -291,6 +292,7 @@ body {
     background-color: #ebe3d5;
     padding: 15px;
     border-radius: 8px;
+    margin-top: 25px !important;
 }
 
 .summary-row {

@@ -210,7 +210,6 @@ function toggleRecommendations(dom) {
 function initRecommendations() {
     const dom = getDOMReferences();
 
-    dom.timeRecommendations.classList.add('hidden-panel');
     updateTimeContent(dom);
 
     setInterval(() => toggleRecommendations(dom), 2000);

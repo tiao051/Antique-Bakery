@@ -64,6 +64,47 @@
                 </div>
             }
         </div>
+
+        <div class="recommended-products">
+            <div id="user-recommendations" class="toggle-recommendations active">
+                <div class="recommendation-banner">
+                    <div class="banner-content">
+                        <div class="banner-icon">🔥</div>
+                        <h2>Based on your interests</h2>
+                        <div class="banner-icon">🔥</div>
+                    </div>              
+                </div>
+                <div class="recommended-items-container">
+                    <div id ="render-user-rec"class="recommended-items">
+                        <div class="recommended-item">
+                            <img src="" alt="" />
+                            <div class="item-details">                            
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- TIME-BASED RECOMMENDATIONS -->
+            <div id="time-recommendations" class="toggle-recommendations">
+                <div class="recommendation-banner">
+                    <div class="banner-content">
+                        <div class="banner-icon">⏰</div>
+                        <h2>Perfect for <span id="time-period">Morning</span></h2>
+                        <div class="banner-icon">☕</div>
+                    </div>
+                </div>
+                <div class="recommended-items-container">
+                    <div id ="render-time-rec" class="recommended-items">
+                        <div id="morning-items" class="time-recommendation active">
+                            <div class="recommended-item">
+                                <img src="" alt="Cappuccino">
+                                <div class="item-details"></div>                           
+                            </div>                       
+                        </div>                    
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </body>
 </html>

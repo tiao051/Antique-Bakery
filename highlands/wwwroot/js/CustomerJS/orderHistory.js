@@ -19,9 +19,7 @@ async function fetchOrderHistory() {
         displayOrderHistory();
     } catch (error) {
         console.error(error);
-        container.innerHTML = renderEmptyHistory(
-            'Why not treat yourself to something nice? 😊'
-        );
+        container.innerHTML = renderEmptyHistory('Why not treat yourself to something nice? 😊');
     }
 }
 
@@ -34,7 +32,6 @@ function displayOrderHistory() {
         return;
     }
 
-    // Render order list với layout như trong hàm đầu
     const orderListHTML = `
     <div class="order-list">
         ${orderHistory.map(order => {
@@ -43,11 +40,10 @@ function displayOrderHistory() {
             ? `<div class="order-item-count">+${order.items.length - 1} more item(s)</div>`
             : '';
 
-        // Giữ lại layout cũ với các class và cấu trúc HTML như ban đầu
         return `
             <div class="order-card" data-order-id="${order.orderId}">
                 <div class="order-header">
-                    <div class="order-id">#${order.orderId}</div>
+                    <div class="order-id">#Order ${order.orderId}</div>
                     <div class="order-date">${formatDate(order.orderDate)}</div>
                 </div>
                 <div class="order-preview">
@@ -58,8 +54,7 @@ function displayOrderHistory() {
                     </div>
                     <div class="order-total">$${order.totalAmount.toFixed(2)}</div>
                 </div>
-            </div>
-            `;
+            </div>`;
     }).join('')}
     </div>`;
 
@@ -83,31 +78,16 @@ function formatDate(dateStr) {
         day: 'numeric'
     });
 }
-// Render an order card
+
+// Render an order modal
 function openOrderModal(order) {
     const modal = document.getElementById('orderModal');
     const modalContent = document.getElementById('modalContent');
 
     if (!modal || !modalContent || !order) return;
 
-    // Bắt đầu tạo HTML cho các items trong đơn hàng
-    let itemsHTML = '<div class="order-items">';
-
-    order.items.forEach(item => {
-        itemsHTML += `
-            <div class="order-item">
-                <img src="${item.itemImg}" alt="${item.itemName}" class="item-image">
-                <div class="item-details">
-                    <div class="item-name">${item.itemName}</div>
-                    <div class="item-specs">Size: ${item.size}</div>
-                    <div class="item-price">$${item.price.toFixed(2)} each</div>
-                </div>
-                <div class="item-quantity">×${item.quantity}</div>
-            </div>
-        `;
-    });
-
-    itemsHTML += '</div>'; 
+    // Sử dụng hàm renderOrderItem để render các items trong đơn hàng
+    const itemsHTML = order.items.map(item => renderOrderItem(item)).join('');
 
     const subtotal = order.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     const total = order.totalAmount;
@@ -144,23 +124,21 @@ function openOrderModal(order) {
         ${summaryHTML}
     `;
 
-    // Hiển thị modal
     modal.classList.add('active');
-    setupModalEvents(); // Thiết lập các sự kiện đóng modal (nếu cần)
+    setupModalEvents();
 }
-
 
 // Render each item in the modal
 function renderOrderItem(item) {
     return `
     <div class="order-item">
-        <img src="${item.image}" alt="${item.name}" class="item-image">
-            <div class="item-details">
-                <div class="item-name">${item.name}</div>
-                <div class="item-specs">Size: ${item.size}</div>
-                <div class="item-price">$${item.price.toFixed(2)} each</div>
-            </div>
-            <div class="item-quantity">×${item.quantity}</div>
+        <img src="${item.itemImg}" alt="${item.itemName}" class="item-image">
+        <div class="item-details">
+            <div class="item-name">${item.itemName}</div>
+            <div class="item-specs">Size: ${item.size}</div>
+            <div class="item-price">$${item.price.toFixed(2)} each</div>
+        </div>
+        <div class="item-quantity">×${item.quantity}</div>
     </div>
     `;
 }
