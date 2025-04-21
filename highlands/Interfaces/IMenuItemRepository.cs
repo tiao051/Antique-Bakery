@@ -1,5 +1,7 @@
 ﻿using highlands.Models;
 using highlands.Models.DTO;
+using highlands.Models.DTO.CustomerDataDTO;
+using highlands.Models.DTO.ProductsDTO;
 
 namespace highlands.Interfaces
 {

@@ -1,4 +1,4 @@
-﻿namespace highlands.Models.DTO
+﻿namespace highlands.Models.DTO.CustomerDataDTO
 {
     public class CheckoutDataViewModel
     {
@@ -7,6 +7,6 @@
         public string Total { get; set; }
         public string TotalQuantity { get; set; }
         public bool SubscribeEmails { get; set; }
-        public string deliveryMethod {  get; set; }
+        public string deliveryMethod { get; set; }
     }
 }

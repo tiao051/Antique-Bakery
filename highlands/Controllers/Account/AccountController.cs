@@ -10,7 +10,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using Microsoft.Extensions.Caching.Distributed;
 using Newtonsoft.Json;
-using highlands.Models.DTO;
+using highlands.Models.DTO.LoginDTO;
 
 namespace highlands.Controllers.Account
 {

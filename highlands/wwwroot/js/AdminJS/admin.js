@@ -171,15 +171,36 @@ async function getCustomerOrderDetail(timeFrame) {
             method: 'GET',
             headers: getAuthHeaders()
         });
-
         if (!response.ok) {
             throw new Error(`Error: ${response.statusText}`);
         }
-
-        const orderDetail = await response.json(); 
-
+        const orderDetail = await response.json();
         const labels = orderDetail.map(item => item.subCategory);
         const dataValues = orderDetail.map(item => item.totalRevenue);
+
+        const exquisitePalette = [
+            '#FF9FB0', // Rose pink
+            '#61CDBB', // Jade green
+            '#E8C1A0', // Champagne
+            '#F1E15B', // Citrine
+            '#8D5B4C', // Cedar
+            '#A5AAB0', // Silver mist
+            '#5C7AFF', // Hyacinth blue
+            '#FEB95F', // Golden apricot
+            '#BA68C8', // Orchid
+            '#54BFB2', // Aquamarine
+            '#FF9FB0', // Cherry blossom
+            '#D1BCF5', // Lavender mist
+            '#FFD166', // Marigold
+            '#06D6A0', // Caribbean green
+            '#5B7CF5'  // Periwinkle blue
+        ];
+
+        while (exquisitePalette.length < labels.length) {
+            exquisitePalette = exquisitePalette.concat(exquisitePalette);
+        }
+
+        const backgroundColors = exquisitePalette.slice(0, labels.length);
 
         const ctx = document.getElementById('revenueChart').getContext('2d');
         window.revenueChart = new Chart(ctx, {
@@ -189,8 +210,8 @@ async function getCustomerOrderDetail(timeFrame) {
                 datasets: [{
                     label: 'Total Revenue',
                     data: dataValues,
-                    backgroundColor: ["#00BFFF", "#FFD700", "#8B4513", "#228B22", "#D2691E"],
-                    borderColor: "#fff",
+                    backgroundColor: backgroundColors,
+                    borderColor: "#ffffff",
                     borderWidth: 2
                 }]
             },
@@ -213,7 +234,6 @@ async function getCustomerOrderDetail(timeFrame) {
                 }
             }
         });
-
     } catch (error) {
         console.error("Failed to fetch order details:", error);
         alert(error.message);

@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="~/css/admin/adminView.css?v=@DateTime.Now.Ticks">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/js/all.min.js"></script>
     <script src="/js/AdminJS/admin.js?v=@DateTime.Now.Ticks" defer></script>
+    <script src="/js/AdminJS/adminReport.js?v=@DateTime.Now.Ticks" defer></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.0/signalr.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.js">
     </script>
@@ -24,11 +25,24 @@
                 <div class="header-title">Admin Dashboard</div>
             </div>
             <div class="header-right">
-                <div class="header-action btn-outline">
-                    <i class="fas fa-calendar"></i> Today
-                </div>
-                <div class="header-action">
-                    <i class="fas fa-download"></i> Generate Report
+                <div class="report-dropdown">
+                    <div class="header-action" onclick="toggleReportOptions()">
+                        <i class="fas fa-download"></i> Generate Report
+                    </div>
+                    <div id="reportOptions" class="report-options">
+                        <div class="header-action btn-outline" onclick="exportReport('daily')">
+                            <i class="fas fa-calendar"></i> Today
+                        </div>
+                        <div class="header-action btn-outline" onclick="exportReport('weekly')">
+                            <i class="fas fa-calendar-week"></i> This Week
+                        </div>
+                        <div class="header-action btn-outline" onclick="exportReport('monthly')">
+                            <i class="fas fa-calendar-alt"></i> This Month
+                        </div>
+                        <div class="header-action btn-outline" onclick="exportReport('quarterly')">
+                            <i class="fas fa-calendar-check"></i> This Quarter
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

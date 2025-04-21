@@ -13,6 +13,9 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using highlands.Services.RabbitMQServices.ExcelServices;
 using highlands.Services.RabbitMQServices.EmailServices;
+using highlands.Models.DTO.CustomerDataDTO;
+using highlands.Models.DTO.PaymentDTO;
+using highlands.Models.DTO.ProductsDTO;
 
 namespace highlands.Controllers.User.CustomerController
 {

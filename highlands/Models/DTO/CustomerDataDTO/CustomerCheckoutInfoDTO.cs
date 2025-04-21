@@ -1,4 +1,4 @@
-﻿namespace highlands.Models.DTO
+﻿namespace highlands.Models.DTO.CustomerDataDTO
 {
     public class CustomerCheckoutInfoDTO
     {

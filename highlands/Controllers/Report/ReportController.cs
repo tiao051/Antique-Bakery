@@ -4,7 +4,7 @@ namespace highlands.Controllers.Report
 {   
     public class ReportController : Controller
     {   
-        public IActionResult Index()
+        public IActionResult Export()
         {
             return View();
         }

@@ -1,5 +1,6 @@
 ﻿using Dapper;
 using highlands.Models.DTO;
+using highlands.Models.DTO.RevenueDTO;
 using Microsoft.Extensions.Caching.Distributed;
 using Newtonsoft.Json;
 using System.Data;

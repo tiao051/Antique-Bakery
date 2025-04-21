@@ -9,6 +9,8 @@ using System.Data;
 using highlands.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using System.Text.Json;
+using highlands.Models.DTO.CustomerDataDTO;
+using highlands.Models.DTO.ProductsDTO;
 
 namespace highlands.Repository
 {
