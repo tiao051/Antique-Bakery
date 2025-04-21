@@ -721,21 +721,30 @@ namespace highlands.Repository
             GROUP BY od.OrderId
             HAVING COUNT(DISTINCT od.ItemName) > 1";
 
-            var result = await _connection.QueryAsync<OrderDetailDTO>(query, new { OrderId = orderId });
-
-            if (result == null || !result.Any())
+            try
             {
-                Console.WriteLine("No product pairs found for the given OrderId. Skipping further processing.");
-                return null; 
+                if (_connection.State != ConnectionState.Open)
+                {
+                     _connection.Open();
+                }
+
+                var result = await _connection.QueryAsync<OrderDetailDTO>(query, new { OrderId = orderId });
+
+                foreach (var item in result)
+                {
+                    Console.WriteLine($"OrderId: {item.OrderId}");
+                    Console.WriteLine($"ItemNames: {item.ItemNames}");
+                }
+
+                return result.ToList();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error connecting to DB: {ex.Message}");
+                // Handle exception or rethrow
+                throw new InvalidOperationException("Failed to connect or query the database.", ex);
             }
 
-            foreach (var item in result)
-            {
-                Console.WriteLine($"OrderId: {item.OrderId}");
-                Console.WriteLine($"ItemNames: {item.ItemNames}");
-            }
-
-            return result.ToList();
         }
     }
 }

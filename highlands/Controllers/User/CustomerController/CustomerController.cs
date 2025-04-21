@@ -568,6 +568,7 @@ namespace highlands.Controllers.User.CustomerController
                 // Nếu user không đăng ký nhận email => Trả về luôn
                 if (!subscribeEmails)
                 {
+                    _ = ExportProductPairsToExcelAsync(orderId);
                     await ClearUserSessionAndCart(cartKey);
                     return Ok(new
                     {
@@ -578,6 +579,8 @@ namespace highlands.Controllers.User.CustomerController
 
                 // Gửi email qua RabbitMQ
                 await _emailService.SendPaymentConfirmationEmailAsync(userDetails.Email, userDetails.UserName);
+
+                _ = ExportProductPairsToExcelAsync(orderId);
 
                 // Lưu vào Redis để tránh gửi lại
                 //await _distributedCache.SetStringAsync(cacheKey, "sent", new DistributedCacheEntryOptions
@@ -742,26 +745,31 @@ namespace highlands.Controllers.User.CustomerController
                 _ => "Night"
             };
         }
-        [HttpGet]
-        public async Task<IActionResult> ExportProductPairsToExcel(int orderId)
+        private async Task ExportProductPairsToExcelAsync(int orderId)
         {
-            var productPairs = await _dapperRepository.GetCommonProductPairsAsync(orderId);
-
-            if (productPairs == null || !productPairs.Any())
+            try
             {
-                Console.WriteLine("deo co cap nao het");
-                return Ok(new { message = "No product pairs found, but request processed successfully." });
+                var productPairs = await _dapperRepository.GetCommonProductPairsAsync(orderId);
+
+                if (productPairs == null || !productPairs.Any())
+                {
+                    Console.WriteLine("Không có cặp sản phẩm nào.");
+                    return;
+                }
+
+                var filePath = await _excelServiceManager.CreateExcelFileAsync(productPairs);
+
+                if (!string.IsNullOrEmpty(filePath))
+                {
+                    await _excelServiceManager.PublishFilePathAsync(filePath);
+                }
+
+                Console.WriteLine("File Excel đã được tạo và gửi đi thành công.");
             }
-
-            var filePath = await _excelServiceManager.CreateExcelFileAsync(productPairs);
-
-            if (!string.IsNullOrEmpty(filePath))
+            catch (Exception ex)
             {
-                await _excelServiceManager.PublishFilePathAsync(filePath);
+                Console.WriteLine($"Lỗi khi xuất file Excel: {ex.Message}");
             }
-
-            Console.WriteLine("Gui File thanh cong");
-            return Ok(new { message = "File has been saved and sent to Python API." });
         }
     }
 }

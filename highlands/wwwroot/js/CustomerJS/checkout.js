@@ -45,17 +45,6 @@ async function payNow(event) {
         sessionStorage.clear();
         console.log("Xoá dữ liệu trong session");
 
-        const excelResponse = await fetch(`/customer/ExportProductPairsToExcel?orderId=${orderId}`, {
-            method: "GET",
-        });
-
-        if (!excelResponse.ok) {
-            throw new Error("Tạo file Excel thất bại!");
-        }
-
-        const excelResult = await excelResponse.json();
-        console.log("Excel file đã được gửi thành công.");
-
         window.location.href = `/home/empty?orderId=${orderId}&totalAmount=${totalAmount.toFixed(2)}&orderDate=${orderDate}`;
     } catch (error) {
         console.error("Lỗi khi gửi yêu cầu:", error);
