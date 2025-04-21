@@ -12,7 +12,7 @@ using System.Text.Json;
 using highlands.Models.DTO.CustomerDataDTO;
 using highlands.Models.DTO.ProductsDTO;
 
-namespace highlands.Repository
+namespace highlands.Repository.MenuItemRepository
 {
     public class MenuItemDapperRepository : IMenuItemRepository
     {
@@ -478,7 +478,7 @@ namespace highlands.Repository
 
             if (customerInfo == null)
             {
-                customerInfo = new CustomerCheckoutInfoDTO(); 
+                customerInfo = new CustomerCheckoutInfoDTO();
             }
 
             return customerInfo;
@@ -727,7 +727,7 @@ namespace highlands.Repository
             {
                 if (_connection.State != ConnectionState.Open)
                 {
-                     _connection.Open();
+                    _connection.Open();
                 }
 
                 var result = await _connection.QueryAsync<OrderDetailDTO>(query, new { OrderId = orderId });

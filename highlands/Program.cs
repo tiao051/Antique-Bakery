@@ -1,7 +1,8 @@
 ﻿using highlands.Data;
 using highlands.Interfaces;
-using highlands.Repository;
+using highlands.Repository.MenuItemRepository;
 using highlands.Repository.OrderRepository;
+using highlands.Repository.ReportRepository;
 using highlands.Services.RabbitMQServices.EmailServices;
 using highlands.Services.RabbitMQServices.ExcelServices;
 using highlands.Services.ReportServices;
@@ -37,6 +38,7 @@ services.AddTransient<ExcelServiceManager>();
 //đăng ký report
 services.AddScoped<ReportService>();
 services.AddScoped<PdfService>();
+services.AddScoped<IReportRepository, ReportRepository>();
 //đăng ký repo cho order
 services.AddScoped<OrderRepository>();
 

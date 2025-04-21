@@ -8,15 +8,15 @@ namespace highlands.Controllers.Report
         private readonly ReportService _reportService;
         private readonly PdfService _pdfService;
 
-        public ReportController()
+        public ReportController(ReportService reportService, PdfService pdfService)
         {
-            _reportService = new ReportService();
-            _pdfService = new PdfService();
+            _reportService = reportService;
+            _pdfService = pdfService;
         }
         [HttpGet]
-        public IActionResult DownloadReport(string type)
+        public async Task<IActionResult> DownloadReport(string type)
         {
-            var data = _reportService.GenerateReport(type);
+            var data = await _reportService.GenerateReportAsync(type);
             var pdf = _pdfService.GeneratePdf(data);
             return File(pdf, "application/pdf", $"Report_{type}_{DateTime.Now:yyyyMMdd}.pdf");
         }

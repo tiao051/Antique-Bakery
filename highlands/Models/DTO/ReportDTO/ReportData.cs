@@ -23,25 +23,25 @@
     public class CategoryRevenue
     {
         public string Category { get; set; }
-        public int Revenue { get; set; }
+        public decimal Revenue { get; set; }
     }
 
     public class ProductRevenue
     {
         public string Name { get; set; }
-        public int Revenue { get; set; }
+        public decimal Revenue { get; set; }
     }
 
     public class TopCustomer
     {
         public string CustomerName { get; set; }
         public int OrderCount { get; set; }
-        public int TotalSpent { get; set; }
+        public decimal TotalSpent { get; set; }
     }
 
     public class TimeRevenueStat
     {
         public string TimeRange { get; set; }
-        public int Revenue { get; set; }
+        public decimal Revenue { get; set; }
     }
 }

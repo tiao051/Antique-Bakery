@@ -191,14 +191,18 @@ namespace highlands.Repository.OrderRepository
 
                 //Query DB nếu có order mới
                 var sql = @"SELECT 
-                    SUM(o.TotalAmount) AS TotalRevenue, 
+                    (SELECT SUM(TotalAmount) 
+                    FROM [Order] 
+                    WHERE YEAR(OrderDate) = YEAR(GETDATE()) 
+                    AND MONTH(OrderDate) = MONTH(GETDATE())) AS TotalRevenue,
+
                     COUNT(o.OrderId) AS TotalOrders,
                     COUNT(DISTINCT o.CustomerId) AS TotalCustomers,
                     SUM(od.Quantity) AS TotalQuantity
                     FROM [Order] o
                     JOIN [OrderDetail] od ON o.OrderId = od.OrderId
                     WHERE YEAR(o.OrderDate) = YEAR(GETDATE()) 
-                    AND MONTH(o.OrderDate) = MONTH(GETDATE());";
+                      AND MONTH(o.OrderDate) = MONTH(GETDATE());";
 
                 var result = await _connection.QueryFirstOrDefaultAsync<RevenueByMonth>(sql) ?? new RevenueByMonth();
 

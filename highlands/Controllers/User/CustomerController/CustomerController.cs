@@ -4,7 +4,6 @@ using highlands.Models.DTO;
 using Microsoft.Extensions.Caching.Distributed;
 using Newtonsoft.Json;
 using System.Text;
-using highlands.Repository;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -16,18 +15,13 @@ using highlands.Services.RabbitMQServices.EmailServices;
 using highlands.Models.DTO.CustomerDataDTO;
 using highlands.Models.DTO.PaymentDTO;
 using highlands.Models.DTO.ProductsDTO;
+using highlands.Repository.MenuItemRepository;
 
 namespace highlands.Controllers.User.CustomerController
 {
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "Customer")]
     public class CustomerController : Controller
     {
-        private readonly string _hostname;
-        private readonly string _username;
-        private readonly string _password;
-        private readonly string _emailQueueName;
-        private readonly string _excelQueueName;
-        private readonly string _port;
         private readonly IMenuItemRepository _dapperRepository;
         private readonly IDistributedCache _distributedCache;
         private readonly string _connectionString;
@@ -46,12 +40,6 @@ namespace highlands.Controllers.User.CustomerController
           ExcelServiceManager excelServiceManager,
           IEmailService emailService)
         {
-            _hostname = configuration["RabbitMQ:HostName"];
-            _username = configuration["RabbitMQ:UserName"];
-            _password = configuration["RabbitMQ:Password"];
-            _port = configuration["RabbitMQ:Port"];
-            _emailQueueName = configuration["RabbitMQ:EmailQueue"];
-            _excelQueueName = configuration["RabbitMQ:ExcelQueue"]; 
             _connectionString = configuration.GetConnectionString("DefaultConnection");
             _dapperRepository = repositories.OfType<MenuItemDapperRepository>().FirstOrDefault();
             _distributedCache = distributedCache;

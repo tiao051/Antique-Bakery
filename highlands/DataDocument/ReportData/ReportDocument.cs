@@ -19,86 +19,147 @@ public class ReportDocument : IDocument
         container.Page(page =>
         {
             page.Margin(30);
-            page.Header().Text($"📊 Báo Cáo {_data.ReportType.ToUpper()} ({_data.TimeRangeText})").FontSize(18).Bold();
+
+            page.Header().Text($"📊 REPORT {_data.ReportType.ToUpper()} ({_data.TimeRangeText})")
+                .FontSize(18).Bold().FontColor(Colors.Blue.Medium);
+
             page.Content().PaddingVertical(10).Column(col =>
             {
-                col.Item().Text($"🧾 Tổng doanh thu: {_data.TotalRevenue:N0} VNĐ").FontSize(14).Bold();
+                // Total revenue
+                col.Item().Text($"🧾 Total Revenue: {_data.TotalRevenue:N0} $")
+                    .FontSize(14).Bold().FontColor(Colors.Green.Darken2);
 
-                // Sản phẩm bán chạy
-                col.Item().PaddingVertical(10).Text("🔥 Sản phẩm bán chạy:");
-                col.Item().Table(table =>
+                // Best sellers
+                if (_data.BestSellers == null || !_data.BestSellers.Any())
                 {
-                    table.ColumnsDefinition(c => { c.RelativeColumn(); c.ConstantColumn(80); });
-                    foreach (var p in _data.BestSellers)
+                    col.Item().Text("No best-selling products available in this period.");
+                }
+                else
+                {
+                    col.Item().PaddingTop(15).Text("🔥 Top 5 Best-Selling Products:").FontSize(13).Bold();
+                    col.Item().Table(table =>
                     {
-                        table.Cell().Text(p.Name);
-                        table.Cell().Text(p.Quantity.ToString());
-                    }
-                });
+                        table.ColumnsDefinition(c => { c.RelativeColumn(); c.ConstantColumn(80); });
 
-                // Sản phẩm bán ế
-                col.Item().PaddingVertical(10).Text("❄️ Sản phẩm bán ế:");
+                        table.Header(header =>
+                        {
+                            header.Cell().Text("Product Name").Bold();
+                            header.Cell().AlignRight().Text("Quantity Sold").Bold();
+                        });
+
+                        foreach (var p in _data.BestSellers)
+                        {
+                            table.Cell().Text(p.Name);
+                            table.Cell().AlignRight().Text(p.Quantity.ToString());
+                        }
+                    });
+                }
+
+                // Worst sellers
+                col.Item().PaddingTop(15).Text("❄️ Top 5 Worst-Selling Products:").FontSize(13).Bold();
                 col.Item().Table(table =>
                 {
                     table.ColumnsDefinition(c => { c.RelativeColumn(); c.ConstantColumn(80); });
+
+                    table.Header(header =>
+                    {
+                        header.Cell().Text("Product Name").Bold();
+                        header.Cell().AlignRight().Text("Quantity Sold").Bold();
+                    });
+
                     foreach (var p in _data.WorstSellers)
                     {
                         table.Cell().Text(p.Name);
-                        table.Cell().Text(p.Quantity.ToString());
+                        table.Cell().AlignRight().Text(p.Quantity.ToString());
                     }
                 });
 
-                // Doanh thu theo danh mục
-                col.Item().PaddingVertical(10).Text("📂 Doanh thu theo danh mục:");
+                // Revenue by category
+                col.Item().PaddingTop(15).Text("📂 Revenue by Category:").FontSize(13).Bold();
                 col.Item().Table(table =>
                 {
                     table.ColumnsDefinition(c => { c.RelativeColumn(); c.ConstantColumn(100); });
+
+                    table.Header(header =>
+                    {
+                        header.Cell().Text("Category").Bold();
+                        header.Cell().AlignRight().Text("Revenue ($)").Bold();
+                    });
+
                     foreach (var cat in _data.RevenueByCategory)
                     {
                         table.Cell().Text(cat.Category);
-                        table.Cell().Text(cat.Revenue.ToString("N0"));
+                        table.Cell().AlignRight().Text(cat.Revenue.ToString("N0"));
                     }
                 });
 
-                // Doanh thu theo sản phẩm
-                col.Item().PaddingVertical(10).Text("📦 Doanh thu theo sản phẩm:");
+                // Revenue by product
+                col.Item().PaddingTop(15).Text("📦 Revenue by Product:").FontSize(13).Bold();
                 col.Item().Table(table =>
                 {
                     table.ColumnsDefinition(c => { c.RelativeColumn(); c.ConstantColumn(100); });
+
+                    table.Header(header =>
+                    {
+                        header.Cell().Text("Product").Bold();
+                        header.Cell().AlignRight().Text("Revenue ($)").Bold();
+                    });
+
                     foreach (var p in _data.RevenueByProduct)
                     {
                         table.Cell().Text(p.Name);
-                        table.Cell().Text(p.Revenue.ToString("N0"));
+                        table.Cell().AlignRight().Text(p.Revenue.ToString("N0"));
                     }
                 });
 
-                // Khách hàng thân thiết
-                col.Item().PaddingVertical(10).Text("👥 Khách hàng thân thiết:");
+                // Top customers
+                col.Item().PaddingTop(15).Text("👥 Top Customers:").FontSize(13).Bold();
                 col.Item().Table(table =>
                 {
-                    table.ColumnsDefinition(c => { c.RelativeColumn(); c.ConstantColumn(80); c.ConstantColumn(100); });
+                    table.ColumnsDefinition(c =>
+                    {
+                        c.RelativeColumn();
+                        c.ConstantColumn(80);
+                        c.ConstantColumn(100);
+                    });
+
+                    table.Header(header =>
+                    {
+                        header.Cell().Text("Customer Name").Bold();
+                        header.Cell().AlignRight().Text("Order Count").Bold();
+                        header.Cell().AlignRight().Text("Total Spent ($)").Bold();
+                    });
+
                     foreach (var c in _data.TopCustomers)
                     {
                         table.Cell().Text(c.CustomerName);
-                        table.Cell().Text($"{c.OrderCount} đơn");
-                        table.Cell().Text($"{c.TotalSpent:N0} VNĐ");
+                        table.Cell().AlignRight().Text($"{c.OrderCount}");
+                        table.Cell().AlignRight().Text($"{c.TotalSpent:N0}");
                     }
                 });
 
-                // Thời gian bán chạy và bán ế
-                col.Item().PaddingVertical(10).Text("⏰ Thời gian bán chạy:");
-                col.Item().Text($"👉 {_data.PeakTime.TimeRange} ({_data.PeakTime.Revenue:N0} VNĐ)");
+                // Peak and off-peak hours
+                col.Item().PaddingTop(15).Text("⏰ Hourly Sales Report:").FontSize(13).Bold();
 
-                col.Item().Text("🕑 Thời gian bán ế:");
-                col.Item().Text($"👉 {_data.OffTime.TimeRange} ({_data.OffTime.Revenue:N0} VNĐ)");
+                col.Item().Text(text =>
+                {
+                    text.Span("👉 Peak Sales Hour: ").Bold();
+                    text.Span($"{_data.PeakTime.TimeRange}").SemiBold();
+                });
 
+                col.Item().Text(text =>
+                {
+                    text.Span("🕑 Off-Peak Sales Hour: ").Bold();
+                    text.Span($"{_data.OffTime.TimeRange}").SemiBold();
+                });
             });
 
             // Footer
-            page.Footer().AlignCenter().Text(x =>
+            page.Footer().AlignCenter().Text(text =>
             {
-                x.Span("Generated by Highlands System ").FontSize(10);
-                x.CurrentPageNumber().FontSize(10);
+                text.Span("Generated by Antique System").FontSize(10);
+                text.Span(" | Page ").FontSize(10);
+                text.CurrentPageNumber().FontSize(10);
             });
         });
     }
