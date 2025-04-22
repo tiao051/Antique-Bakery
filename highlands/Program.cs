@@ -27,7 +27,7 @@ var secretKey = Environment.GetEnvironmentVariable("JWT_SECRET")
 Console.WriteLine($"[JWT VALIDATION] SecretKey: {secretKey}");
 Console.WriteLine($"[JWT VALIDATION] Key Length: {secretKey.Length}");
 
-// đăng ký rabbitmq
+// đăng ký service
 services.AddHostedService<MessageConsumerService>();
 services.AddScoped<IEmailService, SendMessageToQueue>();
 services.AddScoped<IExcelExportService, ExcelExportService>();
@@ -41,6 +41,7 @@ services.AddScoped<PdfService>();
 services.AddScoped<IReportRepository, ReportRepository>();
 //đăng ký repo cho order
 services.AddScoped<OrderRepository>();
+services.AddScoped<PopularShoppingSequence>();
 
 // Đăng ký DbContext & Dapper
 services.AddDbContext<AppDbContext>(options =>

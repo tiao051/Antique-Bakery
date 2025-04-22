@@ -1,0 +1,123 @@
+﻿.patterns-content {
+    padding: 20px;
+}
+
+.patterns-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #8b4513;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 15px;
+}
+
+@@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+.patterns-empty {
+    text-align: center;
+    padding: 40px;
+    color: #666;
+}
+
+.pattern-item {
+    position: relative;
+    padding: 20px;
+    margin-bottom: 15px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    overflow: hidden;
+}
+
+.pattern-rank {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background-color: #8b4513;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.pattern-sequence {
+    padding-left: 40px;
+    margin-bottom: 15px;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.pattern-item-name {
+    font-weight: bold;
+    color: #333;
+    margin: 5px 0;
+}
+
+.pattern-sequence i {
+    color: #8b4513;
+    margin: 0 10px;
+}
+
+.pattern-metrics {
+    display: flex;
+    justify-content: space-between;
+    padding-left: 40px;
+}
+
+.pattern-frequency, .pattern-revenue {
+    display: flex;
+    align-items: center;
+    color: #666;
+}
+
+    .pattern-frequency i, .pattern-revenue i {
+        margin-right: 5px;
+        color: #8b4513;
+    }
+
+.pattern-intensity {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 4px;
+    background-color: #8b4513;
+}
+
+#patternRevenueChart, #patternFrequencyChart {
+    height: 300px !important;
+}
+
+.chart {
+    height: 300px;
+    padding: 20px;
+}
+.product-container { 
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+

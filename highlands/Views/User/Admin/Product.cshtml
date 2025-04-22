@@ -3,7 +3,52 @@
 }
 <link rel="stylesheet" href="~/css/admin/adminView.css?v=@DateTime.Now.Ticks">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/js/all.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link rel="stylesheet" href="~/css/admin/product.css?v=@DateTime.Now.Ticks">
+<script src="/js/AdminJS/product.js" defer></script>
 <body>
-    <div class="main-content">       
+    <div class="product-container">
+        <div class="main-content">
+            <div class="header">
+                <div class="header-left">
+                    <div class="header-title">Product Analytics</div>
+                </div>
+                <div class="header-right">
+                    <div class="header-action refresh-action">
+                        <i class="fas fa-sync-alt"></i> Refresh Data
+                    </div>
+                    <input type="file" id="excelInput" accept=".xlsx, .xls" style="display: none;" />
+                    <div class="header-action import-action">
+                        <i class="fas fa-file-import"></i> Import Excel Data
+                    </div>
+                </div>
+            </div>
+
+            <div class="dashboard">
+                <!-- Common Shopping Patterns Section -->
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <div class="chart-title">Common Shopping Patterns</div>
+                        <div class="chart-filters">
+                            <div class="chart-filter active" data-max-items="3">Top 3</div>
+                            <div class="chart-filter" data-max-items="5">Top 5</div>
+                            <div class="chart-filter" data-max-items="10">Top 10</div>
+                        </div>
+                    </div>
+                    <div class="patterns-content">
+                        <div class="patterns-loading">
+                            <div class="spinner"></div>
+                            <p>Loading shopping patterns...</p>
+                        </div>
+                        <div class="patterns-list" style="display: none;">
+                            <!-- Patterns will be inserted here by JavaScript -->
+                        </div>
+                        <div class="patterns-empty" style="display: none;">
+                            <p>No common shopping patterns found.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </body>

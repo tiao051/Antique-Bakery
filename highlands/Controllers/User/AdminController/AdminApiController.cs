@@ -12,10 +12,13 @@ namespace highlands.Controllers.User.Admin
     {
         private readonly IDistributedCache _distributedCache;
         private readonly OrderRepository _orderRepository;
-        public AdminApiController(OrderRepository orderRepository, IDistributedCache distributedCache)
+        private readonly PopularShoppingSequence _popularRepo;
+
+        public AdminApiController(OrderRepository orderRepository, IDistributedCache distributedCache, PopularShoppingSequence popularRepo)
         {
             _orderRepository = orderRepository;
             _distributedCache = distributedCache;
+            _popularRepo = popularRepo;
         }
         [HttpGet("getOrder")]
         public async Task<IActionResult> GetOrder()
@@ -39,6 +42,12 @@ namespace highlands.Controllers.User.Admin
         {
             var data = await _orderRepository.GetRevenueAndTotalOrdersByMonth();
             return Ok(data);
+        }
+        [HttpGet("productSequences")]
+        public async Task<IActionResult> GeneratePopularSequences(int topN)
+        {
+            var result = await _popularRepo.GetPopularSequencesAsync(topN);
+            return Ok(result);
         }
     }
 }
