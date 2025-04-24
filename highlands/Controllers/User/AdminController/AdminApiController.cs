@@ -43,6 +43,7 @@ namespace highlands.Controllers.User.Admin
             var data = await _orderRepository.GetRevenueAndTotalOrdersByMonth();
             return Ok(data);
         }
+
         [HttpGet("productSequences")]
         public async Task<IActionResult> GeneratePopularSequences(int topN)
         {

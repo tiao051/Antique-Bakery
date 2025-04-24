@@ -12,7 +12,7 @@ public class PopularShoppingSequence
 
     public PopularShoppingSequence(IConfiguration configuration, IDistributedCache cache)
     {
-        _connectionString = configuration.GetConnectionString("DefaultConnection"); // tên đúng với appsettings.json
+        _connectionString = configuration.GetConnectionString("DefaultConnection"); 
         _cache = cache;
     }
     public async Task<List<SequenceResult>> GetPopularSequencesAsync(int topN = 20)
@@ -47,8 +47,7 @@ public class PopularShoppingSequence
         FROM ComboList
         GROUP BY Combo
         ORDER BY Count DESC
-        OFFSET 0 ROWS FETCH NEXT @TopN ROWS ONLY;  -- Đảm bảo dùng OFFSET
-    ";
+        OFFSET 0 ROWS FETCH NEXT @TopN ROWS ONLY;";
 
         using var conn = new SqlConnection(_connectionString);
         var result = (await conn.QueryAsync<SequenceResult>(sql, new { TopN = topN })).ToList();

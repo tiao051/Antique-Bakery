@@ -591,18 +591,19 @@ namespace highlands.Repository.MenuItemRepository
         }
         public async Task<List<ProductSuggestionDTO>> GetSugestedProductByUser(string customerId)
         {
+            Console.WriteLine("GetSugestedProductByUser");
             string cacheKey = $"suggested:{customerId}";
 
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            string cachedData = await _distributedCache.GetStringAsync(cacheKey);
-            if (!string.IsNullOrEmpty(cachedData))
-            {
-                stopwatch.Stop();
-                Console.WriteLine($"[Redis] Cache hit! Time: {stopwatch.ElapsedMilliseconds} ms");
-                return JsonConvert.DeserializeObject<List<ProductSuggestionDTO>>(cachedData);
-            }
+            //string cachedData = await _distributedCache.GetStringAsync(cacheKey);
+            //if (!string.IsNullOrEmpty(cachedData))
+            //{
+            //    stopwatch.Stop();
+            //    Console.WriteLine($"[Redis] Cache hit! Time: {stopwatch.ElapsedMilliseconds} ms");
+            //    return JsonConvert.DeserializeObject<List<ProductSuggestionDTO>>(cachedData);
+            //}
 
             var query = @"
             SELECT TOP 3
@@ -640,6 +641,7 @@ namespace highlands.Repository.MenuItemRepository
 
         public async Task<List<ProductSuggestionDTO>> GetSuggestedProductByTime(string timeSlot)
         {
+            Console.WriteLine("GetSuggestedProductByTime");
             string currentHourKey = DateTime.Now.ToString("yyyyMMddHH");
             string cacheKey = $"suggested:timeslot:{timeSlot}:{currentHourKey}";
 
@@ -674,9 +676,9 @@ namespace highlands.Repository.MenuItemRepository
             JOIN MenuItem mi ON od.ItemName = mi.ItemName
             WHERE
                 CASE
-                    WHEN DATEPART(HOUR, o.OrderDate) BETWEEN 5 AND 10 THEN 'Morning'
-                    WHEN DATEPART(HOUR, o.OrderDate) BETWEEN 11 AND 17 THEN 'Afternoon'
-                    WHEN DATEPART(HOUR, o.OrderDate) BETWEEN 18 AND 21 THEN 'Evening'
+                    WHEN o.OrderHour BETWEEN 5 AND 10 THEN 'Morning'
+                    WHEN o.OrderHour BETWEEN 11 AND 17 THEN 'Afternoon'
+                    WHEN o.OrderHour BETWEEN 18 AND 21 THEN 'Evening'
                     ELSE 'Night'
                 END = @TimeSlot
             GROUP BY mi.ItemName, mi.ItemImg, mi.Subcategory
@@ -688,7 +690,7 @@ namespace highlands.Repository.MenuItemRepository
             );
 
             stopwatch.Stop();
-            Console.WriteLine($"[SQL Server] Query time: {stopwatch.ElapsedMilliseconds} ms");
+            Console.WriteLine($"[SQL Server] 123 Query time: {stopwatch.ElapsedMilliseconds} ms");
 
             foreach (var item in result)
             {
@@ -708,6 +710,7 @@ namespace highlands.Repository.MenuItemRepository
 
             return result.ToList();
         }
+
         public async Task<List<OrderDetailDTO>> GetCommonProductPairsAsync(int orderId)
         {
             Console.WriteLine("GetCommonProductPairsAsync");
