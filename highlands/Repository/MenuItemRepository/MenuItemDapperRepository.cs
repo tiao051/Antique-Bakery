@@ -597,13 +597,13 @@ namespace highlands.Repository.MenuItemRepository
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            //string cachedData = await _distributedCache.GetStringAsync(cacheKey);
-            //if (!string.IsNullOrEmpty(cachedData))
-            //{
-            //    stopwatch.Stop();
-            //    Console.WriteLine($"[Redis] Cache hit! Time: {stopwatch.ElapsedMilliseconds} ms");
-            //    return JsonConvert.DeserializeObject<List<ProductSuggestionDTO>>(cachedData);
-            //}
+            string cachedData = await _distributedCache.GetStringAsync(cacheKey);
+            if (!string.IsNullOrEmpty(cachedData))
+            {
+                stopwatch.Stop();
+                Console.WriteLine($"[Redis] Cache hit! Time: {stopwatch.ElapsedMilliseconds} ms");
+                return JsonConvert.DeserializeObject<List<ProductSuggestionDTO>>(cachedData);
+            }
 
             var query = @"
             SELECT TOP 3
@@ -746,10 +746,8 @@ namespace highlands.Repository.MenuItemRepository
             catch (Exception ex)
             {
                 Console.WriteLine($"Error connecting to DB: {ex.Message}");
-                // Handle exception or rethrow
                 throw new InvalidOperationException("Failed to connect or query the database.", ex);
             }
-
         }
     }
 }
