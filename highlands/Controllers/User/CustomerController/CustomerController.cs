@@ -33,6 +33,7 @@ namespace highlands.Controllers.User.CustomerController
         private readonly IEmailService _emailService;
         private readonly ExcelServiceManager _excelServiceManager;
         private readonly OrderRepository _orderRepository;
+        private readonly IMenuItemRepository _efRepo;
 
         public CustomerController(
           IConfiguration configuration,
@@ -52,6 +53,7 @@ namespace highlands.Controllers.User.CustomerController
             _excelServiceManager = excelServiceManager;
             _emailService = emailService;
             _orderRepository = orderRepository;
+            _efRepo = repositories.OfType<MenuItemDapperRepository>().FirstOrDefault();
         }
 
         [HttpGet]
@@ -89,7 +91,8 @@ namespace highlands.Controllers.User.CustomerController
 
             ViewBag.TotalQuantity = cartItems?.Sum(i => i.Quantity) ?? 0;
 
-            var subcategories = await _dapperRepository.GetSubcategoriesAsync();
+            //var subcategories = await _dapperRepository.GetSubcategoriesAsync();
+            var subcategories = await _efRepo.GetSubcategoriesAsync();
             return View("~/Views/User/Customer/Index.cshtml", subcategories);
         }
         [HttpGet]
@@ -100,7 +103,8 @@ namespace highlands.Controllers.User.CustomerController
                 return BadRequest("Subcategory is required");
             }
 
-            var menuItems = await _dapperRepository.GetMenuItemsBySubcategoryAsync(subcategory);
+            //var menuItems = await _dapperRepository.GetMenuItemsBySubcategoryAsync(subcategory);
+            var menuItems = await _efRepo.GetMenuItemsBySubcategoryAsync(subcategory);
 
             if (menuItems == null || !menuItems.Any())
             {
@@ -155,7 +159,8 @@ namespace highlands.Controllers.User.CustomerController
             try
             {
                 // Lấy chi tiết món từ database
-                var (menuItem, prices, recipeList) = await _dapperRepository.GetItemDetailsAsync(subcategory, itemName, size);
+                //var (menuItem, prices, recipeList) = await _dapperRepository.GetItemDetailsAsync(subcategory, itemName, size);
+                var (menuItem, prices, recipeList) = await _efRepo.GetItemDetailsAsync(subcategory, itemName, size);
 
                 var viewModel = new ItemSelectedViewModel
                 {
@@ -181,7 +186,8 @@ namespace highlands.Controllers.User.CustomerController
 
             try
             {
-                var recipeList = await _dapperRepository.GetIngredientsBySizeAsync(itemName, size);
+                //var recipeList = await _dapperRepository.GetIngredientsBySizeAsync(itemName, size);
+                var recipeList = await _efRepo.GetIngredientsBySizeAsync(itemName, size);
 
                 return PartialView("~/Views/User/Customer/_RecipePartial.cshtml", recipeList);
             }
@@ -231,7 +237,8 @@ namespace highlands.Controllers.User.CustomerController
                 UserId = userId.Value
             };
 
-            var result = await _dapperRepository.CreateCustomerAsync(customer);
+            //var result = await _dapperRepository.CreateCustomerAsync(customer);
+            var result = await _efRepo.CreateCustomerAsync(customer);
 
             if (result)
             {
@@ -291,6 +298,7 @@ namespace highlands.Controllers.User.CustomerController
                 return Json(new { success = false, message = "Invalid parameters." });
             }
 
+            //var price = await _dapperRepository.GetPriceAsync(itemName, size);
             var price = await _dapperRepository.GetPriceAsync(itemName, size);
 
             if (price.HasValue)
@@ -315,6 +323,9 @@ namespace highlands.Controllers.User.CustomerController
 
             int totalQuantity = await _dapperRepository.GetTotalQuantityAsync(userId);
             var sizeQuantities = await _dapperRepository.GetSizeQuantitiesAsync(userId);
+
+            //int totalQuantity = await _efRepo.GetTotalQuantityAsync(userId);
+            //var sizeQuantities = await _efRepo.GetSizeQuantitiesAsync(userId);
 
             Console.WriteLine($"[DEBUG] Redis Updated - Total Quantity: {totalQuantity}");
             Console.WriteLine($"[DEBUG] Redis Updated - Size Quantity: {JsonConvert.SerializeObject(sizeQuantities)}");
@@ -546,7 +557,8 @@ namespace highlands.Controllers.User.CustomerController
                 }).ToList();
 
                 // Kiểm tra user và tạo đơn hàng
-                var userDetails = await _dapperRepository.GetCustomerDetailsAsync(userId);
+                //var userDetails = await _dapperRepository.GetCustomerDetailsAsync(userId);
+                var userDetails = await _efRepo.GetCustomerDetailsAsync(userId);
                 if (userDetails == null)
                 {
                     return BadRequest("User not found.");
@@ -611,8 +623,8 @@ namespace highlands.Controllers.User.CustomerController
         {
             try
             {
-                _dapperRepository.BeginTransaction();
-
+                //_dapperRepository.BeginTransaction();
+                _efRepo.BeginTransaction();
                 var order = new Order
                 {
                     OrderDate = DateTime.Now,
@@ -621,7 +633,8 @@ namespace highlands.Controllers.User.CustomerController
                     CustomerId = customerId
                 };
 
-                int orderId = await _dapperRepository.InsertOrderAsync(order);
+                //int orderId = await _dapperRepository.InsertOrderAsync(order);
+                int orderId = await _efRepo.InsertOrderAsync(order);
                 Console.WriteLine($"Created order successfully for customer = {customerId}, OrderId = {orderId}");
 
                 foreach (var detail in orderDetails)
@@ -630,7 +643,8 @@ namespace highlands.Controllers.User.CustomerController
                     await _dapperRepository.InsertOrderDetailAsync(detail);
                 }
 
-                _dapperRepository.CommitTransaction();
+                _efRepo.CommitTransaction();
+                //_dapperRepository.CommitTransaction();
 
                 var hubContext = _hubContext.Clients.All;
                 await hubContext.SendAsync("ReceiveNewOrder");
@@ -640,7 +654,8 @@ namespace highlands.Controllers.User.CustomerController
             }
             catch (Exception ex)
             {
-                _dapperRepository.RollbackTransaction();
+                //_dapperRepository.RollbackTransaction();
+                _efRepo.RollbackTransaction();
                 Console.WriteLine($"ERROR: {ex.Message}");
                 return -1;
             }
@@ -661,7 +676,9 @@ namespace highlands.Controllers.User.CustomerController
                 return Unauthorized("UserId not found in token");
             }
 
-            var userDetail = await _dapperRepository.GetCustomerPhoneAddrPoints(id);
+            //var userDetail = await _dapperRepository.GetCustomerPhoneAddrPoints(id);
+            var userDetail = await _efRepo.GetCustomerPhoneAddrPoints(id);
+
 
             return Ok(new
             {
@@ -675,7 +692,8 @@ namespace highlands.Controllers.User.CustomerController
         [HttpGet]
         public IActionResult SearchMenuItems(string keyword, int page = 1, int pageSize = 6)
         {
-            var (results, totalPages) = _dapperRepository.Search(keyword, page, pageSize);
+            //var (results, totalPages) = _dapperRepository.Search(keyword, page, pageSize);
+            var (results, totalPages) = _efRepo.Search(keyword, page, pageSize);
 
             ViewBag.TotalPages = totalPages;
             ViewBag.CurrentPage = page;
@@ -694,8 +712,11 @@ namespace highlands.Controllers.User.CustomerController
                     return Unauthorized("UserId not found in token");
                 }
 
-                var customerId = _dapperRepository.GetCustomerIdFromUserId(userId);
-                var sugestedProduct = await _dapperRepository.GetSugestedProductByUser(await customerId);
+                //var customerId = _dapperRepository.GetCustomerIdFromUserId(userId);
+
+                var customerId = _efRepo.GetCustomerIdFromUserId(userId);
+                var sugestedProduct = await _efRepo.GetSugestedProductByUser(await customerId);
+                //var sugestedProduct = await _dapperRepository.GetSugestedProductByUser(await customerId);
 
                 if (sugestedProduct == null || !sugestedProduct.Any())
                 {
@@ -784,7 +805,7 @@ namespace highlands.Controllers.User.CustomerController
                 return Unauthorized("UserId not found in token");
             }
 
-            var customerId = await _dapperRepository.GetCustomerIdFromUserId(userId);
+            var customerId = await _efRepo.GetCustomerIdFromUserId(userId);
 
             if (string.IsNullOrEmpty(customerId))
             {

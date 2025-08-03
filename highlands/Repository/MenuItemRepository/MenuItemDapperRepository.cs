@@ -666,23 +666,23 @@ namespace highlands.Repository.MenuItemRepository
             }
 
             var query = @"
-            SELECT TOP 3
-                mi.ItemName AS Name,
-                mi.ItemImg AS Img,
-                mi.Subcategory,
-                COUNT(*) AS TimesOrdered
-            FROM [Order] o
-            JOIN OrderDetail od ON o.OrderId = od.OrderId
-            JOIN MenuItem mi ON od.ItemName = mi.ItemName
-            WHERE
-                CASE
-                    WHEN o.OrderHour BETWEEN 5 AND 10 THEN 'Morning'
-                    WHEN o.OrderHour BETWEEN 11 AND 17 THEN 'Afternoon'
-                    WHEN o.OrderHour BETWEEN 18 AND 21 THEN 'Evening'
-                    ELSE 'Night'
-                END = @TimeSlot
-            GROUP BY mi.ItemName, mi.ItemImg, mi.Subcategory
-            ORDER BY TimesOrdered DESC;";
+                SELECT TOP 3
+                    mi.ItemName AS Name,
+                    mi.ItemImg AS Img,
+                    mi.Subcategory,
+                    COUNT(*) AS TimesOrdered
+                FROM [Order] o
+                JOIN OrderDetail od ON o.OrderId = od.OrderId
+                JOIN MenuItem mi ON od.ItemName = mi.ItemName
+                WHERE
+                    CASE
+                        WHEN DATEPART(HOUR, o.OrderDate) BETWEEN 5 AND 10 THEN 'Morning'
+                        WHEN DATEPART(HOUR, o.OrderDate) BETWEEN 11 AND 17 THEN 'Afternoon'
+                        WHEN DATEPART(HOUR, o.OrderDate) BETWEEN 18 AND 21 THEN 'Evening'
+                        ELSE 'Night'
+                    END = @TimeSlot
+                GROUP BY mi.ItemName, mi.ItemImg, mi.Subcategory
+                ORDER BY TimesOrdered DESC;";
 
             var result = await _connection.QueryAsync<ProductSuggestionDTO>(
                 query,
@@ -690,7 +690,7 @@ namespace highlands.Repository.MenuItemRepository
             );
 
             stopwatch.Stop();
-            Console.WriteLine($"[SQL Server] 123 Query time: {stopwatch.ElapsedMilliseconds} ms");
+            Console.WriteLine($"[SQL Server] Query time: {stopwatch.ElapsedMilliseconds} ms");
 
             foreach (var item in result)
             {
