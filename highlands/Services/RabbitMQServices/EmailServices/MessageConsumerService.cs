@@ -69,7 +69,6 @@ namespace highlands.Services.RabbitMQServices.EmailServices
                     // Kiểm tra email và userName trước khi gửi email
                     if (!string.IsNullOrWhiteSpace(email) && !string.IsNullOrWhiteSpace(userName))
                     {
-                        Console.WriteLine($"Received email: {email}");
                         await SendEmailAsync(email, userName);
                     }
                     else
@@ -101,48 +100,65 @@ namespace highlands.Services.RabbitMQServices.EmailServices
         {
             Console.WriteLine($"[DEBUG] Email được gửi tới: '{toEmail}'");
 
-            // Kiểm tra tính hợp lệ của email người nhận
             if (string.IsNullOrWhiteSpace(toEmail))
             {
                 Console.WriteLine("Lỗi: Email không hợp lệ.");
                 return;
             }
-
             toEmail = toEmail.Trim();
 
-            // Lấy cấu hình từ appsettings.json
             var smtpServer = _configuration["EmailSettings:SmtpServer"];
-            var smtpPort = _configuration["EmailSettings:Port"];
+            var smtpPortStr = _configuration["EmailSettings:Port"];
             var senderEmail = _configuration["EmailSettings:SenderEmail"];
             var senderPassword = _configuration["EmailSettings:SenderPassword"];
-
-            // Kiểm tra tính hợp lệ của các giá trị cấu hình
-            if (string.IsNullOrWhiteSpace(smtpServer) || string.IsNullOrWhiteSpace(senderEmail) || string.IsNullOrWhiteSpace(senderPassword))
+            Console.WriteLine($"sender email: {senderEmail}");
+            Console.WriteLine($"sender password: {senderPassword}");
+            if (string.IsNullOrWhiteSpace(smtpServer) ||
+                string.IsNullOrWhiteSpace(smtpPortStr) ||
+                string.IsNullOrWhiteSpace(senderEmail) ||
+                string.IsNullOrWhiteSpace(senderPassword))
             {
                 Console.WriteLine("Lỗi: Thông tin cấu hình email không đầy đủ.");
                 return;
             }
 
-            var email = new MimeMessage();
-            email.From.Add(new MailboxAddress("Antique", senderEmail));
-            email.To.Add(new MailboxAddress(userName, toEmail));
-
-            email.Subject = "Antique CàFe";
-            email.Body = new TextPart("plain")
+            if (!int.TryParse(smtpPortStr, out int smtpPort))
             {
-                Text = $"Hello {userName},\n\nTesttttttttt!\n\nHihi,\nMinh Tho"
-            };
+                Console.WriteLine("Lỗi: Port SMTP không hợp lệ.");
+                return;
+            }
 
-            using var smtp = new SmtpClient();
+            MimeMessage email;
             try
             {
-                // Kết nối tới server SMTP và gửi email
-                await smtp.ConnectAsync(smtpServer, int.Parse(smtpPort), SecureSocketOptions.StartTls);  // Sử dụng StartTLS
-                await smtp.AuthenticateAsync(senderEmail, senderPassword);  // Xác thực với mật khẩu ứng dụng
-                await smtp.SendAsync(email);  // Gửi email
-                await smtp.DisconnectAsync(true);  // Ngắt kết nối
+                Console.WriteLine("[DEBUG] Tạo đối tượng email...");
+                email = new MimeMessage();
+                email.From.Add(new MailboxAddress("Antique", senderEmail));
+                email.To.Add(new MailboxAddress(userName, toEmail));
+                email.Subject = "Antique CàFe";
+                email.Body = new TextPart("plain")
+                {
+                    Text = $"Hello {userName},\n\nTesttttttttt!\n\nHihi,\nMinh Tho"
+                };
+                Console.WriteLine("[DEBUG] Tạo email thành công.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Lỗi khi tạo email: {ex.Message}");
+                return;
+            }
 
-                Console.WriteLine($"Email đã gửi thành công tới {toEmail}");
+            try
+            {
+                Console.WriteLine($"[DEBUG] Kết nối tới SMTP server {smtpServer}:{smtpPort}...");
+                using var smtp = new SmtpClient();
+                await smtp.ConnectAsync(smtpServer, smtpPort, SecureSocketOptions.StartTls);
+                Console.WriteLine("[DEBUG] Đã kết nối, đang xác thực...");
+                await smtp.AuthenticateAsync(senderEmail, senderPassword);
+                Console.WriteLine("[DEBUG] Đã xác thực, đang gửi email...");
+                await smtp.SendAsync(email);
+                Console.WriteLine("[DEBUG] Email đã gửi thành công.");
+                await smtp.DisconnectAsync(true);
             }
             catch (Exception ex)
             {

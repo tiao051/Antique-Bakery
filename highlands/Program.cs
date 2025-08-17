@@ -3,9 +3,11 @@ using highlands.Interfaces;
 using highlands.Repository.MenuItemRepository;
 using highlands.Repository.OrderRepository;
 using highlands.Repository.ReportRepository;
+using highlands.Repository.AuthRepository;
 using highlands.Services.RabbitMQServices.EmailServices;
 using highlands.Services.RabbitMQServices.ExcelServices;
 using highlands.Services.ReportServices;
+using highlands.Services.AuthServices;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
@@ -59,6 +61,10 @@ services.AddScoped<IEnumerable<IMenuItemRepository>>(sp => new List<IMenuItemRep
 {
     sp.GetRequiredService<MenuItemDapperRepository>()
 });
+
+// Đăng ký Auth Repository và Services
+services.AddScoped<IAuthRepository, AuthEFRepository>();
+services.AddScoped<IAuthService, AuthService>();
 
 services.AddAuthentication(options =>
 {

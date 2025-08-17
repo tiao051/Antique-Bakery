@@ -1,4 +1,4 @@
-﻿using Dapper;
+using Dapper;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -22,14 +22,14 @@ namespace highlands.Controllers.Account
 
         public AccountController(IConfiguration config, IDistributedCache distributedCache)
         {
-            _connectionString = config.GetConnectionString("DefaultConnection"); 
+            _connectionString = config.GetConnectionString("DefaultConnection");
             _config = config;
             _distributedCache = distributedCache;
         }
 
         public IActionResult Index(string view = "login")
         {
-            ViewBag.ViewToShow = view; 
+            ViewBag.ViewToShow = view;
             return View();
         }
         private string GenerateJwtToken(int userId, string email, int roleId)
@@ -96,13 +96,13 @@ namespace highlands.Controllers.Account
                     {
                         var roleObj = JsonConvert.DeserializeObject<dynamic>(roleData);
 
-                        // Kiểm tra cả UserId và RoleId từ Redis
+                        // Ki?m tra c? UserId v� RoleId t? Redis
                         if (int.TryParse(roleObj.RoleId.ToString(), out roleId) &&
                             roleObj.UserId != null && int.TryParse(roleObj.UserId.ToString(), out userId))
                         {
                             Console.WriteLine($"Retrieved from Redis - UserId: {userId}, RoleId: {roleId}");
 
-                            // Kiểm tra password từ DB ngay cả khi có cache
+                            // Ki?m tra password t? DB ngay c? khi c� cache
                             var query = "SELECT Password FROM Users WHERE UserId = @UserId AND Email = @Email";
                             var user = connection.QuerySingleOrDefault(query, new { UserId = userId, Email = request.Email });
 
@@ -131,19 +131,19 @@ namespace highlands.Controllers.Account
                 }
             }
 
-            // Đảm bảo đã có userId và roleId
+            // ??m b?o ?� c� userId v� roleId
             Console.WriteLine($"Generating JWT for UserId: {userId}, RoleId: {roleId}");
             var token = GenerateJwtToken(userId, request.Email, roleId);
             var refreshToken = GenerateRefreshToken();
 
-            // Lưu Refresh Token vào Redis
+            // L?u Refresh Token v�o Redis
             await StoreRefreshToken(request.Email, refreshToken);
 
-            // Lưu token vào HttpOnly cookie (Secure = true nếu dùng HTTPS)
+            // L?u token v�o HttpOnly cookie (Secure = true n?u d�ng HTTPS)
             var cookieOptions = new CookieOptions
             {
                 HttpOnly = true,
-                Secure = false, // Đặt true nếu đang dùng HTTPS
+                Secure = false, // ??t true n?u ?ang d�ng HTTPS
                 SameSite = SameSiteMode.Strict,
                 Expires = DateTime.UtcNow.AddHours(1)
             };
@@ -170,7 +170,7 @@ namespace highlands.Controllers.Account
                 int roleId = user.RoleId;
                 Console.WriteLine($"Fetched from DB - UserId: {userId}, RoleId: {roleId}");
 
-                // Cache userId và roleId vào Redis
+                // Cache userId v� roleId v�o Redis
                 var roleCacheData = JsonConvert.SerializeObject(new { UserId = userId, RoleId = roleId });
                 await _distributedCache.SetStringAsync(redisKey, roleCacheData, new DistributedCacheEntryOptions
                 {
@@ -234,11 +234,11 @@ namespace highlands.Controllers.Account
         }
         public async Task<IActionResult> Logout()
         {
-            // Đăng xuất khỏi ứng dụng
+            // ??ng xu?t kh?i ?ng d?ng
             HttpContext.Session.Clear();
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
 
-            // Chuyển hướng người dùng về trang login hoặc trang chủ
+            // Chuy?n h??ng ng??i d�ng v? trang login ho?c trang ch?
             return RedirectToAction("Index", "Account");
         }
 
@@ -274,14 +274,14 @@ namespace highlands.Controllers.Account
 
                         userId = connection.Execute(insertUserQuery, new
                         {
-                            Username = email.Split('@')[0], 
+                            Username = email.Split('@')[0],
                             Email = email,
-                            Role = "Customer" 
+                            Role = "Customer"
                         });
                     }
                     else
                     {
-                        // Nếu người dùng đã tồn tại, cập nhật thông tin phương thức đăng nhập
+                        // N?u ng??i d�ng ?� t?n t?i, c?p nh?t th�ng tin ph??ng th?c ??ng nh?p
                         var updateUserQuery = "UPDATE Users SET Type = 'Google' WHERE Email = @Email";
                         connection.Execute(updateUserQuery, new { Email = email });
                         userId = user.UserId;

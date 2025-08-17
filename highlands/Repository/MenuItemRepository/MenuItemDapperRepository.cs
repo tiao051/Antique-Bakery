@@ -52,6 +52,7 @@ namespace highlands.Repository.MenuItemRepository
         // load menu khi click vao cai subcategory
         public async Task<List<MenuItem>> GetMenuItemsBySubcategoryAsync(string subcategory)
         {
+            Console.WriteLine("23123123");
             string cacheKey = $"menu:{subcategory}";
             Stopwatch stopwatch = new Stopwatch(); // Tạo đồng hồ đo thời gian
 
