@@ -3,6 +3,7 @@ using highlands.Repository.PopularShoppingSequence;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Distributed;
+using Newtonsoft.Json;
 
 namespace highlands.Controllers.User.Admin
 {
@@ -31,8 +32,11 @@ namespace highlands.Controllers.User.Admin
         [HttpGet("getOrder")]
         public async Task<IActionResult> GetOrder()
         {
+            Console.WriteLine("123123");
             //var orders = await _orderRepository.GetOrderAsync();
             var orders = await _orderRepositoryEF.GetOrderAsync();
+            Console.WriteLine("[DEBUG] Orders returned to controller:");
+            Console.WriteLine(JsonConvert.SerializeObject(orders, Formatting.Indented));
             return Ok(orders);
         }
         [HttpGet("getOrderDetail/{timeFrame}")]

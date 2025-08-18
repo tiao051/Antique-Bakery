@@ -10,7 +10,7 @@ namespace highlands.Controllers.User.Manager
         private readonly IMenuItemRepository _efRepo;
         public ManagerController(IEnumerable<IMenuItemRepository> repositories)
         {
-            _efRepo = repositories.OfType<MenuItemDapperRepository>().FirstOrDefault();
+            _efRepo = repositories.OfType<MenuItemEFRepository>().FirstOrDefault();
         }
 
         public IActionResult Index()

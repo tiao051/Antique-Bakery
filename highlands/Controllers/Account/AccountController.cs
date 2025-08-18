@@ -131,19 +131,16 @@ namespace highlands.Controllers.Account
                 }
             }
 
-            // ??m b?o ?ã có userId và roleId
             Console.WriteLine($"Generating JWT for UserId: {userId}, RoleId: {roleId}");
             var token = GenerateJwtToken(userId, request.Email, roleId);
             var refreshToken = GenerateRefreshToken();
 
-            // L?u Refresh Token vào Redis
             await StoreRefreshToken(request.Email, refreshToken);
 
-            // L?u token vào HttpOnly cookie (Secure = true n?u dùng HTTPS)
             var cookieOptions = new CookieOptions
             {
                 HttpOnly = true,
-                Secure = false, // ??t true n?u ?ang dùng HTTPS
+                Secure = false,
                 SameSite = SameSiteMode.Strict,
                 Expires = DateTime.UtcNow.AddHours(1)
             };

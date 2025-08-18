@@ -39,12 +39,13 @@ function handleFilterClick(selectedFilter) {
     document.querySelectorAll('.chart-filter').forEach(f => f.classList.remove('active'));
     selectedFilter.classList.add('active');
 
-    const timeFrame = selectedFilter.innerText.toLowerCase();
+    const timeFrame = selectedFilter.innerText.trim().toLowerCase();
     getCustomerOrderDetail(timeFrame);
 }
-
 function getAuthHeaders() {
+    console.log("test");
     const accessToken = localStorage.getItem("accessToken");
+    console.log(accessToken)
     if (!accessToken) {
         throw new Error("No access token found. Please login again.");
     }

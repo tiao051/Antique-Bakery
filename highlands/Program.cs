@@ -27,8 +27,6 @@ QuestPDF.Settings.License = LicenseType.Community;
 // lay secretkey tu enviroment
 var secretKey = Environment.GetEnvironmentVariable("JWT_SECRET")
                 ?? configuration["JwtSettings:SecretKey"];
-Console.WriteLine($"[JWT VALIDATION] SecretKey: {secretKey}");
-Console.WriteLine($"[JWT VALIDATION] Key Length: {secretKey.Length}");
 
 // đăng ký service
 services.AddHostedService<MessageConsumerService>();
@@ -43,7 +41,8 @@ services.AddScoped<ReportService>();
 services.AddScoped<ReportEFService>();
 services.AddScoped<PdfService>();
 services.AddScoped<IReportRepository, ReportRepository>();
-services.AddScoped<IReportRepository, ReportEFRepository>();
+//services.AddScoped<IReportRepository, ReportEFRepository>();
+
 //đăng ký repo cho order
 services.AddScoped<OrderRepository>();
 services.AddScoped<OrderRepositoryEF>();
@@ -52,18 +51,23 @@ services.AddScoped<PopularShoppingSequence>();
 
 // Đăng ký DbContext & Dapper
 services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
+{
+    options.UseSqlServer(configuration.GetConnectionString("DefaultConnection"));
+    options.EnableSensitiveDataLogging(); // For debugging
+});
+
 services.AddScoped<IDbConnection>(_ => new SqlConnection(configuration.GetConnectionString("DefaultConnection")));
 
 // Đăng ký Redis Cache
 services.AddStackExchangeRedisCache(options =>
     options.Configuration = configuration.GetConnectionString("Redis"));
 
-// Đăng ký Repository
+// Đăng ký Repository - Both Dapper and EF
 services.AddScoped<MenuItemEFRepository>();
 services.AddScoped<MenuItemDapperRepository>();
 services.AddScoped<IEnumerable<IMenuItemRepository>>(sp => new List<IMenuItemRepository>
 {
+    sp.GetRequiredService<MenuItemEFRepository>(),
     sp.GetRequiredService<MenuItemDapperRepository>()
 });
 
@@ -145,6 +149,29 @@ services.AddControllersWithViews();
 
 configuration.AddJsonFile("appsettings.json");
 var app = builder.Build();
+
+try
+{   
+
+    using var scope = app.Services.CreateScope();
+
+    var dapperConn = scope.ServiceProvider.GetRequiredService<IDbConnection>();
+    Console.WriteLine("Dapper Test: " + dapperConn.ConnectionString);
+    dapperConn.Open();
+    Console.WriteLine("✅ Dapper connected!");
+
+    // EF
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    Console.WriteLine("EF Test: " + db.Database.GetConnectionString());
+    db.Database.OpenConnection();
+    Console.WriteLine("✅ EF Core connected!");
+}
+catch (Exception ex)
+{
+    Console.WriteLine("❌ Connection failed: " + ex.Message);
+}
+
+
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();

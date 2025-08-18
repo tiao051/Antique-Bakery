@@ -59,7 +59,7 @@ namespace highlands.Repository.OrderRepository
                     .SetAbsoluteExpiration(TimeSpan.FromHours(2));
                 await _distributedCache.SetStringAsync(cacheKey, JsonConvert.SerializeObject(orders), cacheOptions);
             }
-
+            Console.WriteLine("tra ve ket qua cho ef");
             return orders;
         }
 

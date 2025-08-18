@@ -17,7 +17,6 @@ using highlands.Models.DTO.PaymentDTO;
 using highlands.Models.DTO.ProductsDTO;
 using highlands.Repository.MenuItemRepository;
 using highlands.Repository.OrderRepository;
-using Microsoft.IdentityModel.Tokens;
 
 namespace highlands.Controllers.User.CustomerController
 {
@@ -26,7 +25,6 @@ namespace highlands.Controllers.User.CustomerController
     {
         private readonly IMenuItemRepository _dapperRepository;
         private readonly IDistributedCache _distributedCache;
-        private readonly string _connectionString;
         private readonly IHubContext<OrderHub> _hubContext;
         private readonly IHubContext<RecommendationHub> _recommendationHub;
         private readonly IHttpClientFactory _clientFactory;
@@ -36,7 +34,6 @@ namespace highlands.Controllers.User.CustomerController
         private readonly IMenuItemRepository _efRepo;
 
         public CustomerController(
-          IConfiguration configuration,
           IEnumerable<IMenuItemRepository> repositories,
           IDistributedCache distributedCache,
           IHubContext<OrderHub> hubContext,
@@ -45,7 +42,6 @@ namespace highlands.Controllers.User.CustomerController
           IEmailService emailService,
           OrderRepository orderRepository)
         {
-            _connectionString = configuration.GetConnectionString("DefaultConnection");
             _dapperRepository = repositories.OfType<MenuItemDapperRepository>().FirstOrDefault();
             _distributedCache = distributedCache;
             _hubContext = hubContext;
@@ -53,7 +49,7 @@ namespace highlands.Controllers.User.CustomerController
             _excelServiceManager = excelServiceManager;
             _emailService = emailService;
             _orderRepository = orderRepository;
-            _efRepo = repositories.OfType<MenuItemDapperRepository>().FirstOrDefault();
+            _efRepo = repositories.OfType<MenuItemEFRepository>().FirstOrDefault();
         }
 
         [HttpGet]
@@ -536,16 +532,27 @@ namespace highlands.Controllers.User.CustomerController
         {
             try
             {
+                Console.WriteLine($"[DEBUG] Pay method started");
+                
                 // Xác định xem user có đăng ký nhận email không
                 bool subscribeEmails = HttpContext.Session.GetString("SubscribeEmails") == "True";
+                Console.WriteLine($"[DEBUG] Subscribe emails: {subscribeEmails}");
 
                 // Lấy thông tin đơn hàng và các sản phẩm trong giỏ hàng
                 int userId = request.UserID;
                 string cartKey = $"cart:{userId}";
                 decimal totalAmount = request.TotalAmount;
+                Console.WriteLine($"[DEBUG] Getting cart items for userId: {userId}");
+                
                 List<CartItemTemporary> cartItems = await _dapperRepository.GetCartItemsAsync(userId);
                 Console.WriteLine($"[DEBUG] Cart Items trong review order: {JsonConvert.SerializeObject(cartItems)}");
                 Console.WriteLine($"[DEBUG] Received payment request: userId={userId}, totalAmount={totalAmount}");
+
+                if (cartItems == null || !cartItems.Any())
+                {
+                    Console.WriteLine($"[ERROR] Cart is empty for userId: {userId}");
+                    return BadRequest("Cart is empty");
+                }
 
                 // Tạo đơn hàng từ giỏ hàng
                 List<OrderDetail> orderDetails = cartItems.Select(cartItem => new OrderDetail
@@ -556,18 +563,26 @@ namespace highlands.Controllers.User.CustomerController
                     Quantity = cartItem.Quantity
                 }).ToList();
 
+                Console.WriteLine($"[DEBUG] Getting customer details for userId: {userId}");
+                
                 // Kiểm tra user và tạo đơn hàng
                 //var userDetails = await _dapperRepository.GetCustomerDetailsAsync(userId);
                 var userDetails = await _efRepo.GetCustomerDetailsAsync(userId);
                 if (userDetails == null)
                 {
+                    Console.WriteLine($"[ERROR] User not found for userId: {userId}");
                     return BadRequest("User not found.");
                 }
 
+                Console.WriteLine($"[DEBUG] Customer details found: CustomerId={userDetails.CustomerId}");
+
                 int? customerId = userDetails.CustomerId;
+                
+                Console.WriteLine($"[DEBUG] Creating order for customerId: {customerId}");
                 int orderId = await CreateOrder((int)customerId, totalAmount, orderDetails);
                 if (orderId == -1)
                 {
+                    Console.WriteLine($"[ERROR] Failed to create order");
                     return StatusCode(500, "Failed to create order");
                 }
 
@@ -576,6 +591,7 @@ namespace highlands.Controllers.User.CustomerController
                 // Nếu user không đăng ký nhận email => Trả về luôn
                 if (!subscribeEmails)
                 {
+                    Console.WriteLine($"[DEBUG] User not subscribed to emails, returning immediately");
                     _ = ExportProductPairsToExcelAsync(orderId);
                     await ClearUserSessionAndCart(cartKey);
                     return Ok(new
@@ -585,19 +601,25 @@ namespace highlands.Controllers.User.CustomerController
                     });
                 }
 
+                Console.WriteLine($"[DEBUG] User subscribed to emails, sending email");
+                
                 // Gửi email qua RabbitMQ
-                await _emailService.SendPaymentConfirmationEmailAsync(userDetails.Email, userDetails.UserName);
+                try 
+                {
+                    await _emailService.SendPaymentConfirmationEmailAsync(userDetails.Email, userDetails.UserName);
+                    Console.WriteLine($"[DEBUG] Email sent successfully");
+                }
+                catch (Exception emailEx)
+                {
+                    Console.WriteLine($"[WARNING] Email failed but continuing: {emailEx.Message}");
+                }
 
                 _ = ExportProductPairsToExcelAsync(orderId);
 
-                // Lưu vào Redis để tránh gửi lại
-                //await _distributedCache.SetStringAsync(cacheKey, "sent", new DistributedCacheEntryOptions
-                //{
-                //    AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10)
-                //});
-
                 // Xóa giỏ hàng và session sau khi thanh toán thành công
                 await ClearUserSessionAndCart(cartKey);
+
+                Console.WriteLine($"[DEBUG] Payment process completed successfully");
 
                 return Ok(new
                 {
@@ -607,8 +629,9 @@ namespace highlands.Controllers.User.CustomerController
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error: {ex.Message}");
-                return StatusCode(500, "Lỗi khi xử lý thanh toán.");
+                Console.WriteLine($"[ERROR] Payment failed: {ex.Message}");
+                Console.WriteLine($"[ERROR] Stack trace: {ex.StackTrace}");
+                return StatusCode(500, $"Lỗi khi xử lý thanh toán: {ex.Message}");
             }
         }
         private async Task ClearUserSessionAndCart(string cartKey)
@@ -623,6 +646,8 @@ namespace highlands.Controllers.User.CustomerController
         {
             try
             {
+                Console.WriteLine($"[DEBUG] Starting CreateOrder for customer: {customerId}");
+                
                 //_dapperRepository.BeginTransaction();
                 _efRepo.BeginTransaction();
                 var order = new Order
@@ -635,25 +660,33 @@ namespace highlands.Controllers.User.CustomerController
 
                 //int orderId = await _dapperRepository.InsertOrderAsync(order);
                 int orderId = await _efRepo.InsertOrderAsync(order);
-                Console.WriteLine($"Created order successfully for customer = {customerId}, OrderId = {orderId}");
+                Console.WriteLine($"[DEBUG] Created order successfully for customer = {customerId}, OrderId = {orderId}");
 
+                Console.WriteLine($"[DEBUG] Inserting {orderDetails.Count} order details");
                 foreach (var detail in orderDetails)
                 {
                     detail.OrderId = orderId;
-                    await _dapperRepository.InsertOrderDetailAsync(detail);
+                    // FIX: Use EF instead of Dapper to match transaction context
+                    await _efRepo.InsertOrderDetailAsync(detail);
+                    Console.WriteLine($"[DEBUG] Inserted order detail: {detail.ItemName}");
                 }
 
+                Console.WriteLine($"[DEBUG] Committing transaction");
                 _efRepo.CommitTransaction();
                 //_dapperRepository.CommitTransaction();
 
+                Console.WriteLine($"[DEBUG] Sending SignalR notification");
                 var hubContext = _hubContext.Clients.All;
                 await hubContext.SendAsync("ReceiveNewOrder");
                 Console.WriteLine("SignalR: Đã gửi tín hiệu 'ReceiveNewOrder' đến tất cả client.");
 
+                Console.WriteLine($"[DEBUG] CreateOrder completed successfully, returning orderId: {orderId}");
                 return orderId;
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"[ERROR] CreateOrder failed: {ex.Message}");
+                Console.WriteLine($"[ERROR] Stack trace: {ex.StackTrace}");
                 //_dapperRepository.RollbackTransaction();
                 _efRepo.RollbackTransaction();
                 Console.WriteLine($"ERROR: {ex.Message}");

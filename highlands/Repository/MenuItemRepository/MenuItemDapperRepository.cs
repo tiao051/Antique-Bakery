@@ -52,7 +52,6 @@ namespace highlands.Repository.MenuItemRepository
         // load menu khi click vao cai subcategory
         public async Task<List<MenuItem>> GetMenuItemsBySubcategoryAsync(string subcategory)
         {
-            Console.WriteLine("23123123");
             string cacheKey = $"menu:{subcategory}";
             Stopwatch stopwatch = new Stopwatch(); // Tạo đồng hồ đo thời gian
 
@@ -77,6 +76,7 @@ namespace highlands.Repository.MenuItemRepository
             await _distributedCache.SetStringAsync(cacheKey, JsonConvert.SerializeObject(result), cacheOptions);
             stopwatch.Stop(); // Dừng đo thời gian
             Console.WriteLine($"Cache miss! Query time from SQL Server: {stopwatch.ElapsedMilliseconds} ms");
+            Console.WriteLine("no xai dapper kia wtf");
             return result.ToList();
         }
         public async Task<(MenuItem?, List<MenuItemPrice>, List<RecipeWithIngredientDetail>)> GetItemDetailsAsync(string subcategory, string itemName, string size)

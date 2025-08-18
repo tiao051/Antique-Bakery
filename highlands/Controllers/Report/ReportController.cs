@@ -18,6 +18,7 @@ namespace highlands.Controllers.Report
         [HttpGet]
         public async Task<IActionResult> DownloadReport(string type)
         {
+            Console.WriteLine($"type truyen vao la: {type}");
             //var data = await _reportService.GenerateReportAsync(type);
             var data = await _reportEFService.GenerateReportAsync(type);
             var pdf = _pdfService.GeneratePdf(data);
