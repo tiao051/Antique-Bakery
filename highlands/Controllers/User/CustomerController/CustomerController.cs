@@ -10,12 +10,10 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using highlands.Interfaces;
 using Microsoft.AspNetCore.SignalR;
-using Microsoft.EntityFrameworkCore;
 using highlands.Services.RabbitMQServices.ExcelServices;
 using highlands.Services.RabbitMQServices.EmailServices;
 using highlands.Models.DTO.CustomerDataDTO;
 using highlands.Models.DTO.PaymentDTO;
-using highlands.Models.DTO.ProductsDTO;
 using highlands.Repository.MenuItemRepository;
 using highlands.Repository.OrderRepository;
 
@@ -227,7 +225,7 @@ namespace highlands.Controllers.User.CustomerController
         public async Task<IActionResult> Create(string fullname, string phone, string address, string message)
         {
             var userId = HttpContext.Session.GetInt32("UserId");
-
+            Console.WriteLine($"userid khi tao user: {userId}");
             if (userId == null)
             {
                 return RedirectToAction("Login", "Account");

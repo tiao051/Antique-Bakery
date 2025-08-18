@@ -603,5 +603,38 @@ namespace highlands.Repository.MenuItemRepository
                 return false;
             }
         }
+
+        public async Task<List<string>> GetCategoriesAsync()
+        {
+            return await _context.MenuItems
+                .AsNoTracking()
+                .Where(m => !string.IsNullOrEmpty(m.Category))
+                .Select(m => m.Category!)
+                .Distinct()
+                .OrderBy(c => c)
+                .ToListAsync();
+        }
+
+        public async Task<List<string>> GetSubcategoriesByCategoryAsync(string category)
+        {
+            return await _context.MenuItems
+                .AsNoTracking()
+                .Where(m => m.Category == category && !string.IsNullOrEmpty(m.SubCategory))
+                .Select(m => m.SubCategory!)
+                .Distinct()
+                .OrderBy(s => s)
+                .ToListAsync();
+        }
+
+        public async Task<List<string>> GetTypesAsync()
+        {
+            return await _context.MenuItems
+                .AsNoTracking()
+                .Where(m => !string.IsNullOrEmpty(m.Type))
+                .Select(m => m.Type!)
+                .Distinct()
+                .OrderBy(t => t)
+                .ToListAsync();
+        }
     }
 }

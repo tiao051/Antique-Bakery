@@ -101,7 +101,6 @@ namespace highlands.Controllers.Account
                     {
                         var roleObj = JsonConvert.DeserializeObject<dynamic>(roleData);
 
-                        // Ki?m tra c? UserId v� RoleId t? Redis
                         if (int.TryParse(roleObj.RoleId.ToString(), out roleId) &&
                             roleObj.UserId != null && int.TryParse(roleObj.UserId.ToString(), out userId))
                         {

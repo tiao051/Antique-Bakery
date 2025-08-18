@@ -758,5 +758,20 @@ namespace highlands.Repository.MenuItemRepository
         {
             throw new Exception("EF core should hanlde this method");
         }
+
+        public async Task<List<string>> GetCategoriesAsync()
+        {
+            throw new Exception("EF core should handle this method");
+        }
+
+        public async Task<List<string>> GetSubcategoriesByCategoryAsync(string category)
+        {
+            throw new Exception("EF core should handle this method");
+        }
+
+        public async Task<List<string>> GetTypesAsync()
+        {
+            throw new Exception("EF core should handle this method");
+        }
     }
 }

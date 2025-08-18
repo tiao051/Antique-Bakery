@@ -38,5 +38,8 @@ namespace highlands.Interfaces
         Task<List<OrderDetailDTO>> GetCommonProductPairsAsync(int orderId);
         Task<bool> CreateItemAsync(MenuItem menuItem);
         Task<bool> DeleteItemAsync(string itemName);
+        Task<List<string>> GetCategoriesAsync();
+        Task<List<string>> GetSubcategoriesByCategoryAsync(string category);
+        Task<List<string>> GetTypesAsync();
     }
 }

@@ -1,0 +1,538 @@
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Antique Cafe - Create Product</title>
+    <link rel="stylesheet" href="~/css/manager/managerView.css?v=@DateTime.Now.Ticks">
+    <link rel="stylesheet" href="~/css/manager/productManager.css?v=@DateTime.Now.Ticks">
+</head>
+<body>
+    <div class="container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <div class="cafe-name">Antique Cafe</div>
+                <div class="cafe-tagline">your daily energy booster</div>
+            </div>
+
+            <div class="admin-profile">
+                <div class="admin-avatar">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                </div>
+                <div class="admin-info">
+                    <div class="admin-name">MANAGER</div>
+                    <div class="admin-role">Cafe Manager</div>
+                </div>
+            </div>
+
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="@Url.Action("Index", "Manager")" class="nav-link">
+                        <span class="nav-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="3" y="3" width="7" height="7"></rect>
+                                <rect x="14" y="3" width="7" height="7"></rect>
+                                <rect x="14" y="14" width="7" height="7"></rect>
+                                <rect x="3" y="14" width="7" height="7"></rect>
+                            </svg>
+                        </span>
+                        Dashboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link">
+                        <span class="nav-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                                <line x1="3" y1="6" x2="21" y2="6"></line>
+                                <path d="M16 10a4 4 0 0 1-8 0"></path>
+                            </svg>
+                        </span>
+                        Orders
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="@Url.Action("ProductList", "Manager")" class="nav-link active">
+                        <span class="nav-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
+                                <line x1="7" y1="7" x2="7.01" y2="7"></line>
+                            </svg>
+                        </span>
+                        Products
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link">
+                        <span class="nav-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="9" cy="7" r="4"></circle>
+                                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                            </svg>
+                        </span>
+                        Customers
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link">
+                        <span class="nav-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="12" y1="1" x2="12" y2="23"></line>
+                                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                            </svg>
+                        </span>
+                        Analytics
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link">
+                        <span class="nav-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="12" y1="1" x2="12" y2="23"></line>
+                                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                            </svg>
+                        </span>
+                        Statistics
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link">
+                        <span class="nav-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="3"></circle>
+                                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                            </svg>
+                        </span>
+                        Settings
+                    </a>
+                </li>
+            </ul>
+
+            <div class="footer">
+                © 2025 Antique Cafe. All rights reserved.
+            </div>
+        </div>
+
+        <!-- Main content -->
+        <div class="main-content">
+            <div class="notifications">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                    <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                </svg>
+            </div>
+
+            <div class="content-wrapper">
+                <div class="page-header">
+                    <h1 class="page-title">Create New Product</h1>
+                    
+                    <div class="action-buttons">
+                        <a href="@Url.Action("ProductList", "Manager")" class="btn btn-outline">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M15 18l-6-6 6-6"></path>
+                            </svg>
+                            Back to Products
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Success/Error Messages -->
+                @if (TempData["SuccessMessage"] != null)
+                {
+                    <div class="alert alert-success">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                            <polyline points="22,4 12,14.01 9,11.01"></polyline>
+                        </svg>
+                        @TempData["SuccessMessage"]
+                    </div>
+                }
+
+                @if (TempData["ErrorMessage"] != null)
+                {
+                    <div class="alert alert-error">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="15" y1="9" x2="9" y2="15"></line>
+                            <line x1="9" y1="9" x2="15" y2="15"></line>
+                        </svg>
+                        @TempData["ErrorMessage"]
+                    </div>
+                }
+
+                <!-- Create Product Form -->
+                <div class="product-form-container">
+                    <form method="post" action="@Url.Action("Create", "Manager")" class="product-form">
+                        <div class="form-section">
+                            <h3 class="section-title">Basic Information</h3>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="itemName" class="form-label">Product Name</label>
+                                    <input type="text" id="itemName" name="itemName" class="form-input" required 
+                                           placeholder="Enter product name...">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="category" class="form-label">Category</label>
+                                    <select id="category" name="category" class="form-select" required>
+                                        <option value="">Select Category</option>
+                                        <!-- Will be populated from database -->
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="subcategory" class="form-label">Subcategory</label>
+                                    <select id="subcategory" name="subcategory" class="form-select" required>
+                                        <option value="">Select Subcategory</option>
+                                        <!-- Will be populated based on category selection -->
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="type" class="form-label">Type</label>
+                                    <select id="type" name="type" class="form-select" required>
+                                        <option value="">Select Type</option>
+                                        <!-- Will be populated from database -->
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Product Image</label>
+                                <div class="image-upload-section">
+                                    <div class="upload-method-tabs">
+                                        <button type="button" class="upload-tab active" data-method="url">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 0.5rem;">
+                                                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                                                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                                            </svg>
+                                            Image URL
+                                        </button>
+                                        <button type="button" class="upload-tab" data-method="file">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 0.5rem;">
+                                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                                <polyline points="7,10 12,15 17,10"></polyline>
+                                                <line x1="12" y1="15" x2="12" y2="3"></line>
+                                            </svg>
+                                            Upload File
+                                        </button>
+                                    </div>
+                                    
+                                    <div class="upload-method url-method active">
+                                        <input type="url" id="itemimg" name="itemimg" class="form-input" 
+                                               placeholder="https://example.com/product-image.jpg">
+                                        <small class="form-hint">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 0.25rem;">
+                                                <circle cx="12" cy="12" r="10"></circle>
+                                                <path d="M12 6v6l4 2"></path>
+                                            </svg>
+                                            Enter a valid URL for the product image
+                                        </small>
+                                    </div>
+                                    
+                                    <div class="upload-method file-method">
+                                        <div class="file-input-wrapper">
+                                            <div class="file-input-custom" id="fileInputCustom">
+                                                <input type="file" id="imageFile" accept="image/*" class="file-input-actual">
+                                                <div class="file-input-content">
+                                                    <svg class="file-input-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                                        <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                                        <polyline points="21,15 16,10 5,21"></polyline>
+                                                    </svg>
+                                                    <div class="file-input-text">Choose an image file</div>
+                                                    <div class="file-input-subtext">PNG, JPG or JPEG (Max: 5MB)</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div id="imagePreview" class="image-preview" style="display: none;">
+                                            <img id="previewImg" class="preview-image" src="" alt="Preview">
+                                            <br>
+                                            <button type="button" class="remove-preview" onclick="removePreview()">Remove</button>
+                                        </div>
+                                        <small class="form-hint">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 0.25rem;">
+                                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                                <polyline points="7,10 12,15 17,10"></polyline>
+                                                <line x1="12" y1="15" x2="12" y2="3"></line>
+                                            </svg>
+                                            Drag and drop or click to select an image
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                                    <polyline points="17,21 17,13 7,13 7,21"></polyline>
+                                    <polyline points="7,3 7,8 15,8"></polyline>
+                                </svg>
+                                Create Product
+                            </button>
+                            <a href="@Url.Action("ProductList", "Manager")" class="btn btn-secondary">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                                </svg>
+                                Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Load categories from database
+            loadCategories();
+            
+            // Load types from database
+            loadTypes();
+            
+            // Handle upload method tabs
+            setupUploadTabs();
+            
+            // Handle category change
+            document.getElementById('category').addEventListener('change', function() {
+                const category = this.value;
+                loadSubcategories(category);
+            });
+            
+            // Auto-hide alerts after 5 seconds
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(alert => {
+                setTimeout(() => {
+                    alert.style.opacity = '0';
+                    setTimeout(() => {
+                        alert.remove();
+                    }, 300);
+                }, 5000);
+            });
+        });
+
+        // Load categories from API
+        async function loadCategories() {
+            try {
+                const response = await fetch('@Url.Action("GetCategories", "Manager")');
+                const categories = await response.json();
+                
+                const categorySelect = document.getElementById('category');
+                categorySelect.innerHTML = '<option value="">Select Category</option>';
+                
+                categories.forEach(category => {
+                    const option = document.createElement('option');
+                    option.value = category;
+                    option.textContent = category;
+                    categorySelect.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error loading categories:', error);
+            }
+        }
+
+        // Load subcategories based on selected category
+        async function loadSubcategories(category) {
+            const subcategorySelect = document.getElementById('subcategory');
+            
+            // Clear existing options
+            subcategorySelect.innerHTML = '<option value="">Select Subcategory</option>';
+            
+            if (!category) return;
+            
+            try {
+                const response = await fetch(`@Url.Action("GetSubcategories", "Manager")?categoryName=${encodeURIComponent(category)}`);
+                const subcategories = await response.json();
+                
+                console.log('Subcategories received:', subcategories); // Debug log
+                
+                subcategories.forEach(subcategory => {
+                    const option = document.createElement('option');
+                    option.value = subcategory;
+                    option.textContent = subcategory;
+                    subcategorySelect.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error loading subcategories:', error);
+            }
+        }
+
+        // Load types from API
+        async function loadTypes() {
+            try {
+                const response = await fetch('@Url.Action("GetTypes", "Manager")');
+                const types = await response.json();
+                
+                const typeSelect = document.getElementById('type');
+                typeSelect.innerHTML = '<option value="">Select Type</option>';
+                
+                types.forEach(type => {
+                    const option = document.createElement('option');
+                    option.value = type;
+                    option.textContent = type;
+                    typeSelect.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error loading types:', error);
+            }
+        }
+
+        // Setup upload method tabs
+        function setupUploadTabs() {
+            const tabs = document.querySelectorAll('.upload-tab');
+            const methods = document.querySelectorAll('.upload-method');
+            
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const method = this.dataset.method;
+                    
+                    // Update tab states
+                    tabs.forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Update method visibility
+                    methods.forEach(m => m.classList.remove('active'));
+                    document.querySelector(`.${method}-method`).classList.add('active');
+                    
+                    // Clear the other method's input
+                    if (method === 'url') {
+                        document.getElementById('imageFile').value = '';
+                    } else {
+                        document.getElementById('itemimg').value = '';
+                    }
+                });
+            });
+            
+            // Handle file upload
+            const fileInput = document.getElementById('imageFile');
+            const fileInputCustom = document.getElementById('fileInputCustom');
+            
+            fileInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    // Check file type
+                    if (!file.type.startsWith('image/')) {
+                        alert('Please select an image file.');
+                        return;
+                    }
+                    
+                    // Check file size (5MB max)
+                    if (file.size > 5 * 1024 * 1024) {
+                        alert('File size must be less than 5MB.');
+                        return;
+                    }
+                    
+                    // Preview image
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        document.getElementById('previewImg').src = e.target.result;
+                        document.getElementById('imagePreview').style.display = 'block';
+                        document.getElementById('imagePreview').style.opacity = '0';
+                        setTimeout(() => {
+                            document.getElementById('imagePreview').style.transition = 'opacity 0.3s ease';
+                            document.getElementById('imagePreview').style.opacity = '1';
+                        }, 10);
+                    };
+                    reader.readAsDataURL(file);
+                    
+                    // Update file input display
+                    const textElement = fileInputCustom.querySelector('.file-input-text');
+                    const subtextElement = fileInputCustom.querySelector('.file-input-subtext');
+                    textElement.textContent = file.name;
+                    subtextElement.textContent = `File selected: ${(file.size / 1024 / 1024).toFixed(2)} MB`;
+                    fileInputCustom.classList.add('has-file');
+                }
+            });
+
+            // Drag and drop functionality
+            if (fileInputCustom) {
+                fileInputCustom.addEventListener('dragover', function(e) {
+                    e.preventDefault();
+                    this.classList.add('dragover');
+                });
+                
+                fileInputCustom.addEventListener('dragleave', function(e) {
+                    e.preventDefault();
+                    this.classList.remove('dragover');
+                });
+                
+                fileInputCustom.addEventListener('drop', function(e) {
+                    e.preventDefault();
+                    this.classList.remove('dragover');
+                    
+                    const files = e.dataTransfer.files;
+                    if (files.length > 0) {
+                        fileInput.files = files;
+                        fileInput.dispatchEvent(new Event('change'));
+                    }
+                });
+            }
+        }
+
+        // Remove image preview
+        function removePreview() {
+            const imagePreview = document.getElementById('imagePreview');
+            const fileInput = document.getElementById('imageFile');
+            const fileInputCustom = document.getElementById('fileInputCustom');
+            
+            imagePreview.style.transition = 'opacity 0.3s ease';
+            imagePreview.style.opacity = '0';
+            setTimeout(() => {
+                imagePreview.style.display = 'none';
+            }, 300);
+            
+            fileInput.value = '';
+            fileInputCustom.querySelector('.file-input-text').textContent = 'Choose an image file';
+            fileInputCustom.querySelector('.file-input-subtext').textContent = 'PNG, JPG or JPEG (Max: 5MB)';
+            fileInputCustom.classList.remove('has-file');
+        }
+
+        // Form validation
+        document.querySelector('.product-form').addEventListener('submit', function(e) {
+            const requiredFields = this.querySelectorAll('[required]');
+            let isValid = true;
+            
+            // Check if image is provided (either URL or file)
+            const imageUrl = document.getElementById('itemimg').value;
+            const imageFile = document.getElementById('imageFile').files[0];
+            
+            if (!imageUrl && !imageFile) {
+                isValid = false;
+                alert('Please provide a product image (URL or file).');
+                e.preventDefault();
+                return;
+            }
+            
+            requiredFields.forEach(field => {
+                if (!field.value.trim()) {
+                    isValid = false;
+                    field.classList.add('error');
+                } else {
+                    field.classList.remove('error');
+                }
+            });
+            
+            if (!isValid) {
+                e.preventDefault();
+                alert('Please fill in all required fields.');
+            }
+        });
+    </script>
+</body>
+</html>
