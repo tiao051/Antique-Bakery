@@ -40,10 +40,16 @@ namespace highlands.Controllers.User.Manager
             }
         }
         [HttpPost]
-        public async Task<IActionResult> Create(string itemName, string category, string subcategory, string itemimg, string type)
+        public async Task<IActionResult> Create(
+             string itemName,
+             string category,
+             string subcategory,
+             string type,
+             string itemimg,          // từ input URL
+             IFormFile imageFile      // từ input file
+         )
         {
             var userId = GetCurrentUserId();
-            
             if (!userId.HasValue)
             {
                 Console.WriteLine("User not authenticated or invalid UserId claim");
@@ -51,13 +57,29 @@ namespace highlands.Controllers.User.Manager
             }
 
             Console.WriteLine($"Authenticated UserId from JWT: {userId.Value}");
-            Console.WriteLine($"Creating product: Name={itemName}, Category={category}, Subcategory={subcategory}, Type={type}, Image={itemimg}");
+            Console.WriteLine($"Creating product: Name={itemName}, Category={category}, Subcategory={subcategory}, Type={type}");
 
-            // Add /img/ prefix if not already present
-            string imageUrl = itemimg;
-            if (!string.IsNullOrEmpty(itemimg) && !itemimg.StartsWith("/img/"))
+            string imageUrl = null;
+
+            // 1️⃣ Nếu user upload file
+            if (imageFile != null && imageFile.Length > 0)
             {
-                imageUrl = "/img/" + itemimg;
+                var fileName = Path.GetFileName(imageFile.FileName);
+                var filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/img", fileName);
+
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await imageFile.CopyToAsync(stream);
+                }
+
+                imageUrl = "/img/" + fileName;
+                Console.WriteLine($"Image uploaded: {imageUrl}");
+            }
+            // 2️⃣ Nếu user nhập URL
+            else if (!string.IsNullOrEmpty(itemimg))
+            {
+                imageUrl = itemimg.StartsWith("/img/") ? itemimg : "/img/" + itemimg;
+                Console.WriteLine($"Image URL used: {imageUrl}");
             }
 
             var item = new MenuItem
@@ -65,12 +87,12 @@ namespace highlands.Controllers.User.Manager
                 ItemName = itemName,
                 Category = category,
                 SubCategory = subcategory,
-                ItemImg = imageUrl,
-                SubcategoryImg = null,
                 Type = type,
+                ItemImg = imageUrl,
+                SubcategoryImg = null
             };
 
-            Console.WriteLine($"MenuItem object created with corrected image URL: {JsonConvert.SerializeObject(item)}");
+            Console.WriteLine($"MenuItem object created: {JsonConvert.SerializeObject(item)}");
 
             var result = await _efRepo.CreateItemAsync(item);
             Console.WriteLine($"CreateItemAsync result: {result}");
@@ -78,13 +100,11 @@ namespace highlands.Controllers.User.Manager
             if (result)
             {
                 TempData["SuccessMessage"] = "Product created successfully!";
-                Console.WriteLine("Redirecting to ProductList");
                 return RedirectToAction("ProductList");
             }
             else
             {
                 TempData["ErrorMessage"] = "Product creation failed!";
-                Console.WriteLine("Product creation failed, redirecting to CreateProduct");
                 return RedirectToAction("CreateProduct");
             }
         }

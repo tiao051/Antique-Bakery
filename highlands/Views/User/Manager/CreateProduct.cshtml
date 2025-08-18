@@ -171,7 +171,7 @@
 
                 <!-- Create Product Form -->
                 <div class="product-form-container">
-                    <form method="post" action="@Url.Action("Create", "Manager")" class="product-form">
+                    <form method="post" action="@Url.Action("Create", "Manager")" class="product-form" enctype="multipart/form-data">
                         <div class="form-section">
                             <h3 class="section-title">Basic Information</h3>
                             
@@ -245,7 +245,7 @@
                                     <div class="upload-method file-method">
                                         <div class="file-input-wrapper">
                                             <div class="file-input-custom" id="fileInputCustom">
-                                                <input type="file" id="imageFile" accept="image/*" class="file-input-actual">
+                                                <input type="file" id="imageFile" name="imageFile" accept="image/*" class="file-input-actual">
                                                 <div class="file-input-content">
                                                     <svg class="file-input-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                                         <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
