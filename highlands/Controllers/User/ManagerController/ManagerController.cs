@@ -53,17 +53,24 @@ namespace highlands.Controllers.User.Manager
             Console.WriteLine($"Authenticated UserId from JWT: {userId.Value}");
             Console.WriteLine($"Creating product: Name={itemName}, Category={category}, Subcategory={subcategory}, Type={type}, Image={itemimg}");
 
+            // Add /img/ prefix if not already present
+            string imageUrl = itemimg;
+            if (!string.IsNullOrEmpty(itemimg) && !itemimg.StartsWith("/img/"))
+            {
+                imageUrl = "/img/" + itemimg;
+            }
+
             var item = new MenuItem
             {
                 ItemName = itemName,
                 Category = category,
                 SubCategory = subcategory,
-                ItemImg = itemimg,
+                ItemImg = imageUrl,
                 SubcategoryImg = null,
                 Type = type,
             };
 
-            Console.WriteLine($"MenuItem object created: {JsonConvert.SerializeObject(item)}");
+            Console.WriteLine($"MenuItem object created with corrected image URL: {JsonConvert.SerializeObject(item)}");
 
             var result = await _efRepo.CreateItemAsync(item);
             Console.WriteLine($"CreateItemAsync result: {result}");
