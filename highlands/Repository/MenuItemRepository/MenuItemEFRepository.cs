@@ -548,14 +548,16 @@ namespace highlands.Repository.MenuItemRepository
         {
             try
             {
+                Console.WriteLine($"Creating item: {menuItem.ItemName}");
+                
                 // Kiểm tra xem item đã tồn tại chưa
                 var existingItem = await _context.MenuItems
                     .FirstOrDefaultAsync(c => c.ItemName == menuItem.ItemName);
 
                 if (existingItem != null)
                 {
+                    Console.WriteLine($"Item {menuItem.ItemName} already exists, updating...");
                     // Cập nhật thông tin
-                    existingItem.ItemName = menuItem.ItemName;
                     existingItem.Category = menuItem.Category;
                     existingItem.SubCategory = menuItem.SubCategory;
                     existingItem.ItemImg = menuItem.ItemImg;
@@ -565,16 +567,25 @@ namespace highlands.Repository.MenuItemRepository
                 }
                 else
                 {
+                    Console.WriteLine($"Item {menuItem.ItemName} is new, adding...");
                     // Thêm mới
                     await _context.MenuItems.AddAsync(menuItem);
                 }
 
                 var rowsAffected = await _context.SaveChangesAsync();
+                Console.WriteLine($"Rows affected: {rowsAffected}");
+                
+                // Verify the item was actually saved
+                var verifyItem = await _context.MenuItems
+                    .FirstOrDefaultAsync(c => c.ItemName == menuItem.ItemName);
+                Console.WriteLine($"Item verified in database: {verifyItem != null}");
+                
                 return rowsAffected > 0;
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error creating/updating item: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
                 return false;
             }
         }
@@ -582,24 +593,32 @@ namespace highlands.Repository.MenuItemRepository
         {
             try
             {
-                // Kiểm tra xem item đã tồn tại chưa
+                Console.WriteLine($"Deleting item: {itemName}");
+                
+                // Tìm item trong database
                 var existingItem = await _context.MenuItems
                     .FirstOrDefaultAsync(c => c.ItemName == itemName);
 
-                if (existingItem != null)
+                if (existingItem == null)
                 {
-                    throw new Exception("item khong ton tai");  
+                    Console.WriteLine($"Item '{itemName}' not found in database");
+                    return false; // Item không tồn tại
                 }
 
-                // Xóa entity khỏi db, có thể bị lỗi cas
+                Console.WriteLine($"Found item: {existingItem.ItemName}, proceeding to delete...");
+                
+                // Xóa entity khỏi database
                 _context.MenuItems.Remove(existingItem);
 
                 var rowsAffected = await _context.SaveChangesAsync();
+                Console.WriteLine($"Delete operation completed. Rows affected: {rowsAffected}");
+                
                 return rowsAffected > 0;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error delete item: {ex.Message}");
+                Console.WriteLine($"Error deleting item: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
                 return false;
             }
         }

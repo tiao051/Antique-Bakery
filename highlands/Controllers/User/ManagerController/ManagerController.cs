@@ -4,11 +4,12 @@ using highlands.Repository.MenuItemRepository;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using Newtonsoft.Json;
 
 namespace highlands.Controllers.User.Manager
 {
     [Authorize(Policy = "Manager")]
-    public class ManagerController : Controller
+    public class ManagerController : BaseController
     {
         private readonly IMenuItemRepository _efRepo;
         public ManagerController(IEnumerable<IMenuItemRepository> repositories)
@@ -41,15 +42,16 @@ namespace highlands.Controllers.User.Manager
         [HttpPost]
         public async Task<IActionResult> Create(string itemName, string category, string subcategory, string itemimg, string type)
         {
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var userId = GetCurrentUserId();
             
-            if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
+            if (!userId.HasValue)
             {
                 Console.WriteLine("User not authenticated or invalid UserId claim");
                 return RedirectToAction("Login", "Account");
             }
 
-            Console.WriteLine($"Authenticated UserId from JWT: {userId}");
+            Console.WriteLine($"Authenticated UserId from JWT: {userId.Value}");
+            Console.WriteLine($"Creating product: Name={itemName}, Category={category}, Subcategory={subcategory}, Type={type}, Image={itemimg}");
 
             var item = new MenuItem
             {
@@ -61,56 +63,46 @@ namespace highlands.Controllers.User.Manager
                 Type = type,
             };
 
+            Console.WriteLine($"MenuItem object created: {JsonConvert.SerializeObject(item)}");
+
             var result = await _efRepo.CreateItemAsync(item);
+            Console.WriteLine($"CreateItemAsync result: {result}");
 
             if (result)
             {
                 TempData["SuccessMessage"] = "Product created successfully!";
-                // Redirect to product list view showing the new product
+                Console.WriteLine("Redirecting to ProductList");
                 return RedirectToAction("ProductList");
             }
             else
             {
                 TempData["ErrorMessage"] = "Product creation failed!";
+                Console.WriteLine("Product creation failed, redirecting to CreateProduct");
                 return RedirectToAction("CreateProduct");
             }
         }
         [HttpPost]
-        public async Task<IActionResult> DeleteProduct(string itemName)
+        public async Task<IActionResult> Delete(string itemName)
         {
-            try
+            var userId = GetCurrentUserId();
+            
+            if (!userId.HasValue)
             {
-                // Lấy UserId từ JWT claims thay vì session
-                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-                
-                if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
-                {
-                    Console.WriteLine("User not authenticated or invalid UserId claim");
-                    return Json(new { success = false, message = "User not authenticated" });
-                }
-
-                Console.WriteLine($"Authenticated UserId from JWT: {userId}");
-
-                if (string.IsNullOrEmpty(itemName))
-                {
-                    return Json(new { success = false, message = "Product name is required" });
-                }
-
-                var result = await _efRepo.DeleteItemAsync(itemName);
-
-                if (result)
-                {
-                    return Json(new { success = true, message = "Product deleted successfully!" });
-                }
-                else
-                {
-                    return Json(new { success = false, message = "Failed to delete product" });
-                }
+                Console.WriteLine("User not authenticated or invalid UserId claim");
+                return Json(new { success = false, message = "User not authenticated" });
             }
-            catch (Exception ex)
+
+            Console.WriteLine($"Authenticated UserId from JWT: {userId.Value}");
+
+            var result = await _efRepo.DeleteItemAsync(itemName);
+
+            if (result)
             {
-                Console.WriteLine($"Error deleting product: {ex.Message}");
-                return Json(new { success = false, message = "An error occurred while deleting the product" });
+                return Json(new { success = true, message = "Product deleted successfully!" });
+            }
+            else
+            {
+                return Json(new { success = false, message = "Product deletion failed!" });
             }
         }
 
