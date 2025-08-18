@@ -2,7 +2,6 @@
 using highlands.Models;
 using highlands.Models.DTO;
 using highlands.Models.DTO.CustomerDataDTO;
-using highlands.Models.DTO.OrderDTO;
 using highlands.Models.DTO.ProductsDTO;
 using highlands.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -141,7 +140,6 @@ namespace highlands.Repository.MenuItemRepository
                 return false;
             }
         }
-
         public async Task<(MenuItem?, List<MenuItemPrice>, List<RecipeWithIngredientDetail>)> GetItemDetailsAsync(string subcategory, string itemName, string size)
         {
             string cacheKey = $"itemDetails:{subcategory}:{itemName}:{size}";
@@ -545,6 +543,65 @@ namespace highlands.Repository.MenuItemRepository
             Console.WriteLine("GetCommonProductPairsAsync");
             // Implementation tùy thuộc vào logic nghiệp vụ cụ thể
             throw new NotImplementedException("This method needs specific business logic implementation");
+        }
+        public async Task<bool> CreateItemAsync(MenuItem menuItem)
+        {
+            try
+            {
+                // Kiểm tra xem item đã tồn tại chưa
+                var existingItem = await _context.MenuItems
+                    .FirstOrDefaultAsync(c => c.ItemName == menuItem.ItemName);
+
+                if (existingItem != null)
+                {
+                    // Cập nhật thông tin
+                    existingItem.ItemName = menuItem.ItemName;
+                    existingItem.Category = menuItem.Category;
+                    existingItem.SubCategory = menuItem.SubCategory;
+                    existingItem.ItemImg = menuItem.ItemImg;
+                    existingItem.Type = menuItem.Type;
+
+                    _context.MenuItems.Update(existingItem);
+                }
+                else
+                {
+                    // Thêm mới
+                    await _context.MenuItems.AddAsync(menuItem);
+                }
+
+                var rowsAffected = await _context.SaveChangesAsync();
+                return rowsAffected > 0;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error creating/updating item: {ex.Message}");
+                return false;
+            }
+        }
+        public async Task<bool> DeleteItemAsync(string itemName)
+        {
+            try
+            {
+                // Kiểm tra xem item đã tồn tại chưa
+                var existingItem = await _context.MenuItems
+                    .FirstOrDefaultAsync(c => c.ItemName == itemName);
+
+                if (existingItem != null)
+                {
+                    throw new Exception("item khong ton tai");  
+                }
+
+                // Xóa entity khỏi db, có thể bị lỗi cas
+                _context.MenuItems.Remove(existingItem);
+
+                var rowsAffected = await _context.SaveChangesAsync();
+                return rowsAffected > 0;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error delete item: {ex.Message}");
+                return false;
+            }
         }
     }
 }

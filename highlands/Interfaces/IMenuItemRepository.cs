@@ -36,5 +36,7 @@ namespace highlands.Interfaces
         Task<List<ProductSuggestionDTO>> GetSugestedProductByUser(string customerId);
         Task<List<ProductSuggestionDTO>> GetSuggestedProductByTime(string timeSlot);
         Task<List<OrderDetailDTO>> GetCommonProductPairsAsync(int orderId);
+        Task<bool> CreateItemAsync(MenuItem menuItem);
+        Task<bool> DeleteItemAsync(string itemName);
     }
 }

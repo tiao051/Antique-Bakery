@@ -15,6 +15,7 @@ using Microsoft.IdentityModel.Tokens;
 using QuestPDF.Infrastructure;
 using System.Data;
 using System.Text;
+using highlands.Repository.PopularShoppingSequence;
 
 var builder = WebApplication.CreateBuilder(args);
 var services = builder.Services;
@@ -39,10 +40,14 @@ services.AddTransient<ExcelServiceManager>();
 
 //đăng ký report
 services.AddScoped<ReportService>();
+services.AddScoped<ReportEFService>();
 services.AddScoped<PdfService>();
 services.AddScoped<IReportRepository, ReportRepository>();
+services.AddScoped<IReportRepository, ReportEFRepository>();
 //đăng ký repo cho order
 services.AddScoped<OrderRepository>();
+services.AddScoped<OrderRepositoryEF>();
+services.AddScoped<PopularShoppingSequenceEF>();
 services.AddScoped<PopularShoppingSequence>();
 
 // Đăng ký DbContext & Dapper

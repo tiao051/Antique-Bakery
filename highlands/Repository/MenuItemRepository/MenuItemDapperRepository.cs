@@ -750,5 +750,13 @@ namespace highlands.Repository.MenuItemRepository
                 throw new InvalidOperationException("Failed to connect or query the database.", ex);
             }
         }
+        public async Task<bool> CreateItemAsync(MenuItem menuItem)
+        {
+            throw new Exception("EF core should hanlde this method");
+        }
+        public async Task<bool> DeleteItemAsync(string itemName)
+        {
+            throw new Exception("EF core should hanlde this method");
+        }
     }
 }

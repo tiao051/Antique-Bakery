@@ -3,12 +3,12 @@ using highlands.Models.DTO.ReportDTO;
 
 namespace highlands.Services.ReportServices
 {
-    public class ReportService
+    public class ReportEFService
     {
-        private readonly IReportRepository _reportRepo;
-        public ReportService(IReportRepository reportRepo)
+        private readonly IReportRepository _reportEFRepo;
+        public ReportEFService(IReportRepository reportEFRepo)
         {
-            _reportRepo = reportRepo;
+            _reportEFRepo = reportEFRepo;
         }
         public async Task<ReportData> GenerateReportAsync(string type)
         {
@@ -16,14 +16,14 @@ namespace highlands.Services.ReportServices
             var timeRange = GetTimeRange(type);
 
             // Thực hiện các truy vấn song song
-            var totalRevenue = await _reportRepo.GetTotalRevenue(timeRange.Item2, timeRange.Item3);
-            var bestSellers = await _reportRepo.GetBestSellersBy5(timeRange.Item2, timeRange.Item3);
-            var worstSellers = await _reportRepo.GetWorstSellersBy5(timeRange.Item2, timeRange.Item3);
-            var revenueByCategory = await _reportRepo.GetRevenueByCategory(timeRange.Item2, timeRange.Item3);
-            var revenueByProduct = await _reportRepo.GetRevenueByProduct(timeRange.Item2, timeRange.Item3);
-            var topCustomers = await _reportRepo.GetTopCustomers(timeRange.Item2, timeRange.Item3);
-            var peakTime = await _reportRepo.GetPeakTime(timeRange.Item2, timeRange.Item3);
-            var offTime = await _reportRepo.GetOffTime(timeRange.Item2, timeRange.Item3);
+            var totalRevenue = await _reportEFRepo.GetTotalRevenue(timeRange.Item2, timeRange.Item3);
+            var bestSellers = await _reportEFRepo.GetBestSellersBy5(timeRange.Item2, timeRange.Item3);
+            var worstSellers = await _reportEFRepo.GetWorstSellersBy5(timeRange.Item2, timeRange.Item3);
+            var revenueByCategory = await _reportEFRepo.GetRevenueByCategory(timeRange.Item2, timeRange.Item3);
+            var revenueByProduct = await _reportEFRepo.GetRevenueByProduct(timeRange.Item2, timeRange.Item3);
+            var topCustomers = await _reportEFRepo.GetTopCustomers(timeRange.Item2, timeRange.Item3);
+            var peakTime = await _reportEFRepo.GetPeakTime(timeRange.Item2, timeRange.Item3);
+            var offTime = await _reportEFRepo.GetOffTime(timeRange.Item2, timeRange.Item3);
 
             // Lấy kết quả từ các tác vụ
             return new ReportData
@@ -51,13 +51,13 @@ namespace highlands.Services.ReportServices
             switch (type.ToLower())
             {
                 case "daily":
-                    startDate = DateTime.Today; 
+                    startDate = DateTime.Today;
                     timeText = $"{startDate:dd/MM/yyyy}";
                     break;
 
                 case "weekly":
                     int daysFromMonday = ((int)DateTime.Now.DayOfWeek + 6) % 7;
-                    startDate = DateTime.Today.AddDays(-daysFromMonday); 
+                    startDate = DateTime.Today.AddDays(-daysFromMonday);
                     timeText = $"{startDate:dd/MM/yyyy} - {endDate:dd/MM/yyyy}";
                     break;
 

@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace highlands.Models;
+﻿namespace highlands.Models;
 
 public partial class MenuItem
 {
