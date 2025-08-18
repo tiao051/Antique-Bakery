@@ -573,17 +573,47 @@ namespace highlands.Repository.MenuItemRepository
         }
         public (List<MenuItem> items, int totalPages) Search(string keyword, int page = 1, int pageSize = 6)
         {
+            if (string.IsNullOrWhiteSpace(keyword))
+            {
+                return (new List<MenuItem>(), 0);
+            }
+
+            keyword = keyword.Trim();
             var offset = (page - 1) * pageSize;
+            
+            // Enhanced search query with fuzzy matching and relevance ordering
             var query = @"
             SELECT * 
             FROM MenuItem 
-            WHERE ItemName LIKE @Keyword
-            ORDER BY ItemName
+            WHERE ItemName LIKE @Keyword 
+               OR Description LIKE @Keyword
+               OR SubCategory LIKE @Keyword
+            ORDER BY 
+                CASE 
+                    WHEN LOWER(ItemName) = LOWER(@ExactKeyword) THEN 0
+                    WHEN LOWER(ItemName) LIKE LOWER(@StartsWith) THEN 1
+                    WHEN LOWER(ItemName) LIKE @Keyword THEN 2
+                    ELSE 3
+                END,
+                ItemName
             OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY";
 
-            var items = _connection.Query<MenuItem>(query, new { Keyword = $"%{keyword}%", Offset = offset, PageSize = pageSize }).ToList();
+            var items = _connection.Query<MenuItem>(query, new { 
+                Keyword = $"%{keyword}%", 
+                ExactKeyword = keyword,
+                StartsWith = $"{keyword}%",
+                Offset = offset, 
+                PageSize = pageSize 
+            }).ToList();
 
-            var countQuery = @"SELECT COUNT(*) FROM MenuItem WHERE ItemName LIKE @Keyword";
+            // Enhanced count query
+            var countQuery = @"
+            SELECT COUNT(*) 
+            FROM MenuItem 
+            WHERE ItemName LIKE @Keyword 
+               OR Description LIKE @Keyword
+               OR SubCategory LIKE @Keyword";
+               
             var totalItems = _connection.QuerySingle<int>(countQuery, new { Keyword = $"%{keyword}%" });
 
             var totalPages = (int)Math.Ceiling((double)totalItems / pageSize);

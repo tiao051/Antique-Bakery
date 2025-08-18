@@ -2,11 +2,16 @@
 
 @if (!Model.Any())
 {
-    <h2>No results found.</h2>
+    <div class="no-results">
+        <h2>No results found.</h2>
+        <p>Try searching with different keywords</p>
+    </div>
 }
 else
 {
-    <h2>Search Results</h2>
+    <div class="search-results-header">
+        <h2>Search Results (@Model.Count() items found)</h2>
+    </div>
     <div class="search-result-group">
         @foreach (var item in Model)
         {
@@ -14,7 +19,9 @@ else
                 <div class="img-item">
                     <img src="@item.ItemImg" alt="@item.ItemName" />
                 </div>
-                <h3 class="menu-item-name">@item.ItemName</h3>
+                <div class="item-content">
+                    <h3 class="item-name menu-item-name">@item.ItemName</h3>                 
+                </div>
             </div>
         }
     </div>
@@ -22,9 +29,19 @@ else
 @if (ViewBag.TotalPages > 1)
 {
     <div class="pagination">
+        @if (ViewBag.CurrentPage > 1)
+        {
+            <button class="page-btn" onclick="searchMenu(@(ViewBag.CurrentPage - 1))" rel="prev">‹ Previous</button>
+        }
+        
         @for (int i = 1; i <= ViewBag.TotalPages; i++)
         {
-            <button class="page-btn" onclick="searchMenu(@i)">@i</button>
+            <button class="page-btn @(i == ViewBag.CurrentPage ? "active" : "")" onclick="searchMenu(@i)">@i</button>
+        }
+        
+        @if (ViewBag.CurrentPage < ViewBag.TotalPages)
+        {
+            <button class="page-btn" onclick="searchMenu(@(ViewBag.CurrentPage + 1))" rel="next">Next ›</button>
         }
     </div>
 }

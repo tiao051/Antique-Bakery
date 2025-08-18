@@ -466,9 +466,30 @@ namespace highlands.Repository.MenuItemRepository
 
         public (List<MenuItem> items, int totalPages) Search(string keyword, int page = 1, int pageSize = 6)
         {
+            if (string.IsNullOrWhiteSpace(keyword))
+            {
+                return (new List<MenuItem>(), 0);
+            }
+
+            // Normalize keyword for better search
+            keyword = keyword.Trim();
+            
             var query = _context.MenuItems.AsNoTracking()
-                .Where(m => m.ItemName.Contains(keyword))
-                .OrderBy(m => m.ItemName);
+                .Where(m => 
+                    // Exact matches first (highest priority)
+                    m.ItemName.Contains(keyword) ||
+                    // Case insensitive search
+                    EF.Functions.Like(m.ItemName.ToLower(), $"%{keyword.ToLower()}%" ) ||
+                    // Search in description if available
+                    //(m.Description != null && EF.Functions.Like(m.Description.ToLower(), $"%{keyword.ToLower()}%")) ||
+                    // Search in subcategory
+                    EF.Functions.Like(m.SubCategory.ToLower(), $"%{keyword.ToLower()}%"))
+                .OrderBy(m => 
+                    // Order by relevance: exact matches first, then partial matches
+                    m.ItemName.ToLower() == keyword.ToLower() ? 0 :
+                    m.ItemName.ToLower().StartsWith(keyword.ToLower()) ? 1 :
+                    m.ItemName.ToLower().Contains(keyword.ToLower()) ? 2 : 3)
+                .ThenBy(m => m.ItemName);
 
             var totalItems = query.Count();
             var items = query
