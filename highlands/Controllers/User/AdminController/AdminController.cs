@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace highlands.Controllers.User.Admin
 {
     [Authorize(Policy = "Admin")]
-    public class AdminController : Controller
+    public class AdminController : BaseController
     {
         public IActionResult Index()
         {

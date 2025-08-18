@@ -17,7 +17,7 @@ using System.Security.Cryptography;
 
 namespace highlands.Controllers.Account
 {
-    public class AccountController : Controller
+    public class AccountController : BaseController
     {
         private readonly string _connectionString;
         private readonly IDistributedCache _distributedCache;

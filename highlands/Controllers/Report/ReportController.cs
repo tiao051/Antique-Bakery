@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace highlands.Controllers.Report
 {   
-    public class ReportController : Controller
+    public class ReportController : BaseController
     {
         private readonly ReportService _reportService;
         private readonly ReportEFService _reportEFService;

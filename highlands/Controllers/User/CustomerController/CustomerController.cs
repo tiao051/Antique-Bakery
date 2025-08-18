@@ -20,7 +20,7 @@ using highlands.Repository.OrderRepository;
 namespace highlands.Controllers.User.CustomerController
 {
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "Customer")]
-    public class CustomerController : Controller
+    public class CustomerController : BaseController
     {
         private readonly IMenuItemRepository _dapperRepository;
         private readonly IDistributedCache _distributedCache;
@@ -60,21 +60,22 @@ namespace highlands.Controllers.User.CustomerController
                 Console.WriteLine($"Claim Type: {claim.Type}, Claim Value: {claim.Value}");
             }
 
-            var userIdClaim = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier);
-            if (userIdClaim == null)
+            var userId = GetCurrentUserId();
+            var email = GetCurrentUserEmail();
+            var role = GetCurrentUserRole();
+            
+            if (!userId.HasValue)
             {
                 return Unauthorized();
             }
-            var emailClaim = HttpContext.User.FindFirst(ClaimTypes.Email);
-            string userId = userIdClaim.Value; 
-            Console.WriteLine($"UserIdClaim Value: {userId}");
-
-            // Kiểm tra Role từ JWT Token
-            var roleClaim = HttpContext.User.Claims.FirstOrDefault(c => c.Type == "http://schemas.microsoft.com/ws/2008/06/identity/claims/role");
-            Console.WriteLine($"User Role: {roleClaim?.Value ?? "null"}");
+            
+            Console.WriteLine($"UserIdClaim Value: {userId.Value}");
+            Console.WriteLine($"User Email: {email ?? "null"}");
+            Console.WriteLine($"User Role: {role?.ToString() ?? "null"}");
 
             // Kiểm tra Role trong Token
-            if (roleClaim == null || roleClaim.Value != "3")
+            var userRole = GetCurrentUserRole();
+            if (userRole == null || userRole != 3)
             {
                 return Forbid();
             }
@@ -264,10 +265,10 @@ namespace highlands.Controllers.User.CustomerController
             // Nếu không có, hãy thử lấy từ JWT token (HttpContext.User)
             if (userId == null || userId == 0)
             {
-                var userIdClaim = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-                if (!string.IsNullOrEmpty(userIdClaim) && int.TryParse(userIdClaim, out int parsedUserId))
+                var currentUserId = GetCurrentUserId();
+                if (currentUserId.HasValue)
                 {
-                    userId = parsedUserId;
+                    userId = currentUserId.Value;
                     Console.WriteLine("Luu lai vao session");
                     // Lưu lại vào Session để lần sau không cần lấy lại từ token
                     HttpContext.Session.SetInt32("UserId", userId.Value);
@@ -349,11 +350,11 @@ namespace highlands.Controllers.User.CustomerController
 
             if (userId == 0)
             {
-                var userIdClaim = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                var currentUserId = GetCurrentUserId();
 
-                if (!string.IsNullOrEmpty(userIdClaim) && int.TryParse(userIdClaim, out int parsedUserId))
+                if (currentUserId.HasValue)
                 {
-                    userId = parsedUserId;
+                    userId = currentUserId.Value;
                     HttpContext.Session.SetInt32("UserId", userId);
                     Console.WriteLine("Lưu lại vào session thành công");
                 }
@@ -703,27 +704,27 @@ namespace highlands.Controllers.User.CustomerController
         [HttpGet]
         public async Task<IActionResult> GetCustomerData()
         {
-            var email = User.FindFirst(ClaimTypes.Email)?.Value;
-            var id = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var email = GetCurrentUserEmail();
+            var userId = GetCurrentUserId();
 
             if (email == null)
             {
                 return Unauthorized("Email not found in token");
             }
 
-            if (id == null)
+            if (userId == null)
             {
                 return Unauthorized("UserId not found in token");
             }
 
             //var userDetail = await _dapperRepository.GetCustomerPhoneAddrPoints(id);
-            var userDetail = await _efRepo.GetCustomerPhoneAddrPoints(id);
+            var userDetail = await _efRepo.GetCustomerPhoneAddrPoints(userId.Value.ToString());
 
 
             return Ok(new
             {
                 Email = email,
-                UserId = id,
+                UserId = userId.Value,
                 Phone = userDetail.Phone ?? "",  
                 Address = userDetail.Address ?? "", 
                 LoyaltyPoints = userDetail.LoyaltyPoints ?? 0 
@@ -745,16 +746,16 @@ namespace highlands.Controllers.User.CustomerController
         {
             try
             {
-                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                var userId = GetCurrentUserId();
 
-                if (string.IsNullOrEmpty(userId))
+                if (!userId.HasValue)
                 {
                     return Unauthorized("UserId not found in token");
                 }
 
                 //var customerId = _dapperRepository.GetCustomerIdFromUserId(userId);
 
-                var customerId = _efRepo.GetCustomerIdFromUserId(userId);
+                var customerId = _efRepo.GetCustomerIdFromUserId(userId.Value.ToString());
                 var sugestedProduct = await _efRepo.GetSugestedProductByUser(await customerId);
                 //var sugestedProduct = await _dapperRepository.GetSugestedProductByUser(await customerId);
 
@@ -838,14 +839,14 @@ namespace highlands.Controllers.User.CustomerController
         [HttpGet]
         public async Task<IActionResult> HistoryPurchaseData()
         {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var userId = GetCurrentUserId();
 
-            if (string.IsNullOrEmpty(userId))
+            if (!userId.HasValue)
             {
                 return Unauthorized("UserId not found in token");
             }
 
-            var customerId = await _efRepo.GetCustomerIdFromUserId(userId);
+            var customerId = await _efRepo.GetCustomerIdFromUserId(userId.Value.ToString());
 
             if (string.IsNullOrEmpty(customerId))
             {
