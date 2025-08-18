@@ -1,0 +1,44 @@
+/* Error.css - Customer Error Page Styles */
+.error-container {
+    border: 1px solid #e9ecef;
+    background-color: #f8f9fa;
+    padding: 40px;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.error-container .fas.fa-exclamation-triangle {
+    font-size: 48px;
+    color: #dc3545;
+}
+
+.error-title {
+    color: #333;
+    font-weight: 600;
+}
+
+.error-message {
+    color: #666;
+    font-size: 16px;
+    line-height: 1.5;
+}
+
+.error-actions .btn {
+    transition: all 0.3s ease;
+    min-width: 120px;
+}
+
+.error-actions .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.btn-success {
+    background-color: #00704A;
+    border-color: #00704A;
+}
+
+.btn-success:hover {
+    background-color: #005a3a !important;
+    border-color: #005a3a !important;
+}

@@ -6,16 +6,16 @@
 <div class="container mt-5">
     <div class="row justify-content-center">
         <div class="col-md-6">
-            <div class="error-container text-center" style="background-color: #f8f9fa; padding: 40px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+            <div class="error-container text-center">
                 <div class="error-icon mb-3">
-                    <i class="fas fa-exclamation-triangle" style="font-size: 48px; color: #dc3545;"></i>
+                    <i class="fas fa-exclamation-triangle"></i>
                 </div>
                 
-                <h2 class="error-title mb-3" style="color: #333; font-weight: 600;">
+                <h2 class="error-title mb-3">
                     Oops! Something went wrong
                 </h2>
                 
-                <p class="error-message mb-4" style="color: #666; font-size: 16px; line-height: 1.5;">
+                <p class="error-message mb-4">
                     @if (!string.IsNullOrEmpty(ViewBag.ErrorMessage))
                     {
                         @ViewBag.ErrorMessage
@@ -27,10 +27,10 @@
                 </p>
                 
                 <div class="error-actions">
-                    <a href="javascript:history.back()" class="btn btn-outline-primary me-3" style="min-width: 120px;">
+                    <a href="javascript:history.back()" class="btn btn-outline-primary me-3">
                         <i class="fas fa-arrow-left me-2"></i>Go Back
                     </a>
-                    <a href="@Url.Action("Menu", "Customer")" class="btn btn-success" style="min-width: 120px; background-color: #00704A; border-color: #00704A;">
+                    <a href="@Url.Action("Menu", "Customer")" class="btn btn-success">
                         <i class="fas fa-home me-2"></i>Back to Menu
                     </a>
                 </div>
@@ -45,22 +45,4 @@
     </div>
 </div>
 
-<style>
-    .error-container {
-        border: 1px solid #e9ecef;
-    }
-    
-    .error-actions .btn {
-        transition: all 0.3s ease;
-    }
-    
-    .error-actions .btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-    }
-    
-    .btn-success:hover {
-        background-color: #005a3a !important;
-        border-color: #005a3a !important;
-    }
-</style>
+<link rel="stylesheet" href="~/css/customer/error.css?v=@DateTime.Now.Ticks">
