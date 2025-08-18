@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using highlands.Models;
 using highlands.Models.DTO;
+using highlands.Models.DTO.ProductsDTO;
 using Microsoft.Extensions.Caching.Distributed;
 using Newtonsoft.Json;
 using System.Text;
@@ -155,8 +156,8 @@ namespace highlands.Controllers.User.CustomerController
             try
             {
                 // Lấy chi tiết món từ database
-                //var (menuItem, prices, recipeList) = await _dapperRepository.GetItemDetailsAsync(subcategory, itemName, size);
-                var (menuItem, prices, recipeList) = await _efRepo.GetItemDetailsAsync(subcategory, itemName, size);
+                var (menuItem, prices, recipeList) = await _dapperRepository.GetItemDetailsAsync(subcategory, itemName, size);
+                //var (menuItem, prices, recipeList) = await _efRepo.GetItemDetailsAsync(subcategory, itemName, size);
 
                 var viewModel = new ItemSelectedViewModel
                 {
@@ -169,8 +170,12 @@ namespace highlands.Controllers.User.CustomerController
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[ERROR] {ex.Message}");
-                return Content($"An error occurred: {ex.Message}");
+                Console.WriteLine($"[ERROR] Error in ItemSelected: {ex.Message}");
+                Console.WriteLine($"[ERROR] Stack trace: {ex.StackTrace}");
+                
+                // Return a proper error view instead of exposing internal error message
+                ViewBag.ErrorMessage = "Unable to load item details. Please try again.";
+                return View("~/Views/User/Customer/Error.cshtml");
             }
         }
         public async Task<ActionResult> LoadRecipePartial(string itemName, string size)
@@ -182,15 +187,19 @@ namespace highlands.Controllers.User.CustomerController
 
             try
             {
-                //var recipeList = await _dapperRepository.GetIngredientsBySizeAsync(itemName, size);
-                var recipeList = await _efRepo.GetIngredientsBySizeAsync(itemName, size);
+                var recipeList = await _dapperRepository.GetIngredientsBySizeAsync(itemName, size);
+                //var recipeList = await _efRepo.GetIngredientsBySizeAsync(itemName, size);
 
                 return PartialView("~/Views/User/Customer/_RecipePartial.cshtml", recipeList);
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error occurred: {ex.Message}");
-                return Content($"An error occurred: {ex.Message}");
+                Console.WriteLine($"[ERROR] Error in LoadRecipePartial: {ex.Message}");
+                Console.WriteLine($"[ERROR] Stack trace: {ex.StackTrace}");
+                
+                // Return empty list to trigger the "no ingredients" message
+                var emptyList = new List<RecipeWithIngredientDetail>();
+                return PartialView("~/Views/User/Customer/_RecipePartial.cshtml", emptyList);
             }
         }
         public async Task<IActionResult> Checkout()

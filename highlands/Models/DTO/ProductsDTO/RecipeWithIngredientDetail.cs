@@ -9,5 +9,6 @@
         public int Quantity { get; set; }
         public string Size { get; set; }
         public int InRecipe { get; set; }
+        public string Unit { get; set; }
     }
 }

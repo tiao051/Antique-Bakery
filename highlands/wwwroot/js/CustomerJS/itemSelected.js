@@ -29,14 +29,39 @@
                 {
                     method: "GET"
                 })
-                .then(response => response.text())
-                .then(data => {
-                    document.querySelector(".ingredients-container").innerHTML = data;
-
-                    // Sau khi cập nhật nội dung, gán lại event listeners
-                    attachQuantityControlEvents();
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.text();
                 })
-                .catch(error => console.error("Error:", error));
+                .then(data => {
+                    const ingredientsContainer = document.querySelector(".ingredients-container");
+                    if (ingredientsContainer) {
+                        ingredientsContainer.innerHTML = data;
+
+                        // Sau khi cập nhật nội dung, gán lại event listeners
+                        attachQuantityControlEvents();
+                    }
+                })
+                .catch(error => {
+                    console.error("Error loading recipe:", error);
+                    
+                    // Display fallback message when error occurs
+                    const ingredientsContainer = document.querySelector(".ingredients-container");
+                    if (ingredientsContainer) {
+                        ingredientsContainer.innerHTML = `
+                            <div class="no-ingredients-message" style="text-align: center; padding: 30px 20px; color: #666; font-style: italic;">
+                                <div style="background-color: #f8f9fa; border-radius: 8px; padding: 20px; border-left: 4px solid #00704A;">
+                                    <i class="fas fa-info-circle" style="color: #00704A; margin-right: 8px; font-size: 18px;"></i>
+                                    <span style="font-size: 16px; line-height: 1.5; font-weight: 500;">
+                                        We currently do not support ingredient customization for this product.
+                                    </span>
+                                </div>
+                            </div>
+                        `;
+                    }
+                });
         });
     });
 

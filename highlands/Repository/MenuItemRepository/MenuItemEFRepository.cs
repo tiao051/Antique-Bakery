@@ -184,7 +184,7 @@ namespace highlands.Repository.MenuItemRepository
                     {
                         IngredientName = ingredient.IngredientName,
                         Quantity = (int)recipe.Quantity,
-                        //U = ingredient.Unit,
+                        Unit = ingredient.Unit,
                         IngredientType = ingredient.IngredientType,
                         IngredientCategory = ingredient.IngredientCategory
                     })

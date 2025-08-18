@@ -1,8 +1,7 @@
 ﻿@using highlands.Models.DTO.ProductsDTO
 @model List<RecipeWithIngredientDetail>
 
-
-@if (Model != null)
+@if (Model != null && Model.Any())
 {
     var groupedIngredients = Model.GroupBy(r => r.IngredientCategory);
     @foreach (var category in groupedIngredients)
@@ -79,5 +78,15 @@
         </div>
     }
 }
-
-
+else
+{
+    <!-- Display message when no recipe data is available -->
+    <div class="no-ingredients-message" style="text-align: center; padding: 30px 20px; color: #666; font-style: italic;">
+        <div style="background-color: #f8f9fa; border-radius: 8px; padding: 20px; border-left: 4px solid #00704A;">
+            <i class="fas fa-info-circle" style="color: #00704A; margin-right: 8px; font-size: 18px;"></i>
+            <span style="font-size: 16px; line-height: 1.5; font-weight: 500;">
+                We currently do not support ingredient customization for this product.
+            </span>
+        </div>
+    </div>
+}
