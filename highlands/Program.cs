@@ -8,6 +8,7 @@ using highlands.Services.RabbitMQServices.EmailServices;
 using highlands.Services.RabbitMQServices.ExcelServices;
 using highlands.Services.ReportServices;
 using highlands.Services.AuthServices;
+using highlands.Services.PasswordResetServices;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
@@ -31,6 +32,7 @@ var secretKey = Environment.GetEnvironmentVariable("JWT_SECRET")
 // đăng ký service
 services.AddHostedService<MessageConsumerService>();
 services.AddScoped<IEmailService, SendMessageToQueue>();
+services.AddScoped<IPasswordResetService, PasswordResetService>();
 services.AddScoped<IExcelExportService, ExcelExportService>();
 services.AddScoped<IExcelQueuePublisherService, ExcelQueuePublisherService>();
 services.AddHostedService<ExcelProcessingConsumerService>();

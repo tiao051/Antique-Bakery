@@ -1,0 +1,74 @@
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Antique Cafe - Verify OTP</title>
+    <link rel="stylesheet" href="~/css/account/StyleSheetUser.css?v=@DateTime.Now.Ticks" asp-append-version="true" />
+    <script src="/js/AccountJS/verifyOtp.js" defer></script>
+    <script src="https://kit.fontawesome.com/a6ec772266.js" crossorigin="anonymous"></script>
+</head>
+<body>
+    @await Html.PartialAsync("_Notification")
+    <h2>Antique Cafe</h2>
+    
+    <!-- Global notifications outside container -->
+    <div id="globalNotifications" style="position: fixed; top: 20px; right: 20px; z-index: 9999; width: 350px;">
+        <!-- Loading indicator -->
+        <div id="loadingIndicator" style="display: none; background-color: #fff3cd; color: #856404; padding: 15px; border-radius: 8px; margin-bottom: 10px; border: 1px solid #ffeaa7; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+            <i class="fas fa-spinner fa-spin" style="color: #8B4513; font-size: 16px;"></i>
+            <span style="color: #8B4513; margin-left: 10px;">Verifying...</span>
+        </div>
+
+        <!-- Success message -->
+        <div id="successMessage" style="display: none; background-color: #d4edda; color: #155724; padding: 15px; border-radius: 8px; margin-bottom: 10px; border: 1px solid #c3e6cb; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+            <i class="fas fa-check-circle" style="font-size: 16px;"></i>
+            <span id="successText" style="margin-left: 10px;"></span>
+        </div>
+
+        <!-- Error message -->
+        <div id="errorMessage" style="display: none; background-color: #f8d7da; color: #721c24; padding: 15px; border-radius: 8px; margin-bottom: 10px; border: 1px solid #f5c6cb; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+            <i class="fas fa-exclamation-circle" style="font-size: 16px;"></i>
+            <span id="errorText" style="margin-left: 10px;"></span>
+        </div>
+    </div>
+
+    <div class="container" id="container">
+        <div class="form-container sign-in-container" style="width: 100%;">
+            <form id="verifyOtpForm" style="text-align: center; padding: 40px;">
+                <div class="coffee-cup">
+                    <div class="steam"></div>
+                    <div class="steam"></div>
+                </div>
+                <p style="color: #666;">
+                    We have sent a 6-digit OTP code to your email: <br>
+                    <strong style="color: #8B4513;">@ViewBag.Email</strong>
+                </p>
+                
+                <div style="margin: 30px 0;">
+                    <input type="hidden" id="email" value="@ViewBag.Email" />
+                    <input type="text" id="otpCode" name="otpCode" placeholder="Enter 6-digit OTP code" maxlength="6" required 
+                           style="width: 100%; padding: 12px 15px; margin: 10px 0; border: 1px solid #ddd; border-radius: 25px; background-color: #eee; font-size: 18px; text-align: center; letter-spacing: 3px;" />
+                    <small style="color: #666; font-size: 12px;">OTP code is valid for 15 minutes</small>
+                </div>
+                
+                <div style="margin: 0px 0;">
+                    <button type="submit" class="button1" style="width: 100%; padding: 12px 45px; margin: 0px 0;">
+                        <i class="fas fa-check"></i> Verify OTP
+                    </button>
+                </div>
+
+                <div style="margin: 20px 0;">
+                    <a href="@Url.Action("ForgotPassword", "Account")" style="color: #8B4513; text-decoration: none; margin-right: 20px;">
+                        <i class="fas fa-arrow-left"></i> Back
+                    </a>
+                    <button type="button" id="resendOtpBtn" style="background: none; border: none; color: #8B4513; text-decoration: underline; cursor: pointer;">
+                        <i class="fas fa-redo"></i> Resend OTP
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>
