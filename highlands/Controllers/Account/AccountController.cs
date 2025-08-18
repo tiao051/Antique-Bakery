@@ -215,11 +215,14 @@ namespace highlands.Controllers.Account
                     INSERT INTO Users (Username, Email, Password, Role)
                     VALUES (@Username, @Email, @Password, @Role)";
 
+                // Hash the password before storing
+                var hashedPassword = HashPassword(password);
+
                 var result = connection.Execute(insertUserQuery, new
                 {
                     Username = name,
                     Email = email,
-                    Password = password,
+                    Password = hashedPassword,
                     Role = "Customer"
                 });
                 if (result > 0)
@@ -406,6 +409,88 @@ namespace highlands.Controllers.Account
                 var hashedBytes = sha256.ComputeHash(System.Text.Encoding.UTF8.GetBytes(password));
                 return Convert.ToBase64String(hashedBytes);
             }
+        }
+
+        // Migration method to hash existing plaintext passwords
+        [HttpPost]
+        public async Task<IActionResult> MigratePasswordsToHashed()
+        {
+            try
+            {
+                using (var connection = new SqlConnection(_connectionString))
+                {
+                    connection.Open();
+                    
+                    // Get all users with potentially unhashed passwords
+                    var query = "SELECT UserId, Email, Password FROM Users";
+                    var users = connection.Query<dynamic>(query).ToList();
+                    
+                    int migratedCount = 0;
+                    
+                    foreach (var user in users)
+                    {
+                        string currentPassword = user.Password.ToString();
+                        
+                        // Check if password is already hashed (Base64 strings typically end with = or have specific length patterns)
+                        // Also check if it matches common hash lengths
+                        bool isAlreadyHashed = IsLikelyHashedPassword(currentPassword);
+                        
+                        if (!isAlreadyHashed)
+                        {
+                            // Hash the plaintext password
+                            string hashedPassword = HashPassword(currentPassword);
+                            
+                            // Update the password in database
+                            var updateQuery = "UPDATE Users SET Password = @Password WHERE UserId = @UserId";
+                            var result = connection.Execute(updateQuery, new 
+                            { 
+                                Password = hashedPassword, 
+                                UserId = user.UserId 
+                            });
+                            
+                            if (result > 0)
+                            {
+                                migratedCount++;
+                                Console.WriteLine($"Migrated password for user: {user.Email}");
+                            }
+                        }
+                    }
+                    
+                    return Ok(new { 
+                        success = true, 
+                        message = $"Successfully migrated {migratedCount} passwords to hashed format.",
+                        migratedCount = migratedCount,
+                        totalUsers = users.Count
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error migrating passwords: {ex.Message}");
+                return BadRequest(new { 
+                    success = false, 
+                    message = "Error occurred during password migration.",
+                    error = ex.Message
+                });
+            }
+        }
+
+        private bool IsLikelyHashedPassword(string password)
+        {
+            // SHA256 hash converted to Base64 should be 44 characters long
+            // This is a simple heuristic to detect if password is likely already hashed
+            if (string.IsNullOrEmpty(password))
+                return false;
+                
+            // Base64 encoded SHA256 hash is typically 44 characters and ends with =
+            if (password.Length == 44 && password.EndsWith("="))
+                return true;
+                
+            // Additional checks: contains only Base64 characters
+            if (password.Length >= 40 && System.Text.RegularExpressions.Regex.IsMatch(password, @"^[A-Za-z0-9+/]*={0,2}$"))
+                return true;
+                
+            return false;
         }
     }
 }
