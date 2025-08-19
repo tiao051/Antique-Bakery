@@ -29,6 +29,15 @@ QuestPDF.Settings.License = LicenseType.Community;
 var secretKey = Environment.GetEnvironmentVariable("JWT_SECRET")
                 ?? configuration["JwtSettings:SecretKey"];
 
+// Validate secretKey
+if (string.IsNullOrEmpty(secretKey))
+{
+    throw new InvalidOperationException("JWT Secret Key is not configured. Please set JWT_SECRET environment variable or JwtSettings:SecretKey in configuration.");
+}
+
+Console.WriteLine($"[JWT VALIDATION] SecretKey: {secretKey}");
+Console.WriteLine($"[JWT VALIDATION] Key Length: {secretKey.Length}");
+
 // đăng ký service
 services.AddHostedService<MessageConsumerService>();
 services.AddScoped<IEmailService, SendMessageToQueue>();
@@ -120,6 +129,43 @@ services.AddAuthentication(options =>
         RoleClaimType = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
     };
 })
+.AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
+{
+    options.Events = new JwtBearerEvents
+    {
+        OnMessageReceived = context =>
+        {
+            // Check cookie first, then Authorization header
+            var token = context.Request.Cookies["accessToken"];
+            if (string.IsNullOrEmpty(token))
+            {
+                var authHeader = context.Request.Headers["Authorization"].FirstOrDefault();
+                if (authHeader?.StartsWith("Bearer ") == true)
+                {
+                    token = authHeader.Substring("Bearer ".Length).Trim();
+                }
+            }
+            
+            if (!string.IsNullOrEmpty(token))
+            {
+                context.Token = token;
+            }
+            return Task.CompletedTask;
+        }
+    };
+
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = configuration["JwtSettings:Issuer"],
+        ValidAudience = configuration["JwtSettings:Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey)),
+        RoleClaimType = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
+    };
+})
 .AddGoogle("Google", options =>
 {
     options.ClientId = configuration["GoogleAuth:ClientId"] ?? "1057258473272-hnj6l7up7rv12crbh259h0o15pu8btep.apps.googleusercontent.com";
@@ -165,7 +211,7 @@ configuration.AddJsonFile("appsettings.json");
 var app = builder.Build();
 
 try
-{   
+{
 
     using var scope = app.Services.CreateScope();
 
