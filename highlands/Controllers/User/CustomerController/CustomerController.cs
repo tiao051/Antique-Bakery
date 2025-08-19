@@ -19,7 +19,7 @@ using highlands.Repository.OrderRepository;
 
 namespace highlands.Controllers.User.CustomerController
 {
-    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "Customer")]
+    [Authorize(AuthenticationSchemes = "Cookies,JWT", Policy = "Customer")]
     public class CustomerController : BaseController
     {
         private readonly IMenuItemRepository _dapperRepository;

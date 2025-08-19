@@ -224,6 +224,24 @@ input {
         margin: 0 5px;
         height: 40px;
         width: 40px;
+        transition: all 0.3s ease;
+        text-decoration: none;
+    }
+
+    .social-container a:hover {
+        transform: scale(1.1);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+
+    .social-container a.google-signin {
+        background-color: #4285f4;
+        border-color: #4285f4;
+        color: white;
+    }
+
+    .social-container a.google-signin:hover {
+        background-color: #3367d6;
+        border-color: #3367d6;
     }
 
 footer {

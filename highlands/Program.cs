@@ -79,13 +79,21 @@ services.AddScoped<IAuthService, AuthService>();
 
 services.AddAuthentication(options =>
 {
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-    //    options.DefaultAuthenticateScheme = "Cookies";
-    //    options.DefaultSignInScheme = "Cookies";
-    //    options.DefaultChallengeScheme = "Google";
+    options.DefaultAuthenticateScheme = "Cookies";
+    options.DefaultSignInScheme = "Cookies";
+    options.DefaultChallengeScheme = "Google";
 })
-.AddJwtBearer(options =>
+.AddCookie("Cookies", options =>
+{
+    options.LoginPath = "/Account/Login";
+    options.LogoutPath = "/Account/Logout";
+    options.AccessDeniedPath = "/Account/AccessDenied";
+    options.ExpireTimeSpan = TimeSpan.FromHours(24);
+    options.SlidingExpiration = true;
+    options.Cookie.HttpOnly = true;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+})
+.AddJwtBearer("JWT", options =>
 {
     options.Events = new JwtBearerEvents
     {
@@ -112,16 +120,19 @@ services.AddAuthentication(options =>
         RoleClaimType = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
     };
 })
-.AddCookie()
-.AddGoogle(options =>
+.AddGoogle("Google", options =>
 {
-    options.ClientId = "1057258473272-hnj6l7up7rv12crbh259h0o15pu8btep.apps.googleusercontent.com";
-    options.ClientSecret = "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";
+    options.ClientId = configuration["GoogleAuth:ClientId"] ?? "1057258473272-hnj6l7up7rv12crbh259h0o15pu8btep.apps.googleusercontent.com";
+    options.ClientSecret = configuration["GoogleAuth:ClientSecret"] ?? "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";
+    options.CallbackPath = "/signin-google";
     options.Events.OnRedirectToAuthorizationEndpoint = context =>
     {
         context.Response.Redirect(context.RedirectUri + "&prompt=select_account");
         return Task.CompletedTask;
     };
+    options.Scope.Add("email");
+    options.Scope.Add("profile");
+    options.SaveTokens = true;
 });
 
 //Autho của jwt

@@ -141,6 +141,24 @@ namespace highlands.Controllers.Account
 
             await StoreRefreshToken(request.Email, refreshToken);
 
+            // Create cookie authentication in addition to JWT
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
+                new Claim(ClaimTypes.Email, request.Email),
+                new Claim(ClaimTypes.Role, roleId.ToString()),
+                new Claim("AuthMethod", "EmailPassword")
+            };
+
+            var claimsIdentity = new ClaimsIdentity(claims, "Cookies");
+            var authProperties = new AuthenticationProperties
+            {
+                IsPersistent = true,
+                ExpiresUtc = DateTimeOffset.UtcNow.AddHours(24)
+            };
+
+            await HttpContext.SignInAsync("Cookies", new ClaimsPrincipal(claimsIdentity), authProperties);
+
             var cookieOptions = new CookieOptions
             {
                 HttpOnly = true,
@@ -238,11 +256,26 @@ namespace highlands.Controllers.Account
         }
         public async Task<IActionResult> Logout()
         {
-            // ??ng xu?t kh?i ?ng d?ng
-            HttpContext.Session.Clear();
-            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            try
+            {
+                // Clear session
+                HttpContext.Session.Clear();
+                
+                // Sign out from cookie authentication
+                await HttpContext.SignOutAsync("Cookies");
+                
+                // Clear JWT token from cookie if exists
+                Response.Cookies.Delete("accessToken");
+                
+                TempData["SuccessMessage"] = "You have been successfully logged out.";
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Logout error: {ex.Message}");
+                TempData["ErrorMessage"] = "An error occurred during logout.";
+            }
 
-            // Chuy?n h??ng ng??i d�ng v? trang login ho?c trang ch?
+            // Redirect to login page
             return RedirectToAction("Index", "Account");
         }
 
@@ -251,49 +284,119 @@ namespace highlands.Controllers.Account
         {
             var redirectUrl = Url.Action("GoogleResponse", "Account", new { returnUrl });
             var properties = new AuthenticationProperties { RedirectUri = redirectUrl };
-            return Challenge(properties, GoogleDefaults.AuthenticationScheme);
+            return Challenge(properties, "Google");
         }
 
         [HttpGet]
         public async Task<IActionResult> GoogleResponse(string returnUrl = null)
         {
-            var authenticateResult = await HttpContext.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-            var claimsPrincipal = authenticateResult.Principal;
-
-            var email = claimsPrincipal?.FindFirst(ClaimTypes.Email)?.Value;
-
-            if (email != null)
+            try
             {
+                var authenticateResult = await HttpContext.AuthenticateAsync("Google");
+                
+                if (!authenticateResult.Succeeded)
+                {
+                    TempData["ErrorMessage"] = "Google authentication failed.";
+                    return RedirectToAction("Index", "Account");
+                }
+
+                var claimsPrincipal = authenticateResult.Principal;
+                var email = claimsPrincipal?.FindFirst(ClaimTypes.Email)?.Value;
+                var name = claimsPrincipal?.FindFirst(ClaimTypes.Name)?.Value;
+                var googleId = claimsPrincipal?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+                if (string.IsNullOrEmpty(email))
+                {
+                    TempData["ErrorMessage"] = "Unable to retrieve email from Google account.";
+                    return RedirectToAction("Index", "Account");
+                }
+
                 using (var connection = new SqlConnection(_connectionString))
                 {
-                    var query = "SELECT * FROM Users WHERE Email = @Email";
-                    var user = connection.QuerySingleOrDefault(query, new { Email = email });
+                    // Tìm user bằng email
+                    var query = "SELECT UserId, Username, Email, RoleId FROM Users WHERE Email = @Email";
+                    var user = await connection.QuerySingleOrDefaultAsync(query, new { Email = email });
 
                     int userId;
+                    int roleId;
+                    string username;
+
                     if (user == null)
                     {
+                        // Tạo user mới với role Customer (RoleId = 3)
                         var insertUserQuery = @"
-                            INSERT INTO Users (Username, Email, Password, Role, Type)
-                            VALUES (@Username, @Email, NULL, @Role, 'Google')";
+                            INSERT INTO Users (Username, Email, Password, RoleId, IsActive, CreatedAt)
+                            OUTPUT INSERTED.UserId
+                            VALUES (@Username, @Email, NULL, 3, 1, GETDATE())";
 
-                        userId = connection.Execute(insertUserQuery, new
+                        username = name ?? email.Split('@')[0];
+                        userId = await connection.QuerySingleAsync<int>(insertUserQuery, new
                         {
-                            Username = email.Split('@')[0],
-                            Email = email,
-                            Role = "Customer"
+                            Username = username,
+                            Email = email
+                        });
+                        roleId = 3; // Customer role
+
+                        // Tạo Customer record
+                        var insertCustomerQuery = @"
+                            INSERT INTO Customer (UserId, CustomerName, Email, Phone, Address, LoyaltyPoints)
+                            VALUES (@UserId, @CustomerName, @Email, NULL, NULL, 0)";
+                        
+                        await connection.ExecuteAsync(insertCustomerQuery, new
+                        {
+                            UserId = userId,
+                            CustomerName = username,
+                            Email = email
                         });
                     }
                     else
                     {
-                        // N?u ng??i d�ng ?� t?n t?i, c?p nh?t th�ng tin ph??ng th?c ??ng nh?p
-                        var updateUserQuery = "UPDATE Users SET Type = 'Google' WHERE Email = @Email";
-                        connection.Execute(updateUserQuery, new { Email = email });
                         userId = user.UserId;
+                        roleId = user.RoleId;
+                        username = user.Username;
                     }
+
+                    // Tạo claims cho cookie authentication
+                    var claims = new List<Claim>
+                    {
+                        new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
+                        new Claim(ClaimTypes.Email, email),
+                        new Claim(ClaimTypes.Name, username),
+                        new Claim(ClaimTypes.Role, roleId.ToString()),
+                        new Claim("AuthMethod", "Google")
+                    };
+
+                    var claimsIdentity = new ClaimsIdentity(claims, "Cookies");
+                    var authProperties = new AuthenticationProperties
+                    {
+                        IsPersistent = true,
+                        ExpiresUtc = DateTimeOffset.UtcNow.AddHours(24)
+                    };
+
+                    await HttpContext.SignInAsync("Cookies", new ClaimsPrincipal(claimsIdentity), authProperties);
+
+                    // Set session cho backward compatibility
                     HttpContext.Session.SetInt32("UserId", userId);
+                    HttpContext.Session.SetString("UserRole", roleId.ToString());
+
+                    TempData["SuccessMessage"] = $"Welcome back, {username}!";
+
+                    // Redirect based on role
+                    return roleId switch
+                    {
+                        1 => RedirectToAction("Index", "Admin"),
+                        2 => RedirectToAction("Index", "Manager"), 
+                        3 => RedirectToAction("Index", "Customer"),
+                        _ => RedirectToAction("Index", "Home")
+                    };
                 }
             }
-            return RedirectToAction("Index", "Customer");
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Google OAuth Error: {ex.Message}");
+                TempData["ErrorMessage"] = "An error occurred during Google authentication. Please try again.";
+                return RedirectToAction("Index", "Account");
+            }
         }
 
         // GET: Trang quên mật khẩu
